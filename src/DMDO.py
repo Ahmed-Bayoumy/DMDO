@@ -1,5 +1,5 @@
 # ------------------------------------------------------------------------------------#
-#  Multidisciplinary Design Optimization - DMDO                                      #
+#  Distributed Multidisciplinary Design Optimization - DMDO                                      #
 #                                                                                     #
 #  Author: Ahmed H. Bayoumy                                                           #
 #  email: ahmed.bayoumy@mail.mcgill.ca                                                #
