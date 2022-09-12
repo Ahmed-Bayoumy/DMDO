@@ -1336,8 +1336,8 @@ if __name__ == "__main__":
   #TODO: Feature: Move the MDO test functions and BM problems to NOBM package and prepare the DMDO package to be published on PyPi
   #TODO: Feature: Develop a simple UI widget that facilitates simple MDO setup using the compact table or N2-chart
   #TODO: Feature: Import RAF library once the latter is published on PYPI.com
-  #TODO: Bug: Add user and technical documentation 
-  #TODO: Bug: Enable the output report generation that summarizes the MDO history and final results
+  #FIXME: Bug: Add user and technical documentation 
+  #FIXME: Bug: Enable the output report generation that summarizes the MDO history and final results
   Basic_MDO()
   # speedReducer()
   # geometric_programming()
