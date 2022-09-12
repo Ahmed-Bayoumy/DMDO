@@ -636,7 +636,6 @@ class SubProblem(partitionedProblemData):
 
     #  We need this extra evaluation step to update inconsistincies and the master_variables vector
     self.evaluate(out["xmin"])
-    self.coord.update_master_vector(self.vars, self.MDA_process.responses)
     return out
 
   def get_coupling_vars_diff(self, con):
@@ -859,7 +858,10 @@ def GP_A1(z):
   return z1**2 + z2**2
 
 def GP_opt1(z,y):
-  return [y, [z[0]**-2 + z[1]**2 - z[2]**2, z[2]**2 + z[3]**-2  - z[4]**2]]
+  if isinstance(y, list) and len(y) > 0:
+    return [y[0], [z[0]**-2 + z[1]**2 - z[2]**2, z[2]**2 + z[3]**-2  - z[4]**2]]
+  else:
+    return [y, [z[0]**-2 + z[1]**2 - z[2]**2, z[2]**2 + z[3]**-2  - z[4]**2]]
 
 def GP_A2(z):
   z3 = sqrt(z[0]**2 + z[1]**-2 + z[2]**-2 + z[3]**2)
@@ -1192,7 +1194,7 @@ def geometric_programming():
 
   lb.append(15)
   ub.append(18)
-  bl.append(18)
+  bl.append(GP_A1([1]*5))
   scaling.append(1)
 
   # Variables dictionary with subproblems link
@@ -1241,10 +1243,10 @@ def geometric_programming():
   # Construct the coordinator
   coord = ADMM(beta = 1.3,
   nsp=3,
-  budget = 50,
+  budget = 200,
   index_of_master_SP=1,
   display = True,
-  scaling = 0.1,
+  scaling = 1.,
   mode = "serial",
   M_update_scheme= w_scheme.MEDIAN
   )
@@ -1259,7 +1261,7 @@ def geometric_programming():
   coordination=coord,
   opt=GP_opt1,
   fmin_nop=np.inf,
-  budget=20,
+  budget=5,
   display=False,
   psize = 1.,
   pupdate=PSIZE_UPDATE.LAST,
@@ -1316,7 +1318,14 @@ def geometric_programming():
   print(f'------Run_Summary------')
   print(MDAO.stop)
   print(f'q = {MDAO.Coordinator.q}')
+  xsp2 = []
+  xsp3 = []
+  index = np.argmax(MDAO.Coordinator.q)
   for i in MDAO.Coordinator.master_vars:
+    if i.sp_index == MDAO.Coordinator.master_vars[MDAO.Coordinator._linker[1,index]-1].link:
+      xsp2.append(i.value)
+    if i.sp_index == MDAO.Coordinator.master_vars[MDAO.Coordinator._linker[0,index]-1].link:
+      xsp3.append(i.value)
     print(f'{i.name}_{i.sp_index} = {i.value}')
   fmin = 0
   hmax = -inf
@@ -1330,6 +1339,24 @@ def geometric_programming():
   print(f'P_main: fmin= {fmin}, hmax= {hmax}')
   print(f'Final obj value of the main problem: \n {fmin}')
 
+  # Checking the impact of swapping z11_2 and z11_3 on the feasibility of SP2 and SP3, respectively
+  
+  temp = copy.deepcopy(xsp3[1])
+  xsp3[1] = xsp2[-1]
+  xsp2[-1] = temp
+  print(f'For {MDAO.Coordinator.master_vars[MDAO.Coordinator._linker[0,index]-1].name}_'
+    f'{MDAO.Coordinator.master_vars[MDAO.Coordinator._linker[0,index]-1].link} to '
+      f'{MDAO.Coordinator.master_vars[MDAO.Coordinator._linker[1,index]-1].name}_'
+    f'{MDAO.Coordinator.master_vars[MDAO.Coordinator._linker[1,index]-1].link}, using {MDAO.Coordinator.master_vars[MDAO.Coordinator._linker[0,index]-1].name}_'
+    f'{MDAO.Coordinator.master_vars[MDAO.Coordinator._linker[0,index]-1].link}' 
+    f' will make h_sp{MDAO.Coordinator.master_vars[MDAO.Coordinator._linker[1,index]-1].link} = {GP_opt2(xsp2, 0)[1]}')
+  print(f'For {MDAO.Coordinator.master_vars[MDAO.Coordinator._linker[0,index]-1].name}_'
+    f'{MDAO.Coordinator.master_vars[MDAO.Coordinator._linker[0,index]-1].link} to '
+      f'{MDAO.Coordinator.master_vars[MDAO.Coordinator._linker[1,index]-1].name}_'
+    f'{MDAO.Coordinator.master_vars[MDAO.Coordinator._linker[1,index]-1].link}, using {MDAO.Coordinator.master_vars[MDAO.Coordinator._linker[1,index]-1].name}_'
+    f'{MDAO.Coordinator.master_vars[MDAO.Coordinator._linker[1,index]-1].link}' 
+    f' will make h_sp{MDAO.Coordinator.master_vars[MDAO.Coordinator._linker[0,index]-1].link} = {GP_opt3(xsp3, 0)[1]}')
+
 if __name__ == "__main__":
   #TODO: Feature: Add more realistic analytical test problems
   #TODO: Feature: Add realistic multi-physics MDO problems that require using open-source physics-based simulation tools
@@ -1341,6 +1368,8 @@ if __name__ == "__main__":
   Basic_MDO()
   # speedReducer()
   # geometric_programming()
+  # print(GP_opt3([1.855, 1.2741785775750114, 0.935, 1.138, 1.035], 0))
+  # print(GP_opt2([2.418, 0.9533, 0.845, 0.722, 0.37906], 0))
 
 
 
