@@ -1368,8 +1368,6 @@ if __name__ == "__main__":
   Basic_MDO()
   # speedReducer()
   # geometric_programming()
-  # print(GP_opt3([1.855, 1.2741785775750114, 0.935, 1.138, 1.035], 0))
-  # print(GP_opt2([2.418, 0.9533, 0.845, 0.722, 0.37906], 0))
 
 
 
