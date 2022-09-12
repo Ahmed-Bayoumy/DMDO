@@ -22,7 +22,6 @@
 
 import copy
 import csv
-import enum
 from genericpath import isfile
 import json
 from multiprocessing.dummy import Process
@@ -95,6 +94,7 @@ class COUPLING_TYPE(Enum):
   FEEDBACK = auto()
   FEEDFORWARD = auto()
   UNCOUPLED = auto()
+  DUMMY = auto()
 
 class COUPLING_STRENGTH(Enum):
   TIGHT = auto()
@@ -331,15 +331,15 @@ class coordinationData:
 class ADMM_data(coordinationData):
   beta: float = 1.3
   gamma: float = 0.5
-  q: np.ndarray = np.empty([0,0])
-  qold: np.ndarray = np.empty([0,0])
+  q: np.ndarray = np.zeros([0,0])
+  qold: np.ndarray = np.zeros([0,0])
   phi: float = 1.0
-  v: np.ndarray = np.empty([0,0])
-  w: np.ndarray = np.empty([0,0])
+  v: np.ndarray = np.zeros([0,0])
+  w: np.ndarray = np.zeros([0,0])
   update_w: bool = False
   M_update_scheme: int = w_scheme.MEDIAN
 
-# TODO: ADMM needs to be customized for this code
+# COMPLETE: ADMM needs to be customized for this code
 @dataclass
 class ADMM(ADMM_data):
   " Alternating directions method of multipliers "
@@ -375,28 +375,24 @@ class ADMM(ADMM_data):
 
 
   def calc_inconsistency(self):
-    q_temp : np.ndarray = np.empty([0,0])
+    q_temp : np.ndarray = np.zeros([0,0])
     for i in range(self._linker.shape[1]):
       if self.master_vars:
-        q_temp = np.append(q_temp, subtract(((self.master_vars[self._linker[0, i]-1])),
-                ((self.master_vars[self._linker[1, i]-1])))*self.scaling)
+        q_temp = np.append(q_temp, subtract(((self.master_vars[self._linker[0, i]-1].value)),
+                ((self.master_vars[self._linker[1, i]-1].value)))*self.scaling)
       else:
         raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
-
-    # if self.started:
-    # 	self.update_w = not any(np.less_equal(
-    # 		np.abs(self.q), self.gamma*np.abs(q_temp)))
 
     self.q = copy.deepcopy(q_temp)
 
 
 
   def calc_inconsistency_old(self):
-    q_temp : np.ndarray = np.empty([0,0])
+    q_temp : np.ndarray = np.zeros([0,0])
     for i in range(self._linker.shape[1]):
       if self.master_vars_old:
-        q_temp = np.append(q_temp, subtract(((self.master_vars_old[self._linker[0, i]-1])),
-                ((self.master_vars_old[self._linker[1, i]-1])))*self.scaling)
+        q_temp = np.append(q_temp, subtract(((self.master_vars_old[self._linker[0, i]-1].value)),
+                ((self.master_vars_old[self._linker[1, i]-1].value)))*self.scaling)
       else:
         raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
     self.qold = copy.deepcopy(q_temp)
@@ -411,9 +407,10 @@ class ADMM(ADMM_data):
       raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
 
 
-  def calc_penalty(self):
+  def calc_penalty(self, q_indices):
     phi = np.add(np.multiply(self.v, self.q), np.multiply(np.multiply(self.w, self.w), np.multiply(self.q, self.q)))
-    self.phi = np.sum(phi)
+    #COMPLETE: Sum relevant components of q to accelerate the convergence of variables consistency
+    self.phi = np.sum(phi[q_indices])
 
     if np.iscomplex(self.phi) or np.isnan(self.phi):
       self.phi = np.inf
@@ -427,7 +424,6 @@ class ADMM(ADMM_data):
     if self.M_update_scheme == w_scheme.MEDIAN:
       for i in range(self.q_stall.shape[0]):
         increase_w.append(2. * ((self.q_stall[i]) and (np.greater_equal(np.abs(self.q[i]), np.median(np.abs(self.q))))))
-      # self.update_w = any(np.less_equal(np.abs(self.q), self.gamma*np.abs(self.qold)))
     elif self.M_update_scheme == w_scheme.MAX:
       increase_w = self.q.shape * (self.q_stall and np.greater_equal(np.abs(self.q), np.max(np.abs(self.q))))
     elif self.M_update_scheme == w_scheme.NORMAL:
@@ -441,7 +437,7 @@ class ADMM(ADMM_data):
       raise Exception(IOError, "Multipliers update scheme is not recognized!")
 
     for i in range(len(self.w)):
-      self.w[i] = np.multiply(self.w[i], np.power(self.beta, increase_w[i]))
+      self.w[i] = copy.deepcopy(np.multiply(self.w[i], np.power(self.beta, increase_w[i])))
 
     self.w
 
@@ -475,7 +471,7 @@ class partitionedProblemData:
 @dataclass
 class SubProblem(partitionedProblemData):
   # Constructor
-  def __init__(self, nv, index, vars, resps, is_main, analysis, coordination, opt, fmin_nop, budget, display, psize, pupdate):
+  def __init__(self, nv, index, vars, resps, is_main, analysis, coordination, opt, fmin_nop, budget, display, psize, pupdate, freal=None):
     self.nv = nv
     self.index = index
     self.vars = copy.deepcopy(vars)
@@ -490,6 +486,7 @@ class SubProblem(partitionedProblemData):
     self.display = display
     self.psize = psize
     self.psize_init = pupdate
+    self.frealistic = freal
 
   def get_minimizer(self):
     v = []
@@ -519,20 +516,53 @@ class SubProblem(partitionedProblemData):
   def set_pair(self):
     indices1 = []
     indices2 = []
+    sp_link =  []
+    sp_link_to = []
     for i in range(len(self.coord.master_vars)):
-      if self.index == self.coord.master_vars[i].sp_index and self.coord.master_vars[i].link and self.coord.master_vars[i].link >= 1:
+      check: bool = False
+      if self.coord.master_vars[i].link and isinstance(self.coord.master_vars[i].link, list):
+        nl = len(self.coord.master_vars[i].link)
+        check = any(self.coord.master_vars[i].link >= np.ones(nl))
+      elif self.coord.master_vars[i].link:
+        check = self.coord.master_vars[i].link >= 1
+      if (self.index == self.coord.master_vars[i].sp_index or self.coord.master_vars[i].coupling_type != COUPLING_TYPE.UNCOUPLED)  and check and self.coord.master_vars[i].index not in indices2:
+        sp_link.append(self.coord.master_vars[i].sp_index)
         linked_to = (self.coord.master_vars[i].link)
-        indices1.append(self.coord.master_vars[i].index)
+        if linked_to and isinstance(linked_to, list):
+          for linki in range(len(linked_to)):
+            indices1.append(self.coord.master_vars[i].index)
+        else:
+          indices1.append(self.coord.master_vars[i].index)
         for j in range(len(self.coord.master_vars)):
-          if linked_to == self.coord.master_vars[j].sp_index and self.coord.master_vars[j].name == self.coord.master_vars[i].name:
+          check = False
+          if linked_to and isinstance(linked_to, list):
+            nl = len(linked_to)
+            check = any(linked_to == np.multiply(self.coord.master_vars[j].sp_index, np.ones(nl)))
+          else:
+            check = (linked_to == self.coord.master_vars[j].sp_index)
+          if check and (self.coord.master_vars[j].name == self.coord.master_vars[i].name):
+            sp_link_to.append(self.coord.master_vars[i].link)
             indices2.append(self.coord.master_vars[j].index)
-    if self.is_main == 1:
-      self.coord._linker = copy.deepcopy(np.array([indices1, indices2]))
-    else:
-      self.coord._linker = copy.deepcopy(np.array([indices2, indices1]))
+    
+    # Remove redundant links
+    self.coord._linker = copy.deepcopy(np.array([indices1, indices2]))
+
+  def getLocalIndices(self):
+    local_link = []
+    for i in range(len(self.coord._linker[0])):
+      for j in range(len(self.vars)):
+        if (self.coord._linker[0])[i] == self.vars[j].index or (self.coord._linker[1])[i] == self.vars[j].index:
+          local_link.append(i)
+      for k in range(len(self.resps)):
+        if (self.coord._linker[0])[i] == self.resps[k].index or (self.coord._linker[1])[i] == self.resps[k].index:
+          local_link.append(i)
+    local_link.sort()
+    return local_link
+    
+
 
   def evaluate(self, vlist: List[float]):
-    # If no variables were provided use existing value of the variables of the current subproblem (Might happen during initialization)
+    # If no variables were provided use existing value of the variables of the current subproblem (might happen during initialization)
     if vlist is None:
       v: List = self.get_design_vars()
       vlist = self.get_list_vars(v)
@@ -549,16 +579,16 @@ class SubProblem(partitionedProblemData):
     self.set_pair()
     self.coord.update_master_vector(self.vars, self.MDA_process.responses)
     self.coord.calc_inconsistency()
-    self.coord.calc_penalty()
+    q_indices: List = self.getLocalIndices()
+    self.coord.calc_penalty(q_indices)
 
     if self.realistic_objective:
       con.append(y-self.frealistic)
     return [fun[0]+self.coord.phi, con]
 
   def solve(self, v, w):
-    self.coord.v = v
-    self.coord.w = w
-    # self.coord.master_vars = copy.deepcopy(vars)
+    self.coord.v = copy.deepcopy(v)
+    self.coord.w = copy.deepcopy(w)
     bl = self.get_list_vars(self.get_design_vars())
     eval = {"blackbox": self.evaluate}
     param = {"baseline": bl,
@@ -567,7 +597,6 @@ class SubProblem(partitionedProblemData):
                 "var_names": self.get_list_vars_names(self.get_design_vars()),
                 "scaling": self.get_design_vars_scaling(self.get_design_vars()),
                 "post_dir": "./post"}
-    # options = {"seed": 0, "budget": self.budget, "tol": 1e-9, "display": self.display, "precision": "high", "psize_init": 1.}
     pinit = min(max(1E-12, self.psize), 1)
     options = {
       "seed": 0,
@@ -590,8 +619,6 @@ class SubProblem(partitionedProblemData):
 
     out = {}
     pinit = self.psize
-    # TODO: Coordinator forgets q after calling the optimizer, possible remedy is to update the variables from the optimizer output and the master variables too
-    # then at the end of each outer loop iteration we can calculate q of that subproblem before updating penalty parameters
     out = self.optimizer(data)
     if self.psize_init == PSIZE_UPDATE.DEFAULT:
       self.psize = 1.
@@ -603,8 +630,9 @@ class SubProblem(partitionedProblemData):
       self.psize = out["psize"]
     else:
       self.psize = 1.
-
-    # print(f'sp{self.index} || pinit= {pinit} || psize={self.psize} || bl={bl} || xmin={out["xmin"]}')
+    
+    # COMPLETE: Coordinator forgets q after calling the optimizer, possible remedy is to update the subproblem variables from the optimizer output and the master variables too
+    # then at the end of each outer loop iteration we can calculate q of that subproblem before updating penalty parameters
 
     #  We need this extra evaluation step to update inconsistincies and the master_variables vector
     self.evaluate(out["xmin"])
@@ -613,7 +641,6 @@ class SubProblem(partitionedProblemData):
 
   def get_coupling_vars_diff(self, con):
     vc: List[variableData] = self.get_coupling_vars()
-    # conl = []
     for i in range(len(vc)):
       con.append(float(vc[i].value-vc[i].ub))
 
@@ -675,7 +702,6 @@ class MDO_data(Process_data):
 
 @dataclass
 class MDO(MDO_data):
-
   def setup(self, input):
     data: Dict = {}
     if isfile(input):
@@ -695,8 +721,6 @@ class MDO(MDO_data):
       dx.append(self.Coordinator.master_vars[i] - self.Coordinator.master_vars_old[i])
       x.append(self.Coordinator.master_vars[i].value)
       xold.append(self.Coordinator.master_vars_old[i].value)
-    # print(f'x = {x}')
-    # print(f'xold = {xold}')
     return np.linalg.norm(dx, 2)
 
   def check_termination_critt(self, iter):
@@ -713,9 +737,10 @@ class MDO(MDO_data):
       return True
 
     return False
-
+  
   def run(self):
     """ Run the MDO process """
+    #  COMPLETE: fix the setup of the local (associated with SP) and global (associated with MDO) coordinators
     for iter in range(self.Coordinator.budget):
       if iter > 0:
         self.Coordinator.master_vars_old = copy.deepcopy(self.Coordinator.master_vars)
@@ -723,17 +748,15 @@ class MDO(MDO_data):
         self.Coordinator.master_vars_old = copy.deepcopy(self.variables)
         self.Coordinator.master_vars = copy.deepcopy(self.variables)
 
-
-
       """ ADMM inner loop """
       for s in range(len(self.subProblems)):
-        self.subProblems[s].coord = copy.deepcopy(self.Coordinator)
         if iter == 0:
+          self.subProblems[s].coord = copy.deepcopy(self.Coordinator)
           self.subProblems[s].set_pair()
           self.Coordinator.v = [0.] * len(self.subProblems[s].coord._linker[0])
           self.Coordinator.w = [1.] * len(self.subProblems[s].coord._linker[0])
-
-        # self.subProblems[s].set_dependent_vars(self.Coordinator.master_vars)
+        else:
+          self.subProblems[s].coord.master_vars = copy.deepcopy(self.Coordinator.master_vars)
 
         out_sp = self.subProblems[s].solve(self.Coordinator.v, self.Coordinator.w)
         self.Coordinator = copy.deepcopy(self.subProblems[s].coord)
@@ -753,7 +776,7 @@ class MDO(MDO_data):
       """ Update LM and PM """
       self.Coordinator.update_multipliers()
 
-      """ Stopping criterias """
+      """ Stopping criteria """
       self.tab_inc.append(np.max(np.abs(self.Coordinator.q)))
       stop: bool = self.check_termination_critt(iter)
 
@@ -773,19 +796,22 @@ class MDO(MDO_data):
   def getOutputs(self):
     return self.responses
 
+# TODO: MDO setup will be simplified when the N2 chart UI is implemented
 def termTest():
   print("Termination criterria work!")
 
 def A1(x):
   LAMBDA = 0.0
-  if not all(v > 0. for v in x):
-    return np.inf
+  for i in range(len(x)):
+    if x[i] == 0.:
+      x[i] = 1e-12
   return math.log(x[0]+LAMBDA) + math.log(x[1]+LAMBDA) + math.log(x[2]+LAMBDA)
 
 def A2(x):
   LAMBDA = 0.0
-  if not all(v > 0. for v in x):
-    return np.inf
+  for i in range(len(x)):
+    if x[i] == 0.:
+      x[i] = 1e-12
   return np.divide(1., (x[0]+LAMBDA)) + np.divide(1., (x[1]+LAMBDA)) + np.divide(1., (x[2]+LAMBDA))
 
 def opt1(x, y):
@@ -794,9 +820,63 @@ def opt1(x, y):
 def opt2(x, y):
   return [0., [x[1]+y[0]-10.]]
 
+def SR_A1(x):
+  """ Speed reducer A1 """
+  return (0.7854*x[0]*x[1]**2*(3.3333*x[2]*x[2] + 14.9335*x[2] - 43.0934))
+
+def SR_A2(x):
+  """ Speed reducer A2 """
+  return (-1.5079*x[0]*x[4]**2) + (7.477 * x[4]**3) + 0.7854 * x[3] * x[4]**2
+
+def SR_A3(x):
+  """ Speed reducer A3 """
+  return (-1.5079*x[0]*x[4]**2 + 7.477*x[4]**3 + 0.7854*x[3]*x[4]**2)
+
+def SR_opt1(x, y):
+  g5 = 27/(x[0]*x[1]**2*x[2]) -1
+  g6 = 397.5/(x[0]*x[1]**2*x[2]**2) -1
+  g9 = x[1]*x[2]/40 -1
+  g10 = 5*x[1]/x[0] -1
+  g11 = x[0]/(12*x[1]) -1
+  return [y, [g5,g6,g9,g10,g11]]
+
+
+def SR_opt2(x, y):
+  g1 = sqrt( ((745*x[3])/(x[1]*x[2]))**2 + 1.69e+7)/(110*x[4]**3) -1
+  g3 = (1.5*x[4] + 1.9)/x[3] -1
+  g7 = 1.93*x[3]**3/(x[1]*x[2]*x[4]**4) -1
+  return [y, [g1,g3,g7]]
+
+def SR_opt3(x, y):
+  g2 = sqrt( ((745*x[3])/(x[1]*x[2]))**2 + 1.575e+8)/(85*x[4]**3) -1
+  g4 = (1.1*x[4] + 1.9)/x[3] -1
+  g8 = (1.93*x[3]**3)/(x[1]*x[2]*x[4]**4) -1
+  return [y, [g2, g4, g8]]
+
+def GP_A1(z):
+  z1 = sqrt(z[0]**2 + z[1]**-2 + z[2]**2)
+  z2 = sqrt(z[2]**2 + z[3]**2  + z[4]**2)
+  return z1**2 + z2**2
+
+def GP_opt1(z,y):
+  return [y, [z[0]**-2 + z[1]**2 - z[2]**2, z[2]**2 + z[3]**-2  - z[4]**2]]
+
+def GP_A2(z):
+  z3 = sqrt(z[0]**2 + z[1]**-2 + z[2]**-2 + z[3]**2)
+  return z3
+
+def GP_opt2(z,y):
+  return [0, [z[0]**2 + z[1]**2 - z[3]**2, z[0]**-2 + z[2]**2 - z[3]**2]]
+
+def GP_A3(z):
+  z6 = sqrt(z[0]**2 + z[1]**2 + z[2]**2 +z[3] **2)
+  return z6
+
+def GP_opt3(z, y):
+  return [0, [z[0]**2 + z[1]**-2 - z[2]**2, z[0]**2 +z[1]**2 - z[3]**2]]
+
 def Basic_MDO():
   #  Variables setup
-  # TODO: will be simplified when the N2 chart UI is implemented
   v = {}
   V: List[variableData] = []
   names = ["u", "v", "a", "b", "u", "w", "a", "b"]
@@ -807,8 +887,8 @@ def Basic_MDO():
    COUPLING_TYPE.FEEDBACK, COUPLING_TYPE.FEEDFORWARD]
   lb = [0.]*8
   ub = [10.]*8
-  bl = [5.]*8
-  scaling = [10.] * 8
+  bl = [1.]*8
+  scaling = np.subtract(ub,lb)
 
   # Variables dictionary with subproblems link
   for i in range(8):
@@ -889,10 +969,6 @@ def Basic_MDO():
   )
 
   # Construct MDO workflow
-  # inc_stop: float
-  # stop: str
-  # tab_inc: list
-  # noprogress_stop: int
   MDAO: MDO = MDO(
   Architecture = MDO_ARCHITECTURE.IDF,
   Coordinator = coord,
@@ -916,11 +992,20 @@ def Basic_MDO():
   print(f'q = {MDAO.Coordinator.q}')
   for i in MDAO.Coordinator.master_vars:
     print(f'{i.name}_{i.sp_index} = {i.value}')
-  print(f'Final obj value of the main problem: \n {MDAO.fmin}')
+
+  fmin = 0
+  hmax = -inf
+  for j in range(len(MDAO.subProblems)):
+    print(f'SP_{MDAO.subProblems[j].index}: fmin= {MDAO.subProblems[j].MDA_process.getOutputs()}, hmin= {MDAO.subProblems[j].opt([s.value for s in MDAO.subProblems[j].get_design_vars()] , MDAO.subProblems[j].MDA_process.getOutputs())[1]}')
+    fmin += sum(MDAO.subProblems[j].MDA_process.getOutputs())
+    hmin= MDAO.subProblems[j].opt([s.value for s in MDAO.subProblems[j].get_design_vars()] , MDAO.subProblems[j].MDA_process.getOutputs())[1]
+    if max(hmin) > hmax: 
+      hmax = max(hmin) 
+  print(f'P_main: fmin= {fmin}, hmax= {hmax}')
+  print(f'Final obj value of the main problem: \n {fmin}')
 
 def speedReducer():
   #  Variables setup
-  # TODO: will be simplified when the N2 chart UI is implemented
   f1min = 722
   f1max = 5408
   f2min = 184
@@ -934,20 +1019,23 @@ def speedReducer():
   ff = COUPLING_TYPE.FEEDFORWARD
   fb = COUPLING_TYPE.FEEDBACK
   un = COUPLING_TYPE.UNCOUPLED
+  dum = COUPLING_TYPE.DUMMY
 
 
-  names = ["x1", "x1", "x1", "x2", "x2", "x2", "x3", "x3", "x3", "f1", "f2", "x4", "x6", "f3", "x5", "x7", "f1", "f2", "f3"]
-  spi =   [ 1,      2,    3,		1,		2,		3,		1,		2,		3,		1,    2,    2,		2,		4,    3,	  3,		4,		4,		4]
-  links = [ 2,  [1,3],    2,    2,[1,3],    2, 	  2,[1,3],    2,    4,    4, None, None,    3, None, None, 		1, 		2, 		3]
+  names = ["x1", "x2", "x3", "f1",   "x1", "x2", "x3", "x4", "x6", "f2",   "x1", "x2", "x3", "x5", "x7", "f3"]
+  spi =   [   1,    1,    1,		1,		  2,		2,		2,		2,		2,		2,      3,    3,		3,		3,    3,	  3]
+  links = [[2,3],[2,3],[2,3],   None,  [1,3],[1,3],[1,3], None, None,    None,  [1,2],[1,2],[1,2], None, None,    None]
+  lb =    [2.6 ,  0.7 ,  17., 722.,  2.6 ,  0.7,  17.,  7.3,  2.9, 184.,   2.6 ,  0.7,  17.,  7.3,   5.,942.]
+  ub =    [3.6 ,  0.8 ,  28.,5408.,  3.6 ,  0.8,  28.,  8.3,  3.9, 506.,   3.6 ,  0.8 , 28.,  8.3,  5.5,1369.]
+  bl =    np.divide(np.subtract(ub, lb), 2.)
+  
   coupling_t = \
-          [ s,      s,		s,		s,		s,		s,		s,		s,		s,	 ff,   ff,    s,    s,   ff,    s,    s,   fb,   fb,   fb]
-  lb = [0.]*19
-  ub = [10.]*8
-  bl = [5.]*8
-  scaling = [10.] * 8
+          [ s,      s,		s,		un,		s,		s,		s,		un,		un,	 un,   s,    s,    s,   un,    un,    un]
+ 
+  scaling = [10.] * 16
 
   # Variables dictionary with subproblems link
-  for i in range(8):
+  for i in range(16):
     v[f"var{i+1}"] = {"index": i+1,
     "sp_index": spi[i],
     f"name": names[i],
@@ -961,12 +1049,298 @@ def speedReducer():
     "value": bl[i],
     "ub": ub[i]}
 
-  for i in range(8):
+  for i in range(16):
     V.append(variableData(**v[f"var{i+1}"]))
 
+  # Analyses setup; construct disciplinary analyses
+  DA1: process = DA(inputs=[V[0], V[1], V[2]],
+  outputs=[V[3]],
+  blackbox=SR_A1,
+  links=[4],
+  coupling_type=COUPLING_TYPE.FEEDFORWARD)
+  
+  DA2: process = DA(inputs=[V[4], V[5], V[6], V[7], V[8]],
+  outputs=[V[9]],
+  blackbox=SR_A2,
+  links=[4],
+  coupling_type=COUPLING_TYPE.FEEDFORWARD
+  )
+
+  DA3: process = DA(inputs=[V[10], V[11], V[12], V[13], V[14]],
+  outputs=[V[15]],
+  blackbox=SR_A3,
+  links=[4],
+  coupling_type=COUPLING_TYPE.FEEDFORWARD
+  )
+
+  # MDA setup; construct subproblems MDA
+  sp1_MDA: process = MDA(nAnalyses=1, analyses = [DA1], variables=[V[0], V[1], V[2]], responses=[V[3]])
+  sp2_MDA: process = MDA(nAnalyses=1, analyses = [DA2], variables=[V[4], V[5], V[6], V[7], V[8]], responses=[V[9]])
+  sp3_MDA: process = MDA(nAnalyses=1, analyses = [DA3], variables=[V[10], V[11], V[12], V[13], V[14]], responses=[V[15]])
+
+  # Construct the coordinator
+  coord = ADMM(beta = 1.3,
+  nsp=4,
+  budget = 50,
+  index_of_master_SP=1,
+  display = True,
+  scaling = 0.1,
+  mode = "serial",
+  M_update_scheme= w_scheme.MEDIAN
+  )
+
+  # Construct subproblems
+  sp1 = SubProblem(nv = 3,
+  index = 1,
+  vars = [V[0], V[1], V[2]],
+  resps = [V[3]],
+  is_main=1,
+  analysis= sp1_MDA,
+  coordination=coord,
+  opt=SR_opt1,
+  fmin_nop=np.inf,
+  budget=20,
+  display=False,
+  psize = 1.,
+  pupdate=PSIZE_UPDATE.LAST)
+
+  sp2 = SubProblem(nv = 5,
+  index = 2,
+  vars = [V[4], V[5], V[6], V[7], V[8]],
+  resps = [V[9]],
+  is_main=0,
+  analysis= sp2_MDA,
+  coordination=coord,
+  opt=SR_opt2,
+  fmin_nop=np.inf,
+  budget=20,
+  display=False,
+  psize = 1.,
+  pupdate=PSIZE_UPDATE.LAST
+  )
+
+  sp3 = SubProblem(nv = 5,
+  index = 3,
+  vars = [V[10], V[11], V[12], V[13], V[14]],
+  resps = [V[15]],
+  is_main=0,
+  analysis= sp3_MDA,
+  coordination=coord,
+  opt=SR_opt3,
+  fmin_nop=np.inf,
+  budget=20,
+  display=False,
+  psize = 1.,
+  pupdate=PSIZE_UPDATE.LAST)
+
+# Construct MDO workflow
+  MDAO: MDO = MDO(
+  Architecture = MDO_ARCHITECTURE.IDF,
+  Coordinator = coord,
+  subProblems = [sp1, sp2, sp3],
+  variables = V,
+  responses = [V[3], V[9], V[15]],
+  fmin = np.inf,
+  hmin = np.inf,
+  display = True,
+  inc_stop = 1E-9,
+  stop = "Iteration budget exhausted",
+  tab_inc = [],
+  noprogress_stop = 100
+  )
+
+
+# Run the MDO problem
+  out = MDAO.run()
+
+  print(f'------Run_Summary------')
+  print(MDAO.stop)
+  print(f'q = {MDAO.Coordinator.q}')
+  for i in MDAO.Coordinator.master_vars:
+    print(f'{i.name}_{i.sp_index} = {i.value}')
+  fmin = 0
+  hmax = -inf
+  for j in range(len(MDAO.subProblems)):
+    print(f'SP_{MDAO.subProblems[j].index}: fmin= {MDAO.subProblems[j].MDA_process.getOutputs()}, hmin= {MDAO.subProblems[j].opt([s.value for s in MDAO.subProblems[j].get_design_vars()] , [])[1]}')
+    fmin += sum(MDAO.subProblems[j].MDA_process.getOutputs())
+    hmin= MDAO.subProblems[j].opt([s.value for s in MDAO.subProblems[j].get_design_vars()] , [])[1]
+    if max(hmin) > hmax: 
+      hmax = max(hmin) 
+  print(f'P_main: fmin= {fmin}, hmax= {hmax}')
+  print(f'Final obj value of the main problem: \n {fmin}')
+
+def geometric_programming():
+  v = {}
+  V: List[variableData] = []
+  s  = COUPLING_TYPE.SHARED
+  ff = COUPLING_TYPE.FEEDFORWARD
+  fb = COUPLING_TYPE.FEEDBACK
+  un = COUPLING_TYPE.UNCOUPLED
+  dum = COUPLING_TYPE.DUMMY
+
+
+  names = ["z3", "z4", "z5", "z6",   "z7", "z3", "z8", "z9", "z10", "z11",   "z6", "z11", "z12", "z13", "z14", "dd"]
+  spi =   [   1,    1,    1,		1,		  1,		2,		2,		2,		2,		  2,      3,     3,		  3,		 3,     3, 1]
+  links = [   2, None, None,    3,   None,    1, None, None, None,      3,      1,     2,  None,  None,  None, None]
+  coupling_t = \
+          [ fb,    un,	 un,	 fb,		 un,	 ff,	 un,	 un,	 un,	    s,     ff,     s,    un,    un,    un, ff]
+ 
+  lb =    [1e-6]*15
+  ub =    [1e6]*15
+  bl =    [1.]*15
+  scaling = [9.e5] * 15
+
+  lb.append(15)
+  ub.append(18)
+  bl.append(18)
+  scaling.append(1)
+
+  # Variables dictionary with subproblems link
+  for i in range(16):
+    v[f"var{i+1}"] = {"index": i+1,
+    "sp_index": spi[i],
+    f"name": names[i],
+    "dim": 1,
+    "coupling_type": coupling_t[i],
+    "link": links[i],
+    "baseline": bl[i],
+    "scaling": scaling[i],
+    "lb": lb[i],
+    "value": bl[i],
+    "ub": ub[i]}
+
+  for i in range(16):
+    V.append(variableData(**v[f"var{i+1}"]))
+  
+  # Analyses setup; construct disciplinary analyses
+  DA1: process = DA(inputs=[V[0], V[1], V[2], V[3], V[4]],
+  outputs=[V[15]],
+  blackbox=GP_A1,
+  links=[2, 3],
+  coupling_type=COUPLING_TYPE.FEEDBACK)
+  
+  DA2: process = DA(inputs=[V[6], V[7], V[8], V[9]],
+  outputs=[V[5]],
+  blackbox=GP_A2,
+  links=[1, 3],
+  coupling_type=COUPLING_TYPE.FEEDFORWARD
+  )
+
+  DA3: process = DA(inputs=[V[11], V[12], V[13], V[14]],
+  outputs=[V[10]],
+  blackbox=GP_A3,
+  links=[1, 2],
+  coupling_type=COUPLING_TYPE.FEEDFORWARD
+  )
+
+  # MDA setup; construct subproblems MDA
+  sp1_MDA: process = MDA(nAnalyses=1, analyses = [DA1], variables=[V[0], V[1], V[2], V[3], V[4]], responses=[V[15]])
+  sp2_MDA: process = MDA(nAnalyses=1, analyses = [DA2], variables=[V[6], V[7], V[8], V[9]], responses=[V[5]])
+  sp3_MDA: process = MDA(nAnalyses=1, analyses = [DA3], variables=[V[11], V[12], V[13], V[14]], responses=[V[10]])
+
+  # Construct the coordinator
+  coord = ADMM(beta = 1.3,
+  nsp=3,
+  budget = 50,
+  index_of_master_SP=1,
+  display = True,
+  scaling = 0.1,
+  mode = "serial",
+  M_update_scheme= w_scheme.MEDIAN
+  )
+
+  # Construct subproblems
+  sp1 = SubProblem(nv = 5,
+  index = 1,
+  vars = [V[0], V[1], V[2], V[3], V[4]],
+  resps = [V[15]],
+  is_main=1,
+  analysis= sp1_MDA,
+  coordination=coord,
+  opt=GP_opt1,
+  fmin_nop=np.inf,
+  budget=20,
+  display=False,
+  psize = 1.,
+  pupdate=PSIZE_UPDATE.LAST,
+  freal=15.)
+
+  sp2 = SubProblem(nv = 4,
+  index = 2,
+  vars = [V[6], V[7], V[8], V[9]],
+  resps = [V[5]],
+  is_main=0,
+  analysis= sp2_MDA,
+  coordination=coord,
+  opt=GP_opt2,
+  fmin_nop=np.inf,
+  budget=20,
+  display=False,
+  psize = 1.,
+  pupdate=PSIZE_UPDATE.LAST
+  )
+
+  sp3 = SubProblem(nv = 4,
+  index = 3,
+  vars = [V[11], V[12], V[13], V[14]],
+  resps = [V[10]],
+  is_main=0,
+  analysis= sp3_MDA,
+  coordination=coord,
+  opt=GP_opt3,
+  fmin_nop=np.inf,
+  budget=20,
+  display=False,
+  psize = 1.,
+  pupdate=PSIZE_UPDATE.LAST)
+
+# Construct MDO workflow
+  MDAO: MDO = MDO(
+  Architecture = MDO_ARCHITECTURE.IDF,
+  Coordinator = coord,
+  subProblems = [sp1, sp2, sp3],
+  variables = V,
+  responses = [V[5], V[10], V[15]],
+  fmin = np.inf,
+  hmin = np.inf,
+  display = True,
+  inc_stop = 1E-9,
+  stop = "Iteration budget exhausted",
+  tab_inc = [],
+  noprogress_stop = 100
+  )
+
+
+# Run the MDO problem
+  out = MDAO.run()
+  print(f'------Run_Summary------')
+  print(MDAO.stop)
+  print(f'q = {MDAO.Coordinator.q}')
+  for i in MDAO.Coordinator.master_vars:
+    print(f'{i.name}_{i.sp_index} = {i.value}')
+  fmin = 0
+  hmax = -inf
+  for j in range(len(MDAO.subProblems)):
+    print(f'SP_{MDAO.subProblems[j].index}: fmin= {MDAO.subProblems[j].MDA_process.getOutputs()}, hmin= {MDAO.subProblems[j].opt([s.value for s in MDAO.subProblems[j].get_design_vars()] , [])[1]}')
+    if MDAO.subProblems[j].is_main:
+      fmin = MDAO.subProblems[j].MDA_process.getOutputs()
+      hmin= MDAO.subProblems[j].opt([s.value for s in MDAO.subProblems[j].get_design_vars()] , [])[1]
+      if max(hmin) > hmax: 
+        hmax = max(hmin) 
+  print(f'P_main: fmin= {fmin}, hmax= {hmax}')
+  print(f'Final obj value of the main problem: \n {fmin}')
 
 if __name__ == "__main__":
+  #TODO: Feature: Add more realistic analytical test problems
+  #TODO: Feature: Add realistic multi-physics MDO problems that require using open-source physics-based simulation tools
+  #TODO: Feature: Move the MDO test functions and BM problems to NOBM package and prepare the DMDO package to be published on PyPi
+  #TODO: Feature: Develop a simple UI widget that facilitates simple MDO setup using the compact table or N2-chart
+  #TODO: Feature: Import RAF library once the latter is published on PYPI.com
+  #TODO: Bug: Add user and technical documentation 
+  #TODO: Bug: Enable the output report generation that summarizes the MDO history and final results
   Basic_MDO()
+  # speedReducer()
+  # geometric_programming()
 
 
 
