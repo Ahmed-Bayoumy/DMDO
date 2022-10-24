@@ -21,14 +21,12 @@
 # ------------------------------------------------------------------------------------#
 
 import copy
-import csv
 from genericpath import isfile
 import json
 from multiprocessing.dummy import Process
 from multiprocessing.sharedctypes import Value
 
 from dataclasses import dataclass, field
-from tkinter.font import NORMAL
 from typing import List, Dict, Any, Callable, Protocol, Optional
 
 import numpy as np
@@ -1356,6 +1354,37 @@ def geometric_programming():
     f'{MDAO.Coordinator.master_vars[MDAO.Coordinator._linker[1,index]-1].link}, using {MDAO.Coordinator.master_vars[MDAO.Coordinator._linker[1,index]-1].name}_'
     f'{MDAO.Coordinator.master_vars[MDAO.Coordinator._linker[1,index]-1].link}' 
     f' will make h_sp{MDAO.Coordinator.master_vars[MDAO.Coordinator._linker[0,index]-1].link} = {GP_opt3(xsp3, 0)[1]}')
+
+def SBJ():
+  """ Supersonic Business Jet aircraft conceptual design"""
+  # Variables definition
+  v = {}
+  V: List[variableData] = []
+  s  = COUPLING_TYPE.SHARED
+  ff = COUPLING_TYPE.FEEDFORWARD
+  fb = COUPLING_TYPE.FEEDBACK
+  un = COUPLING_TYPE.UNCOUPLED
+  dum = COUPLING_TYPE.DUMMY
+
+
+  names = ["SFC", "We", "LD", "Ws",   "Wf", "Wt",   "D", "T", "We", "SFC",   "ESF", "ESF", "Wt", "theta", "tc", "ARw", "LAMBDAw", "Sref", "Sht", "ARht", "LAMBDAht", "Lw", "Lht", "D", "LD", "L",   "L", "tc", "ARw", "LAMBDAw", "Sref", "Sht", "ARht", "Ws", "Wf", "theta", "lambda", "t", "ts", "zeros", "ineqtol"]
+  spi =   [   1,    1,    1,		1,		  1,		1,		  2,	 2,		 2,		  2,       2,     3,		3,		   3,    3,     3,         3,      3,     3,      3,          3,    3,     3,   3,    3,   3,     4,    4,     4,         4,      4,     4,      4,    4,    4,       4,        4,   4,    4,      -1,         2]
+  links = [   2,    2,    3,    4,      4,    3,      3, None,   1,     1,       3,     2,    1,       4,    4,     4,         4,      4,     4,      4,       None, None,  None,   2,    1,   4,     3,    3,     3,         3,      3,     3,      3,    1,    1,       3,     None,None, None,       2,        -1]
+  coupling_t = \
+          [ ff,    ff,	 ff,	 ff,		 ff,	 fb,	   ff,	 un,	 fb,	 fb,      fb,    ff,   ff,      ff,    s,     s,         s,      s,     s,      s,         un,   un,    un,  fb,   fb,  fb,    ff,   ff,     s,         s,      s,     s,      s,   fb,   fb,      fb,       un,  un,   un,      fb,        ff]
+  lb =    [1  ,   100,  0.1, 5000,   5000, 5000,   1000,  0.1,  100,    1,     0.5,   0.5, 5000,     0.2, 0.01,   2.5,        40,    200,    50,    2.5,         40, 0.01,     1,1000,  0.1,5000,  5000, 0.01,   2.5,        40,    200,    50,    2.5, 5000, 5000,     0.2,      0.1, 0.1,  0.1,     0.0,       0.0] 
+  ub =    [4,30000,10,100000,100000,100000,
+          70000, 1,30000,4,1.5,
+          1.5,100000,50,0.1,8,70,800,148.9,8.5,70,0.2,3.5,70000,10,100000,
+          100000, 0.1,8,70,800,148.9,8.5,100000,100000,50,0.4,4.0,9.0,0.0,10.]
+  dim = [1]*41
+  dim[37] = 9
+  dim[38] = 9
+
+  fstar = 33600
+  frealistic = 30000
+  altitude = 55000
+  Mach = 1.4
 
 if __name__ == "__main__":
   #TODO: Feature: Add more realistic analytical test problems
