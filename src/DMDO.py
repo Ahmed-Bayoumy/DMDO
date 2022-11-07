@@ -36,6 +36,7 @@ import math
 
 import OMADS
 from enum import Enum, auto
+from scipy.optimize import minimize, Bounds
 
 @dataclass
 class BMMDO:
@@ -493,11 +494,12 @@ class partitionedProblemData:
   psize: float
   psize_init: int
   tol: float
+  scipy: Dict
 
 @dataclass
 class SubProblem(partitionedProblemData):
   # Constructor
-  def __init__(self, nv, index, vars, resps, is_main, analysis, coordination, opt, fmin_nop, budget, display, psize, pupdate, freal=None, tol=1E-12):
+  def __init__(self, nv, index, vars, resps, is_main, analysis, coordination, opt, fmin_nop, budget, display, psize, pupdate, scipy=None, freal=None, tol=1E-12, solver='OMADS'):
     self.nv = nv
     self.index = index
     self.vars = copy.deepcopy(vars)
@@ -514,6 +516,22 @@ class SubProblem(partitionedProblemData):
     self.psize_init = pupdate
     self.frealistic = freal
     self.tol = tol
+    self.solver = solver
+    if solver == 'OMADS':
+      self.scipy = None
+    elif solver == 'scipy':
+      self.scipy = scipy
+    else:
+      warning(f'Inappropriate solver method definition for subproblem # {self.index}! OMADS will be used.')
+      self.solver = 'OMADS'
+    
+
+    if (self.solver == 'scipy' and (scipy == None or "options" not in self.scipy or "method" not in self.scipy)):
+      warning(f'Inappropriate definition of the scipy settings for subproblem # {self.index}! scipy default settings shall be used!')
+      self.scipy: Dict = {}
+      self.scipy["options"] = {'disp': False}
+      self.scipy["method"] = 'SLSQP'
+        
 
   def get_minimizer(self):
     v = []
@@ -611,58 +629,72 @@ class SubProblem(partitionedProblemData):
 
     if self.realistic_objective:
       con.append(y-self.frealistic)
-    return [fun[0]+self.coord.phi, con]
+    if self.solver == "OMADS":
+      return [fun[0]+self.coord.phi, con]
+    else:
+      return fun[0]+self.coord.phi+max(max(con),0)**2
 
   def solve(self, v, w):
     self.coord.v = copy.deepcopy(v)
     self.coord.w = copy.deepcopy(w)
     bl = self.get_list_vars(self.get_design_vars())
-    eval = {"blackbox": self.evaluate}
-    param = {"baseline": bl,
-                "lb": self.get_list_vars_lb(self.get_design_vars()),
-                "ub": self.get_list_vars_ub(self.get_design_vars()),
-                "var_names": self.get_list_vars_names(self.get_design_vars()),
-                "scaling": self.get_design_vars_scaling(self.get_design_vars()),
-                "post_dir": "./post"}
-    pinit = min(max(self.tol, self.psize), 1)
-    options = {
-      "seed": 0,
-      "budget": 2*self.budget*len(self.vars),
-      "tol": max(pinit/1000, self.tol),
-      "psize_init": pinit,
-      "display": self.display,
-      "opportunistic": False,
-      "check_cache": True,
-      "store_cache": False,
-      "collect_y": False,
-      "rich_direction": False,
-      "precision": "high",
-      "save_results": False,
-      "save_coordinates": False,
-      "save_all_best": False,
-      "parallel_mode": False
-    }
-    data = {"evaluator": eval, "param": param, "options":options}
+    if self.solver == 'OMADS' or self.solver != 'scipy':
+      eval = {"blackbox": self.evaluate}
+      param = {"baseline": bl,
+                  "lb": self.get_list_vars_lb(self.get_design_vars()),
+                  "ub": self.get_list_vars_ub(self.get_design_vars()),
+                  "var_names": self.get_list_vars_names(self.get_design_vars()),
+                  "scaling": self.get_design_vars_scaling(self.get_design_vars()),
+                  "post_dir": "./post"}
+      pinit = min(max(self.tol, self.psize), 1)
+      options = {
+        "seed": 0,
+        "budget": 2*self.budget*len(self.vars),
+        "tol": max(pinit/1000, self.tol),
+        "psize_init": pinit,
+        "display": self.display,
+        "opportunistic": False,
+        "check_cache": True,
+        "store_cache": False,
+        "collect_y": False,
+        "rich_direction": False,
+        "precision": "high",
+        "save_results": False,
+        "save_coordinates": False,
+        "save_all_best": False,
+        "parallel_mode": False
+      }
+      data = {"evaluator": eval, "param": param, "options":options}
 
-    out = {}
-    pinit = self.psize
-    out = self.optimizer(data)
-    if self.psize_init == PSIZE_UPDATE.DEFAULT:
-      self.psize = 1.
-    elif self.psize_init == PSIZE_UPDATE.SUCCESS:
-      self.psize = out["psuccess"]
-    elif self.psize_init == PSIZE_UPDATE.MAX:
-      self.psize = out["pmax"]
-    elif self.psize_init == PSIZE_UPDATE.LAST:
-      self.psize = out["psize"]
-    else:
-      self.psize = 1.
-    
-    # COMPLETE: Coordinator forgets q after calling the optimizer, possible remedy is to update the subproblem variables from the optimizer output and the master variables too
-    # then at the end of each outer loop iteration we can calculate q of that subproblem before updating penalty parameters
+      out = {}
+      pinit = self.psize
+      out = self.optimizer(data)
+      if self.psize_init == PSIZE_UPDATE.DEFAULT:
+        self.psize = 1.
+      elif self.psize_init == PSIZE_UPDATE.SUCCESS:
+        self.psize = out["psuccess"]
+      elif self.psize_init == PSIZE_UPDATE.MAX:
+        self.psize = out["pmax"]
+      elif self.psize_init == PSIZE_UPDATE.LAST:
+        self.psize = out["psize"]
+      else:
+        self.psize = 1.
+      
+      # COMPLETE: Coordinator forgets q after calling the optimizer, possible remedy is to update the subproblem variables from the optimizer output and the master variables too
+      # then at the end of each outer loop iteration we can calculate q of that subproblem before updating penalty parameters
 
-    #  We need this extra evaluation step to update inconsistincies and the master_variables vector
-    self.evaluate(out["xmin"])
+      #  We need this extra evaluation step to update inconsistincies and the master_variables vector
+      self.evaluate(out["xmin"])
+    elif self.solver == 'scipy':
+      if self.scipy != None and isinstance(self.scipy, dict):
+        opts = self.scipy["options"]
+        bnds = Bounds(lb=self.get_list_vars_lb(self.get_design_vars()), ub=self.get_list_vars_ub(self.get_design_vars()))
+        res = minimize(self.evaluate, method=self.scipy["method"], x0=bl, options=opts, tol=self.tol, bounds=bnds)
+        out = copy.deepcopy(res.x)
+        self.evaluate(out)
+      else:
+        raise IOError(f'Scipy solver is selected but its dictionary settings is inappropriately defined!')
+
     return out
 
   def get_coupling_vars_diff(self, con):
@@ -788,7 +820,10 @@ class MDO(MDO_data):
         self.Coordinator = copy.deepcopy(self.subProblems[s].coord)
         if self.subProblems[s].index == self.Coordinator.index_of_master_SP:
           self.fmin = self.subProblems[s].fmin_nop
-          self.hmin = out_sp["hmin"]
+          if self.subProblems[s].solver == "OMADS":
+            self.hmin = out_sp["hmin"]
+          else:
+            self.hmin = [0.]
 
       """ Display convergence """
       dx = self.get_master_vars_difference()
@@ -2184,9 +2219,10 @@ if __name__ == "__main__":
   #FIXME: Bug: Add user and technical documentation 
   #FIXME: Bug: Enable the output report generation that summarizes the MDO history and final results
   Basic_MDO()
-  # SBJ()
   # speedReducer()
   # geometric_programming()
+  # SBJ()
+
 
 
 
