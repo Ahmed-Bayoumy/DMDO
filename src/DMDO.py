@@ -49,6 +49,9 @@ class USER:
   """
 # Global instant of user data
 user =USER
+# Global lists to store the evolution of inconsistency and the discripency from best known solution for each iteration within the nested inner-outer loop
+eps_qio = []
+eps_fio = []
 
 @dataclass
 class double_precision:
@@ -346,13 +349,18 @@ class ADMM_data(coordinationData):
   w: np.ndarray = np.zeros([0,0])
   update_w: bool = False
   M_update_scheme: int = w_scheme.MEDIAN
+  eps_qo: List = None
+  save_q_in: bool = False
+  save_q_in_out: bool = False
+  eps_fo: List = None
 
 # COMPLETE: ADMM needs to be customized for this code
 @dataclass
 class ADMM(ADMM_data):
   " Alternating directions method of multipliers "
   # Constructor
-  def __init__(self, nsp, beta, budget, index_of_master_SP, display, scaling, mode, M_update_scheme):
+  def __init__(self, nsp, beta, budget, index_of_master_SP, display, scaling, mode, M_update_scheme, store_q_o=False, store_q_io=False):
+    global eps_fio, eps_qio
     """ Initialize the multiplier vectors """
     self.nsp = nsp
     self.beta = beta
@@ -363,6 +371,10 @@ class ADMM(ADMM_data):
     self.mode = mode
     self.started: bool = False
     self.M_update_scheme = M_update_scheme
+    self.eps_qo = []
+    self.save_q_out = store_q_o
+    self.save_q_in_out = store_q_io
+    self.eps_fo = []
 
 
 
@@ -383,6 +395,8 @@ class ADMM(ADMM_data):
 
 
   def calc_inconsistency(self):
+    if self.save_q_in_out:
+      global eps_qio
     q_temp : np.ndarray = np.zeros([0,0])
     for i in range(self._linker.shape[1]):
       if self.master_vars:
@@ -401,6 +415,11 @@ class ADMM(ADMM_data):
         raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
 
     self.q = copy.deepcopy(q_temp)
+    if self.save_q_out:
+      self.eps_qo.append(np.max([abs(x) for x in q_temp]))
+    if self.save_q_in_out:
+      eps_qio.append(np.max([abs(x) for x in q_temp]))
+
 
 
 
@@ -480,7 +499,7 @@ class partitionedProblemData:
   coupling: List[float]
   solution: List[Any]
   solver: Any
-  realistic_objective: float = False
+  realistic_objective: bool = False
   optFunctions: List[Callable] = None
   obj: float = np.inf
   constraints: List[float] = [np.inf]
@@ -607,6 +626,8 @@ class SubProblem(partitionedProblemData):
 
 
   def evaluate(self, vlist: List[float]):
+    if self.coord.save_q_in_out:
+      global eps_fio
     # If no variables were provided use existing value of the variables of the current subproblem (might happen during initialization)
     if vlist is None:
       v: List = self.get_design_vars()
@@ -620,6 +641,16 @@ class SubProblem(partitionedProblemData):
     self.fmin_nop = fun[0]
     con = fun[1]
     con = self.get_coupling_vars_diff(con)
+
+    if self.is_main == True:
+      if self.frealistic != None and self.frealistic != 0.:
+        self.coord.eps_fo.append(abs(fun[0]-self.frealistic)/abs(self.frealistic))
+        if self.coord.save_q_in_out:
+          eps_fio.append(abs(fun[0]-self.frealistic)/abs(self.frealistic))
+      else:
+        self.coord.eps_fo.append(abs(fun[0]))
+        if self.coord.save_q_in_out:
+          eps_fio.append(abs(fun[0]))
 
     self.set_pair()
     self.coord.update_master_vector(self.vars, self.MDA_process.responses)
@@ -797,6 +828,10 @@ class MDO(MDO_data):
     return False
   
   def run(self):
+    global eps_fio, eps_qio
+    # Note: once you run MDAO, the data stored in eps_fio and eps_qio shall be deleted. It is recommended to store such data to a different variable before running another MDAO
+    eps_fio = []
+    eps_qio = []
     """ Run the MDO process """
     #  COMPLETE: fix the setup of the local (associated with SP) and global (associated with MDO) coordinators
     for iter in range(self.Coordinator.budget):
@@ -899,7 +934,7 @@ def SR_opt1(x, y):
   g9 = x[1]*x[2]/40 -1
   g10 = 5*x[1]/x[0] -1
   g11 = x[0]/(12*x[1]) -1
-  return [y, [g5,g6,g9,g10,g11]]
+  return [y[0], [g5,g6,g9,g10,g11]]
 
 
 def SR_opt2(x, y):
@@ -1535,7 +1570,7 @@ def Basic_MDO():
   ub = [10.]*8
   bl = [1.]*8
   scaling = np.subtract(ub,lb)
-
+  Qscaling = []
   # Variables dictionary with subproblems link
   for i in range(8):
     v[f"var{i+1}"] = {"index": i+1,
@@ -1550,6 +1585,7 @@ def Basic_MDO():
     "lb": lb[i],
     "value": bl[i],
     "ub": ub[i]}
+    Qscaling.append(1/scaling[i] if 1/scaling[i] != np.inf and 1/scaling[i] != np.nan else 1.)
 
   for i in range(8):
     V.append(variableData(**v[f"var{i+1}"]))
@@ -1579,10 +1615,12 @@ def Basic_MDO():
   budget = 50,
   index_of_master_SP=1,
   display = True,
-  scaling = 0.1,
+  scaling = Qscaling,
   mode = "serial",
-  M_update_scheme= w_scheme.MEDIAN
-  )
+  M_update_scheme= w_scheme.MEDIAN,
+  store_q_io=True)
+
+  
 
   # Construct subproblems
   sp1 = SubProblem(nv = 3,
@@ -1597,7 +1635,8 @@ def Basic_MDO():
   budget=20,
   display=False,
   psize = 1.,
-  pupdate=PSIZE_UPDATE.LAST)
+  pupdate=PSIZE_UPDATE.LAST,
+  freal=2.625)
 
   sp2 = SubProblem(nv = 3,
   index = 2,
@@ -1732,7 +1771,8 @@ def speedReducer():
   display = True,
   scaling = 0.1,
   mode = "serial",
-  M_update_scheme= w_scheme.MEDIAN
+  M_update_scheme= w_scheme.MEDIAN,
+  store_q_io=True
   )
 
   # Construct subproblems
@@ -1748,7 +1788,8 @@ def speedReducer():
   budget=20,
   display=False,
   psize = 1.,
-  pupdate=PSIZE_UPDATE.LAST)
+  pupdate=PSIZE_UPDATE.LAST,
+  freal=2994.47)
 
   sp2 = SubProblem(nv = 5,
   index = 2,
@@ -1807,9 +1848,9 @@ def speedReducer():
   fmin = 0
   hmax = -inf
   for j in range(len(MDAO.subProblems)):
-    print(f'SP_{MDAO.subProblems[j].index}: fmin= {MDAO.subProblems[j].MDA_process.getOutputs()}, hmin= {MDAO.subProblems[j].opt([s.value for s in MDAO.subProblems[j].get_design_vars()] , [])[1]}')
+    print(f'SP_{MDAO.subProblems[j].index}: fmin= {MDAO.subProblems[j].MDA_process.getOutputs()}, hmin= {MDAO.subProblems[j].opt([s.value for s in MDAO.subProblems[j].get_design_vars()] , MDAO.subProblems[j].MDA_process.getOutputs())[1]}')
     fmin += sum(MDAO.subProblems[j].MDA_process.getOutputs())
-    hmin= MDAO.subProblems[j].opt([s.value for s in MDAO.subProblems[j].get_design_vars()] , [])[1]
+    hmin= MDAO.subProblems[j].opt([s.value for s in MDAO.subProblems[j].get_design_vars()] , MDAO.subProblems[j].MDA_process.getOutputs())[1]
     if max(hmin) > hmax: 
       hmax = max(hmin) 
   print(f'P_main: fmin= {fmin}, hmax= {hmax}')
@@ -1892,7 +1933,8 @@ def geometric_programming():
   display = True,
   scaling = 1.,
   mode = "serial",
-  M_update_scheme= w_scheme.MEDIAN
+  M_update_scheme= w_scheme.MEDIAN,
+  store_q_io=True
   )
 
   # Construct subproblems
@@ -2121,7 +2163,8 @@ def SBJ():
   display = True,
   scaling = Qscaling,
   mode = "serial",
-  M_update_scheme= w_scheme.MEDIAN
+  M_update_scheme= w_scheme.MEDIAN,
+  store_q_io=True
   )
 
   # Construct subproblems
