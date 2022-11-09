@@ -787,6 +787,8 @@ class MDO_data(Process_data):
   stop: str
   tab_inc: List
   noprogress_stop: int
+  eps_qio: List[float] = None
+  eps_fio: List[float] = None
 
 
 @dataclass
@@ -878,6 +880,8 @@ class MDO(MDO_data):
 
       if stop:
         break
+      self.eps_qio = copy.deepcopy(eps_qio)
+      self.eps_fio = copy.deepcopy(eps_fio)
     return self.Coordinator.q
 
   def validation(self, vType: int):
