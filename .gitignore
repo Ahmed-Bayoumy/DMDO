@@ -1,1 +1,4 @@
 *.egg-info
+*.coverage
+*.pytest*
+__pycache__
