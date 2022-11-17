@@ -1,0 +1,111 @@
+# The basic MDO problem
+variables:
+# vs:  [name, SP_index, Link, coupling type, lb, bl, ub, dim]
+  v0:  ["u",     1,       2,          s, 0., 1., 10.,  1]
+  v1:  ["v",     1,    None,          u, 0., 1., 10.,  1]
+  v2:  ["a",     1,       2,         ff, 0., 1., 10.,  1]
+  v3:  ["b",     1,       2,         fb, 0., 1., 10.,  1]
+  v4:  ["u",     2,       1,          s, 0., 1., 10.,  1]
+  v5:  ["w",     2,    None,          u, 0., 1., 10.,  1]
+  v6:  ["a",     2,       1,         fb, 0., 1., 10.,  1]
+  v7:  ["b",     2,       1,         ff, 0., 1., 10.,  1]
+
+DA:
+  DA1:
+    index: 1
+    inputs: [v0, v1, v3]
+    outputs: [v2]
+    blackbox: A1
+    type: callable
+    links: 2
+    coupling_type: ff
+
+  DA2:
+    index: 2
+    inputs: [v4, v5, v6]
+    outputs: [v7]
+    blackbox: A2
+    type: callable
+    links: 2
+    coupling_type: ff
+
+MDA:
+  MDA1:
+    index: 1
+    nAnalyses: 1
+    analyses: [1]
+    variables: [v0, v1, v3]
+    responses: [v2]
+
+  MDA2:
+    index: 2
+    nAnalyses: 1
+    analyses: [2]
+    variables: [v4, v5, v6]
+    responses: [v7]
+
+coord:
+  c1:
+    index: 1
+    type: ADMM
+    beta: 1.3
+    nsp: 2
+    budget: 50
+    index_of_master_SP: 1
+    display: True
+    scaling: 10
+    mode: serial
+    M_update_scheme: median
+    store_q_io: True
+
+subproblem:
+  sp1:
+    nv: 3
+    index: 1
+    vars: [v0, v1, v3]
+    resps: [v2]
+    is_main: True
+    MDA: 1
+    coordinator: 1
+    opt: opt1
+    type: callable
+    fmin_nop: inf
+    budget: 20
+    display: False
+    psize: 1.
+    pupdate: Last
+    freal: 2.625
+
+  sp2:
+    nv: 3
+    index: 2
+    vars: [v4, v5, v6]
+    resps: [v7]
+    is_main: False
+    MDA: 2
+    coordinator: 1
+    opt: opt2
+    type: callable
+    fmin_nop: inf
+    budget: 20
+    display: False
+    psize: 1.
+    pupdate: Last
+
+USER:
+
+
+MDO:
+  architecture: IDF
+  coordinator: 1
+  subproblems: [1, 2]
+  responses: [v2, v7]
+  fmin: inf
+  hmin: inf
+  display: True
+  inc_stop: 0.0000000001
+  stop: "Iteration budget exhausted"
+  tab_inc: []
+  noprogress_stop: 100
+
+
