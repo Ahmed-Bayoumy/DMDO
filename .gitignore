@@ -2,3 +2,8 @@
 *.coverage
 *.pytest*
 __pycache__
+docs/build
+docs/source
+MakeFile
+make.bat
+.vscode

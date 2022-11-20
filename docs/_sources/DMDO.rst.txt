@@ -1,0 +1,21 @@
+DMDO package
+=============
+
+Submodules
+----------
+
+OMADS.POLL module
+------------------
+
+.. automodule:: DMDO.DMDO
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: DMDO
+   :members:
+   :undoc-members:
+   :show-inheritance:

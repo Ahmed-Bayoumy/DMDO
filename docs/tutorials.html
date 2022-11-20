@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tutorials &mdash; Read the Docs DMDO 1.3.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/proof.css" type="text/css" />
+      <link rel="stylesheet" href="_static/proof.css" type="text/css" />
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/proof.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script src="_static/debug.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="DMDO package" href="DMDO.html" />
+    <link rel="prev" title="Benchmarking" href="benchmarking.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> Read the Docs DMDO
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Technical Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="background.html">Background</a></li>
+<li class="toctree-l1"><a class="reference internal" href="benchmarking.html">Benchmarking</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Demo Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Tutorials</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#sellar-problem">Sellar problem</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#speed-reducer">Speed reducer</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#geometric-programming">Geometric programming</a></li>
+</ul>
+</li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Code Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="DMDO.html">DMDO package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="indicesAndTables.html">Indices and tables</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Read the Docs DMDO</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Tutorials</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/tutorials.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="tutorials">
+<h1>Tutorials<a class="headerlink" href="#tutorials" title="Permalink to this headline"></a></h1>
+<p>This section demonstrates how to use DMDO to solve MDO problems.</p>
+<section id="sellar-problem">
+<h2>Sellar problem<a class="headerlink" href="#sellar-problem" title="Permalink to this headline"></a></h2>
+<figure class="align-center" id="ft1">
+<a class="reference internal image-reference" href="_images/Sellar_Wflow.png"><img alt="_images/Sellar_Wflow.png" src="_images/Sellar_Wflow.png" style="width: 450px;" /></a>
+</figure>
+<figure class="align-center" id="ft2">
+<a class="reference internal image-reference" href="_images/sellar_xdsm.png"><img alt="_images/sellar_xdsm.png" src="_images/sellar_xdsm.png" style="width: 700px;" /></a>
+</figure>
+<p>Original problem <span class="math notranslate nohighlight">\(\mathcal{P}\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+\text{min}: &amp; \ \ \ x^2 + z_2 + y_1 + e^{-y_2} \\
+\text{w.r.t.}: &amp; \ \ \ x, z_1, z_2 \\
+\text{s.t. }: &amp; \ \ \ &amp; \\
+&amp; \ \ \ 3.16 - y_1 &lt;=0 \\
+&amp; \ \ \ y_2 - 24.0 &lt;=0 \\
+&amp; \ \ \ y_1 (x, z_{1}, z_{2}, y_{2}) = x+z^{2}_{1}+z_{2}-0.2y_{2} \\
+&amp; \ \ \ y_2 (z_{1}, z_{2}, y_{1}) = \sqrt{y_{1}}+z_{1}+z_{2}
+\tag{$\mathcal{P}$}
+\end{align*}\end{split}\]</div>
+<p>Subproblem <span class="math notranslate nohighlight">\(\mathcal{p}_{1}\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+\text{min}: &amp; \ \ \ x^2 + z_2 + y_1 + e^{-y_2} + \phi_{z_{1}} (z_{1_{1}}-z_{1_{2}}) + \phi_{z_{2}} (z_{2_{1}}-z_{2_{2}}) + \phi_{y_{1}} (y_{1_{1}}-y_{1_{2}}) + \phi_{y_{2}} (y_{2_{1}}-y_{2_{2}})\\
+\text{w.r.t.}: &amp; \ \ \ x, z_{1_{1}}, z_{2_{1}}, y_{2_{1}} \\
+\text{s.t. }: &amp; \ \ \ &amp; \\
+&amp; \ \ \ 3.16 - y_{1_{1}} &lt;=0 \\
+&amp; \ \ \ y_{1_{1}} (x, z_{1_{1}}, z_{2_{1}}, y_{2_{1}}) = x+z^{2}_{1_{1}}+z_{2_{1}}-0.2y_{2_{1}}
+\tag{$\mathcal{p}_{1}$}
+\end{align*}\end{split}\]</div>
+<p>Subproblem <span class="math notranslate nohighlight">\(\mathcal{p}_{2}\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+\text{min}: &amp; \ \ \ \phi_{z_{1}} (z_{1_{1}}-z_{1_{2}}) + \phi_{z_{2}} (z_{2_{1}}-z_{2_{2}}) + \phi_{y_{1}} (y_{1_{1}}-y_{1_{2}}) + \phi_{y_{2}} (y_{2_{1}}-y_{2_{2}}) \\
+\text{w.r.t.}: &amp; \ \ \ x, z_{1_{2}}, z_{2_{2}}, y_{1_{2}} \\
+\text{s.t. }: &amp; \ \ \ &amp; \\
+&amp; \ \ \ y_{2_{2}} - 24.0 &lt;=0 \\
+&amp; \ \ \ y_{2_{2}} (z_{1_{2}}, z_{2_{2}}, y_{1_{2}}) = \sqrt{y_{1_{2}}}+z_{1_{2}}+z_{2_{2}}
+\tag{$\mathcal{p}_{2}$}
+\end{align*}\end{split}\]</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#  Sellar - Two discipline problem with IDF</span>
+
+<span class="c1">#  Variables grouping and problem setup</span>
+<span class="n">x</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">X</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">variableData</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="c1"># Define variable names</span>
+<span class="n">N</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;x&quot;</span><span class="p">,</span> <span class="s2">&quot;z1&quot;</span><span class="p">,</span> <span class="s2">&quot;z2&quot;</span><span class="p">,</span> <span class="s2">&quot;y1&quot;</span><span class="p">,</span> <span class="s2">&quot;y2&quot;</span><span class="p">,</span> <span class="s2">&quot;z1&quot;</span><span class="p">,</span> <span class="s2">&quot;z2&quot;</span><span class="p">,</span> <span class="s2">&quot;y1&quot;</span><span class="p">,</span> <span class="s2">&quot;y2&quot;</span><span class="p">]</span>
+<span class="n">nx</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+<span class="c1"># Subproblem indices: Indices should be non-zero</span>
+<span class="n">J</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span>
+<span class="c1"># Subproblems links</span>
+<span class="n">L</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="c1"># Coupling types</span>
+<span class="n">Ct</span> <span class="o">=</span> <span class="p">[</span><span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">UNCOUPLED</span><span class="p">,</span>
+      <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">SHARED</span><span class="p">,</span>
+      <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">SHARED</span><span class="p">,</span>
+      <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDFORWARD</span><span class="p">,</span>
+      <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDBACK</span><span class="p">,</span>
+      <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">SHARED</span><span class="p">,</span>
+      <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">SHARED</span><span class="p">,</span>
+      <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDBACK</span><span class="p">,</span>
+      <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDFORWARD</span><span class="p">]</span>
+<span class="c1"># Realistic lower bounds</span>
+<span class="n">lb</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">3.16</span><span class="p">,</span> <span class="mf">1.77763888346</span><span class="p">,</span> <span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">3.16</span><span class="p">,</span> <span class="mf">1.77763888346</span><span class="p">]</span>
+<span class="c1"># Realistic upper bounds</span>
+<span class="n">ub</span> <span class="o">=</span> <span class="p">[</span><span class="mf">10.</span><span class="p">,</span><span class="mf">10.</span><span class="p">,</span><span class="mf">10.</span><span class="p">,</span> <span class="mf">115.2</span><span class="p">,</span> <span class="mf">24.</span><span class="p">,</span> <span class="mf">10.</span><span class="p">,</span><span class="mf">10.</span><span class="p">,</span> <span class="mf">115.2</span><span class="p">,</span> <span class="mf">24.</span><span class="p">]</span>
+
+<span class="c1"># # Artificial lower bounds</span>
+<span class="c1"># lb = [0, -10, 0, 2., 1.5, -10, 0, 2., 1.5]</span>
+<span class="c1"># # Artificial upper bounds</span>
+<span class="c1"># ub = [10.,10.,10., 50., 50, 10.,10., 50., 50]</span>
+
+<span class="c1"># Bad artificial lower bounds</span>
+<span class="c1"># lb = [0, -10, 0, 0., 0., -10, 0, 0., 0.]</span>
+<span class="c1"># Bad artificial upper bounds</span>
+<span class="c1"># ub = [10.]*9</span>
+
+<span class="c1"># Baseline</span>
+<span class="n">x0</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">5.</span><span class="p">,</span> <span class="mf">5.</span><span class="p">,</span> <span class="mf">8.43</span><span class="p">,</span> <span class="mf">7.848</span><span class="p">,</span> <span class="mf">5.</span><span class="p">,</span> <span class="mf">5.</span><span class="p">,</span> <span class="mf">8.43</span><span class="p">,</span> <span class="mf">7.848</span><span class="p">]</span>
+<span class="c1"># Scaling</span>
+<span class="n">scaling</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">subtract</span><span class="p">(</span><span class="n">ub</span><span class="p">,</span><span class="n">lb</span><span class="p">)</span>
+<span class="n">Qscaling</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="c1"># Create a dictionary for each variable</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nx</span><span class="p">):</span>
+<span class="n">x</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;var</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;index&quot;</span><span class="p">:</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span>
+<span class="s2">&quot;sp_index&quot;</span><span class="p">:</span> <span class="n">J</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="sa">f</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">N</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="s2">&quot;dim&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+<span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mf">0.</span><span class="p">,</span>
+<span class="s2">&quot;coupling_type&quot;</span><span class="p">:</span> <span class="n">Ct</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="s2">&quot;link&quot;</span><span class="p">:</span> <span class="n">L</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="s2">&quot;baseline&quot;</span><span class="p">:</span> <span class="n">x0</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="s2">&quot;scaling&quot;</span><span class="p">:</span> <span class="n">scaling</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="s2">&quot;lb&quot;</span><span class="p">:</span> <span class="n">lb</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="n">x0</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="s2">&quot;ub&quot;</span><span class="p">:</span> <span class="n">ub</span><span class="p">[</span><span class="n">i</span><span class="p">]}</span>
+<span class="n">Qscaling</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">10.</span><span class="o">/</span><span class="n">scaling</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="mf">10.</span><span class="o">/</span><span class="n">scaling</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span> <span class="ow">and</span> <span class="mf">10.</span><span class="o">/</span><span class="n">scaling</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="k">else</span> <span class="mf">1.</span><span class="p">)</span>
+
+<span class="c1"># Instantiate the variableData class for each variable using its according dictionary</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nx</span><span class="p">):</span>
+<span class="n">X</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">variableData</span><span class="p">(</span><span class="o">**</span><span class="n">x</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;var</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]))</span>
+
+
+<span class="k">def</span> <span class="nf">Sellar_A1</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="k">return</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.2</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">Sellar_A2</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="k">return</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+
+<span class="k">def</span> <span class="nf">Sellar_opt1</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+<span class="k">return</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]),</span> <span class="p">[</span><span class="mf">3.16</span><span class="o">-</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]</span>
+
+<span class="k">def</span> <span class="nf">Sellar_opt2</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+<span class="k">return</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="p">[</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="mf">24.</span><span class="p">]]</span>
+
+<span class="c1"># Analyses setup; construct disciplinary analyses</span>
+<span class="n">DA1</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">DA</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">4</span><span class="p">]],</span>
+<span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">3</span><span class="p">]],</span>
+<span class="n">blackbox</span><span class="o">=</span><span class="n">Sellar_A1</span><span class="p">,</span>
+<span class="n">links</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<span class="n">coupling_type</span><span class="o">=</span><span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDFORWARD</span>
+<span class="p">)</span>
+
+<span class="n">DA2</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">DA</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">7</span><span class="p">]],</span>
+<span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">8</span><span class="p">]],</span>
+<span class="n">blackbox</span><span class="o">=</span><span class="n">Sellar_A2</span><span class="p">,</span>
+<span class="n">links</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="n">coupling_type</span><span class="o">=</span><span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDFORWARD</span>
+<span class="p">)</span>
+
+<span class="n">sp1_MDA</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">MDA</span><span class="p">(</span><span class="n">nAnalyses</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">analyses</span> <span class="o">=</span> <span class="p">[</span><span class="n">DA1</span><span class="p">],</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">4</span><span class="p">]],</span> <span class="n">responses</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">3</span><span class="p">]])</span>
+<span class="n">sp2_MDA</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">MDA</span><span class="p">(</span><span class="n">nAnalyses</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">analyses</span> <span class="o">=</span> <span class="p">[</span><span class="n">DA2</span><span class="p">],</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">7</span><span class="p">]],</span> <span class="n">responses</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">8</span><span class="p">]])</span>
+
+
+<span class="c1"># Construct the coordinator</span>
+<span class="n">coord</span> <span class="o">=</span> <span class="n">ADMM</span><span class="p">(</span><span class="n">beta</span> <span class="o">=</span> <span class="mf">1.3</span><span class="p">,</span>
+<span class="n">nsp</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<span class="n">budget</span> <span class="o">=</span> <span class="mi">500</span><span class="p">,</span>
+<span class="n">index_of_master_SP</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="n">display</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="n">scaling</span> <span class="o">=</span> <span class="n">Qscaling</span><span class="p">,</span>
+<span class="n">mode</span> <span class="o">=</span> <span class="s2">&quot;serial&quot;</span><span class="p">,</span>
+<span class="n">M_update_scheme</span><span class="o">=</span> <span class="n">w_scheme</span><span class="o">.</span><span class="n">MAX</span><span class="p">,</span>
+<span class="n">store_q_io</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+
+<span class="c1"># Construct subproblems</span>
+<span class="n">sp1</span> <span class="o">=</span> <span class="n">SubProblem</span><span class="p">(</span><span class="n">nv</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+<span class="n">index</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+<span class="nb">vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">4</span><span class="p">]],</span>
+<span class="n">resps</span> <span class="o">=</span> <span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">3</span><span class="p">]],</span>
+<span class="n">is_main</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="n">analysis</span><span class="o">=</span> <span class="n">sp1_MDA</span><span class="p">,</span>
+<span class="n">coordination</span><span class="o">=</span><span class="n">coord</span><span class="p">,</span>
+<span class="n">opt</span><span class="o">=</span><span class="n">Sellar_opt1</span><span class="p">,</span>
+<span class="n">fmin_nop</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+<span class="n">budget</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+<span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="n">psize</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span>
+<span class="n">pupdate</span><span class="o">=</span><span class="n">PSIZE_UPDATE</span><span class="o">.</span><span class="n">LAST</span><span class="p">,</span>
+<span class="n">freal</span><span class="o">=</span><span class="mf">3.16</span><span class="p">)</span>
+
+<span class="n">sp2</span> <span class="o">=</span> <span class="n">SubProblem</span><span class="p">(</span><span class="n">nv</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+<span class="n">index</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+<span class="nb">vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">7</span><span class="p">]],</span>
+<span class="n">resps</span> <span class="o">=</span> <span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">8</span><span class="p">]],</span>
+<span class="n">is_main</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="n">analysis</span><span class="o">=</span> <span class="n">sp2_MDA</span><span class="p">,</span>
+<span class="n">coordination</span><span class="o">=</span><span class="n">coord</span><span class="p">,</span>
+<span class="n">opt</span><span class="o">=</span><span class="n">Sellar_opt2</span><span class="p">,</span>
+<span class="n">fmin_nop</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+<span class="n">budget</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+<span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="n">psize</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span>
+<span class="n">pupdate</span><span class="o">=</span><span class="n">PSIZE_UPDATE</span><span class="o">.</span><span class="n">LAST</span>
+<span class="p">)</span>
+
+<span class="n">MDAO</span><span class="p">:</span> <span class="n">MDO</span> <span class="o">=</span> <span class="n">MDO</span><span class="p">(</span>
+<span class="n">Architecture</span> <span class="o">=</span> <span class="n">MDO_ARCHITECTURE</span><span class="o">.</span><span class="n">IDF</span><span class="p">,</span>
+<span class="n">Coordinator</span> <span class="o">=</span> <span class="n">coord</span><span class="p">,</span>
+<span class="n">subProblems</span> <span class="o">=</span> <span class="p">[</span><span class="n">sp1</span><span class="p">,</span> <span class="n">sp2</span><span class="p">],</span>
+<span class="n">variables</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span>
+<span class="n">responses</span> <span class="o">=</span> <span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">8</span><span class="p">]],</span>
+<span class="n">fmin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+<span class="n">hmin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+<span class="n">display</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="n">inc_stop</span> <span class="o">=</span> <span class="mf">1E-9</span><span class="p">,</span>
+<span class="n">stop</span> <span class="o">=</span> <span class="s2">&quot;Iteration budget exhausted&quot;</span><span class="p">,</span>
+<span class="n">tab_inc</span> <span class="o">=</span> <span class="p">[],</span>
+<span class="n">noprogress_stop</span> <span class="o">=</span> <span class="mi">1000</span>
+<span class="p">)</span>
+
+<span class="c1"># Run the MDO problem</span>
+<span class="n">out</span> <span class="o">=</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+<span class="c1"># Print summary output</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;------Run_Summary------&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">MDAO</span><span class="o">.</span><span class="n">stop</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;q = </span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">q</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">:</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">i</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">i</span><span class="o">.</span><span class="n">sp_index</span><span class="si">}</span><span class="s1"> = </span><span class="si">{</span><span class="n">i</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+<span class="n">fmin</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">hmax</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">)):</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;SP_</span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s1">: fmin= </span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">MDA_process</span><span class="o">.</span><span class="n">getOutputs</span><span class="p">()</span><span class="si">}</span><span class="s1">, hmin= </span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">opt</span><span class="p">([</span><span class="n">s</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">get_design_vars</span><span class="p">()]</span> <span class="p">,</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">MDA_process</span><span class="o">.</span><span class="n">getOutputs</span><span class="p">())[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">fmin</span> <span class="o">+=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">MDA_process</span><span class="o">.</span><span class="n">getOutputs</span><span class="p">())</span>
+<span class="n">hmin</span><span class="o">=</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">opt</span><span class="p">([</span><span class="n">s</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">get_design_vars</span><span class="p">()]</span> <span class="p">,</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">MDA_process</span><span class="o">.</span><span class="n">getOutputs</span><span class="p">())[</span><span class="mi">1</span><span class="p">]</span>
+<span class="k">if</span> <span class="nb">max</span><span class="p">(</span><span class="n">hmin</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">hmax</span><span class="p">:</span>
+   <span class="n">hmax</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">hmin</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;P_main: fmin= </span><span class="si">{</span><span class="n">fmin</span><span class="si">}</span><span class="s1">, hmax= </span><span class="si">{</span><span class="n">hmax</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Final obj value of the main problem: </span><span class="se">\n</span><span class="s1"> </span><span class="si">{</span><span class="n">fmin</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">------</span><span class="n">Run_Summary</span><span class="o">------</span>
+<span class="n">Iteration</span> <span class="n">budget</span> <span class="n">exhausted</span>
+<span class="n">q</span> <span class="o">=</span> <span class="p">[</span> <span class="mf">2.34375000e-02</span>  <span class="mf">1.17187500e-02</span> <span class="o">-</span><span class="mf">1.99577179e-09</span> <span class="o">-</span><span class="mf">2.96638243e-02</span><span class="p">]</span>
+<span class="n">x_1</span> <span class="o">=</span> <span class="mf">0.0</span>
+<span class="n">z1_1</span> <span class="o">=</span> <span class="mf">1.375</span>
+<span class="n">z2_1</span> <span class="o">=</span> <span class="mf">2.34375</span>
+<span class="n">y1_1</span> <span class="o">=</span> <span class="mf">3.159999977639373</span>
+<span class="n">y2_1</span> <span class="o">=</span> <span class="mf">5.371875111803135</span>
+<span class="n">z1_2</span> <span class="o">=</span> <span class="mf">1.328125</span>
+<span class="n">z2_2</span> <span class="o">=</span> <span class="mf">2.33203125</span>
+<span class="n">y1_2</span> <span class="o">=</span> <span class="mf">3.16</span>
+<span class="n">y2_2</span> <span class="o">=</span> <span class="mf">5.437795133463117</span>
+<span class="n">SP_1</span><span class="p">:</span> <span class="n">fmin</span><span class="o">=</span> <span class="p">[</span><span class="mf">3.159999977639373</span><span class="p">],</span> <span class="n">hmin</span><span class="o">=</span> <span class="p">[</span><span class="mf">2.2360627127682164e-08</span><span class="p">]</span>
+<span class="n">SP_2</span><span class="p">:</span> <span class="n">fmin</span><span class="o">=</span> <span class="p">[</span><span class="mf">5.437795133463117</span><span class="p">],</span> <span class="n">hmin</span><span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">18.56220486653688</span><span class="p">]</span>
+<span class="n">P_main</span><span class="p">:</span> <span class="n">fmin</span><span class="o">=</span> <span class="mf">8.59779511110249</span><span class="p">,</span> <span class="n">hmax</span><span class="o">=</span> <span class="mf">2.2360627127682164e-08</span>
+<span class="n">Final</span> <span class="n">obj</span> <span class="n">value</span> <span class="n">of</span> <span class="n">the</span> <span class="n">main</span> <span class="n">problem</span><span class="p">:</span>
+<span class="mf">8.59779511110249</span>
+</pre></div>
+</div>
+</section>
+<section id="speed-reducer">
+<h2>Speed reducer<a class="headerlink" href="#speed-reducer" title="Permalink to this headline"></a></h2>
+<p>Original problem <span class="math notranslate nohighlight">\(\mathcal{P}\)</span>:</p>
+<figure class="align-center" id="ft3">
+<a class="reference internal image-reference" href="_images/SR.png"><img alt="_images/SR.png" src="_images/SR.png" style="width: 400px;" /></a>
+</figure>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+\text{min}: &amp; \ \ \ 0.7854x_{1}x^{2}_{2}(3.3333x^{2}_{3} + 14.9334x_{3} -43.0934) -1.5079x_{1}(x^{2}_{6} + x^{2}_{7}) +7.477(x^{3}_{6}+x^{3}_{7}) + 0.7854(x_{4}x^{2}_{6}+x_{5}x^{2}_{7}) \\
+\text{w.r.t.}: &amp; \ \ \ x_{1}, x_{2}, x_{3}, x_4, x_5, x_6, x_7 \\
+\text{s.t. }: \ \ \ \\
+&amp; \ \ \ 27x^{-1}_{1}x^{-2}_{2}x^{-1}_{3} \leq 1 \\
+&amp; \ \ \ 397.5x^{-1}_{1}x^{-2}_{2}x^{-2}_{3} \leq 1 \\
+&amp; \ \ \ 1.93x^{-1}_{2}x^{-1}_{3}x^{3}_{4}x^{-4}_{6} \leq 1 \\
+&amp; \ \ \ 1.93x^{-1}_{2}x^{-1}_{3}x^{3}_{5}x^{-4}_{7} \leq 1 \\
+&amp; \ \ \ [(745x_{4}x^{-1}_{2}x^{-1}_{3})^{2} + 16.9 \times 10^{6}]^{0.5} / [ 110.0x^{3}_{6} ] \leq 1 \\
+&amp; \ \ \ [(745x_{5}x^{-1}_{2}x^{-1}_{3})^{2} + 157.5 \times 10^{6}]^{0.5} / [ 85.0x^{3}_{7} ] \leq 1 \\
+&amp; \ \ \ x_{2}x_{3}/40 \leq 1 \\
+&amp; \ \ \ 5x_{2}/x_1 \leq 1 \\
+&amp; \ \ \ x_{1}/12x_2 \leq 1 \\
+&amp; \ \ \ (1.5x_6 + 1.9)x^{-1}_4 \leq 1 \\
+&amp; \ \ \ (1.1x_7 + 1.9)x^{-1}_5 \leq 1 \\
+&amp; \ \ \ 2.6 \leq x_1 \leq 3.6\\
+&amp; \ \ \ 0.7 \leq x_2 \leq 0.8\\
+&amp; \ \ \ 17 \leq x_3 \leq 28\\
+&amp; \ \ \ 7.3 \leq x_4 \leq 8.3\\
+&amp; \ \ \ 7.3 \leq x_5 \leq 8.3\\
+&amp; \ \ \ 2.9 \leq x_6 \leq 3.9\\
+&amp; \ \ \ 5.0 \leq x_7 \leq 5.5\\
+\tag{$\mathcal{P}$}
+\end{align*}\end{split}\]</div>
+<p>Subproblem <span class="math notranslate nohighlight">\(\mathcal{p}_{1}\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+\text{min}: &amp; \ \ \ 0.7854x_{1_{1}}x^{2}_{2_{1}}(3.3333x^{2}_{3_{1}} + 14.9334x_{3_{1}} -43.0934) + \phi_{x_{1_{12}}} (x_{1_{1}}-x_{1_{2}}) + \phi_{x_{1_{13}}} (x_{1_{1}}-x_{1_{3}}) + \phi_{x_{2_{12}}} (x_{2_{1}}-x_{2_{2}}) + \phi_{x_{2_{13}}} (x_{2_{1}}-x_{2_{3}}) + \phi_{x_{3_{12}}} (x_{3_{1}}-x_{3_{2}}) + \phi_{x_{3_{13}}} (x_{3_{1}}-x_{3_{3}})\\
+\text{w.r.t.}: &amp; \ \ \ x_{1_{1}}, x_{2_{1}}, x_{3_{1}} \\
+\text{s.t. }: &amp; \ \ \ &amp; \\
+&amp; \ \ \ 27x^{-1}_{1_{1}}x^{-2}_{2_{1}}x^{-1}_{3_{1}} \leq 1 \\
+&amp; \ \ \ 397.5x^{-1}_{1_{1}}x^{-2}_{2_{1}}x^{-2}_{3_{1}} \leq 1 \\
+&amp; \ \ \ x_{2_{1}}x_{3_{1}}/40 \leq 1 \\
+&amp; \ \ \ 5x_{2_{1}}/x_{1_{1}} \leq 1 \\
+&amp; \ \ \ x_{1_{1}}/12x_{2_{1}} \leq 1 \\
+\tag{$\mathcal{p}_{1}$}
+\end{align*}\end{split}\]</div>
+<p>Subproblem <span class="math notranslate nohighlight">\(\mathcal{p}_{2}\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+\text{min}: &amp; \ \ \ -1.5079x_{1_{2}}(x^{2}_{6} + x^{2}_{7}) +7.477(x^{3}_{6}+x^{3}_{7}) + \phi_{x_{1_{12}}} (x_{1_{1}}-x_{1_{2}}) + \phi_{x_{1_{13}}} (x_{1_{1}}-x_{1_{3}}) + \phi_{x_{2_{12}}} (x_{2_{1}}-x_{2_{2}}) + \phi_{x_{2_{13}}} (x_{2_{1}}-x_{2_{3}}) + \phi_{x_{3_{12}}} (x_{3_{1}}-x_{3_{2}}) + \phi_{x_{3_{13}}} (x_{3_{1}}-x_{3_{3}})\\
+\text{w.r.t.}: &amp; \ \ \ x_{1_{1}}, x_{2_{1}}, x_{3_{1}}, x_4, x_6 \\
+\text{s.t. }: &amp; \ \ \ &amp; \\
+&amp; \ \ \ 1.93x^{-1}_{2_{2}}x^{-1}_{3_{2}}x^{3}_{4_{2}}x^{-4}_{6} \leq 1 \\
+&amp; \ \ \ (1.5x_6 + 1.9)x^{-1}_{4_{2}} \leq 1 \\
+&amp; \ \ \ [(745x_{4}x^{-1}_{2_{2}}x^{-1}_{3_{2}})^{2} + 16.9 \times 10^{6}]^{0.5} / [ 110.0x^{3}_{6} ] \leq 1
+\tag{$\mathcal{p}_{2}$}
+\end{align*}\end{split}\]</div>
+<p>Subproblem <span class="math notranslate nohighlight">\(\mathcal{p}_{3}\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+\text{min}: &amp; \ \ \ 0.7854(x_{4_{3}}x^{2}_{6}+x_{5}x^{2}_{7}) + \phi_{x_{1_{12}}} (x_{1_{1}}-x_{1_{2}}) + \phi_{x_{1_{13}}} (x_{1_{1}}-x_{1_{3}}) + \phi_{x_{2_{12}}} (x_{2_{1}}-x_{2_{2}}) + \phi_{x_{2_{13}}} (x_{2_{1}}-x_{2_{3}}) + \phi_{x_{3_{12}}} (x_{3_{1}}-x_{3_{2}}) + \phi_{x_{3_{13}}} (x_{3_{1}}-x_{3_{3}})\\
+\text{w.r.t.}: &amp; \ \ \ x_{1_{3}}, x_{2_{3}}, x_{3_{3}}, x_{5}, x_{7} \\
+\text{s.t. }: &amp; \ \ \ &amp; \\
+&amp; \ \ \ [(745x_{5}x^{-1}_{2_{3}}x^{-1}_{3_{3}})^{2} + 157.5 \times 10^{6}]^{0.5} / [ 85.0x^{3}_{7} ] \leq 1 \\
+&amp; \ \ \ (1.1x_7 + 1.9)x^{-1}_5 \leq 1 \\
+&amp; \ \ \ 1.93x^{-1}_{2_{3}}x^{-1}_{3_{3}}x^{3}_{5}x^{-4}_{7} \leq 1
+\tag{$\mathcal{p}_{3}$}
+\end{align*}\end{split}\]</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">SR_A1</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="sd">&quot;&quot;&quot; Speed reducer A1 &quot;&quot;&quot;</span>
+<span class="k">return</span> <span class="p">(</span><span class="mf">0.7854</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="mf">3.3333</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="mf">14.9335</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mf">43.0934</span><span class="p">))</span>
+
+<span class="k">def</span> <span class="nf">SR_A2</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="sd">&quot;&quot;&quot; Speed reducer A2 &quot;&quot;&quot;</span>
+<span class="k">return</span> <span class="p">(</span><span class="o">-</span><span class="mf">1.5079</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mf">7.477</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">SR_A3</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="sd">&quot;&quot;&quot; Speed reducer A3 &quot;&quot;&quot;</span>
+<span class="k">return</span> <span class="mf">0.7854</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">*</span> <span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span>
+
+
+<span class="k">def</span> <span class="nf">SR_opt1</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+<span class="n">g5</span> <span class="o">=</span> <span class="mi">27</span><span class="o">/</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">-</span><span class="mi">1</span>
+<span class="n">g6</span> <span class="o">=</span> <span class="mf">397.5</span><span class="o">/</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span><span class="mi">1</span>
+<span class="n">g9</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="mi">40</span> <span class="o">-</span><span class="mi">1</span>
+<span class="n">g10</span> <span class="o">=</span> <span class="mi">5</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">/</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span><span class="mi">1</span>
+<span class="n">g11</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="p">(</span><span class="mi">12</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">-</span><span class="mi">1</span>
+<span class="k">return</span> <span class="p">[</span><span class="n">y</span><span class="p">,</span> <span class="p">[</span><span class="n">g5</span><span class="p">,</span><span class="n">g6</span><span class="p">,</span><span class="n">g9</span><span class="p">,</span><span class="n">g10</span><span class="p">,</span><span class="n">g11</span><span class="p">]]</span>
+
+
+<span class="k">def</span> <span class="nf">SR_opt2</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+<span class="n">g1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span> <span class="p">((</span><span class="mi">745</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span><span class="o">/</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">1.69e+7</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">110</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span> <span class="o">-</span><span class="mi">1</span>
+<span class="n">g3</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.5</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.9</span><span class="p">)</span><span class="o">/</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">-</span><span class="mi">1</span>
+<span class="n">g7</span> <span class="o">=</span> <span class="mf">1.93</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">**</span><span class="mi">3</span><span class="o">/</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">**</span><span class="mi">4</span><span class="p">)</span> <span class="o">-</span><span class="mi">1</span>
+<span class="k">return</span> <span class="p">[</span><span class="n">y</span><span class="p">,</span> <span class="p">[</span><span class="n">g1</span><span class="p">,</span><span class="n">g3</span><span class="p">,</span><span class="n">g7</span><span class="p">]]</span>
+
+<span class="k">def</span> <span class="nf">SR_opt3</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+<span class="n">g2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span> <span class="p">((</span><span class="mi">745</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span><span class="o">/</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">1.575e+8</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="mi">85</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span> <span class="o">-</span><span class="mi">1</span>
+<span class="n">g4</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.1</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">+</span> <span class="mf">1.9</span><span class="p">)</span><span class="o">/</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">-</span><span class="mi">1</span>
+<span class="n">g8</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.93</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">**</span><span class="mi">4</span><span class="p">)</span> <span class="o">-</span><span class="mi">1</span>
+<span class="k">return</span> <span class="p">[</span><span class="n">y</span><span class="p">,</span> <span class="p">[</span><span class="n">g2</span><span class="p">,</span> <span class="n">g4</span><span class="p">,</span> <span class="n">g8</span><span class="p">]]</span>
+<span class="c1">#  Variables setup</span>
+<span class="n">f1min</span> <span class="o">=</span> <span class="mi">722</span>
+<span class="n">f1max</span> <span class="o">=</span> <span class="mi">5408</span>
+<span class="n">f2min</span> <span class="o">=</span> <span class="mi">184</span>
+<span class="n">f2max</span> <span class="o">=</span> <span class="mi">506</span>
+<span class="n">f3min</span> <span class="o">=</span> <span class="mi">942</span>
+<span class="n">f3max</span> <span class="o">=</span> <span class="mi">1369</span>
+<span class="c1">#</span>
+<span class="n">v</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">V</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">variableData</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">s</span>  <span class="o">=</span> <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">SHARED</span>
+<span class="n">ff</span> <span class="o">=</span> <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDFORWARD</span>
+<span class="n">fb</span> <span class="o">=</span> <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDBACK</span>
+<span class="n">un</span> <span class="o">=</span> <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">UNCOUPLED</span>
+<span class="n">dum</span> <span class="o">=</span> <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">DUMMY</span>
+
+
+<span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;x1&quot;</span><span class="p">,</span> <span class="s2">&quot;x2&quot;</span><span class="p">,</span> <span class="s2">&quot;x3&quot;</span><span class="p">,</span> <span class="s2">&quot;f1&quot;</span><span class="p">,</span>   <span class="s2">&quot;x1&quot;</span><span class="p">,</span> <span class="s2">&quot;x2&quot;</span><span class="p">,</span> <span class="s2">&quot;x3&quot;</span><span class="p">,</span> <span class="s2">&quot;x4&quot;</span><span class="p">,</span> <span class="s2">&quot;x6&quot;</span><span class="p">,</span> <span class="s2">&quot;f2&quot;</span><span class="p">,</span>   <span class="s2">&quot;x1&quot;</span><span class="p">,</span> <span class="s2">&quot;x2&quot;</span><span class="p">,</span> <span class="s2">&quot;x3&quot;</span><span class="p">,</span> <span class="s2">&quot;x5&quot;</span><span class="p">,</span> <span class="s2">&quot;x7&quot;</span><span class="p">,</span> <span class="s2">&quot;f3&quot;</span><span class="p">]</span>
+<span class="n">spi</span> <span class="o">=</span>   <span class="p">[</span>   <span class="mi">1</span><span class="p">,</span>    <span class="mi">1</span><span class="p">,</span>    <span class="mi">1</span><span class="p">,</span>           <span class="mi">1</span><span class="p">,</span>                <span class="mi">2</span><span class="p">,</span>            <span class="mi">2</span><span class="p">,</span>              <span class="mi">2</span><span class="p">,</span>              <span class="mi">2</span><span class="p">,</span>              <span class="mi">2</span><span class="p">,</span>              <span class="mi">2</span><span class="p">,</span>      <span class="mi">3</span><span class="p">,</span>    <span class="mi">3</span><span class="p">,</span>                <span class="mi">3</span><span class="p">,</span>              <span class="mi">3</span><span class="p">,</span>    <span class="mi">3</span><span class="p">,</span>          <span class="mi">3</span><span class="p">]</span>
+<span class="n">links</span> <span class="o">=</span> <span class="p">[[</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],[</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],[</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span>   <span class="kc">None</span><span class="p">,</span>  <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">],[</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">],[</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span>    <span class="kc">None</span><span class="p">,</span>  <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span>    <span class="kc">None</span><span class="p">]</span>
+<span class="n">lb</span> <span class="o">=</span>    <span class="p">[</span><span class="mf">2.6</span> <span class="p">,</span>  <span class="mf">0.7</span> <span class="p">,</span>  <span class="mf">17.</span><span class="p">,</span> <span class="mf">722.</span><span class="p">,</span>  <span class="mf">2.6</span> <span class="p">,</span>  <span class="mf">0.7</span><span class="p">,</span>  <span class="mf">17.</span><span class="p">,</span>  <span class="mf">7.3</span><span class="p">,</span>  <span class="mf">2.9</span><span class="p">,</span> <span class="mf">184.</span><span class="p">,</span>   <span class="mf">2.6</span> <span class="p">,</span>  <span class="mf">0.7</span><span class="p">,</span>  <span class="mf">17.</span><span class="p">,</span>  <span class="mf">7.3</span><span class="p">,</span>   <span class="mf">5.</span><span class="p">,</span><span class="mf">942.</span><span class="p">]</span>
+<span class="n">ub</span> <span class="o">=</span>    <span class="p">[</span><span class="mf">3.6</span> <span class="p">,</span>  <span class="mf">0.8</span> <span class="p">,</span>  <span class="mf">28.</span><span class="p">,</span><span class="mf">5408.</span><span class="p">,</span>  <span class="mf">3.6</span> <span class="p">,</span>  <span class="mf">0.8</span><span class="p">,</span>  <span class="mf">28.</span><span class="p">,</span>  <span class="mf">8.3</span><span class="p">,</span>  <span class="mf">3.9</span><span class="p">,</span> <span class="mf">506.</span><span class="p">,</span>   <span class="mf">3.6</span> <span class="p">,</span>  <span class="mf">0.8</span> <span class="p">,</span> <span class="mf">28.</span><span class="p">,</span>  <span class="mf">8.3</span><span class="p">,</span>  <span class="mf">5.5</span><span class="p">,</span><span class="mf">1369.</span><span class="p">]</span>
+<span class="n">bl</span> <span class="o">=</span>    <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">subtract</span><span class="p">(</span><span class="n">ub</span><span class="p">,</span> <span class="n">lb</span><span class="p">),</span> <span class="mf">2.</span><span class="p">)</span>
+
+<span class="n">coupling_t</span> <span class="o">=</span> \
+      <span class="p">[</span> <span class="n">s</span><span class="p">,</span>      <span class="n">s</span><span class="p">,</span>           <span class="n">s</span><span class="p">,</span>              <span class="n">un</span><span class="p">,</span>             <span class="n">s</span><span class="p">,</span>              <span class="n">s</span><span class="p">,</span>              <span class="n">s</span><span class="p">,</span>              <span class="n">un</span><span class="p">,</span>             <span class="n">un</span><span class="p">,</span>      <span class="n">un</span><span class="p">,</span>   <span class="n">s</span><span class="p">,</span>    <span class="n">s</span><span class="p">,</span>    <span class="n">s</span><span class="p">,</span>   <span class="n">un</span><span class="p">,</span>    <span class="n">un</span><span class="p">,</span>    <span class="n">un</span><span class="p">]</span>
+
+<span class="n">scaling</span> <span class="o">=</span> <span class="p">[</span><span class="mf">10.</span><span class="p">]</span> <span class="o">*</span> <span class="mi">16</span>
+
+<span class="c1"># Variables dictionary with subproblems link</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">16</span><span class="p">):</span>
+<span class="n">v</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;var</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;index&quot;</span><span class="p">:</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span>
+<span class="s2">&quot;sp_index&quot;</span><span class="p">:</span> <span class="n">spi</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="sa">f</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">names</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="s2">&quot;dim&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+<span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mf">0.</span><span class="p">,</span>
+<span class="s2">&quot;coupling_type&quot;</span><span class="p">:</span> <span class="n">coupling_t</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="s2">&quot;link&quot;</span><span class="p">:</span> <span class="n">links</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="s2">&quot;baseline&quot;</span><span class="p">:</span> <span class="n">bl</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="s2">&quot;scaling&quot;</span><span class="p">:</span> <span class="n">scaling</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="s2">&quot;lb&quot;</span><span class="p">:</span> <span class="n">lb</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="n">bl</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="s2">&quot;ub&quot;</span><span class="p">:</span> <span class="n">ub</span><span class="p">[</span><span class="n">i</span><span class="p">]}</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">16</span><span class="p">):</span>
+<span class="n">V</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">variableData</span><span class="p">(</span><span class="o">**</span><span class="n">v</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;var</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]))</span>
+
+<span class="c1"># Analyses setup; construct disciplinary analyses</span>
+<span class="n">DA1</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">DA</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">2</span><span class="p">]],</span>
+<span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">3</span><span class="p">]],</span>
+<span class="n">blackbox</span><span class="o">=</span><span class="n">SR_A1</span><span class="p">,</span>
+<span class="n">links</span><span class="o">=</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span>
+<span class="n">coupling_type</span><span class="o">=</span><span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDFORWARD</span><span class="p">)</span>
+
+<span class="n">DA2</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">DA</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">7</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">8</span><span class="p">]],</span>
+<span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">9</span><span class="p">]],</span>
+<span class="n">blackbox</span><span class="o">=</span><span class="n">SR_A2</span><span class="p">,</span>
+<span class="n">links</span><span class="o">=</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span>
+<span class="n">coupling_type</span><span class="o">=</span><span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDFORWARD</span>
+<span class="p">)</span>
+
+<span class="n">DA3</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">DA</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">11</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">12</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">13</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">14</span><span class="p">]],</span>
+<span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">15</span><span class="p">]],</span>
+<span class="n">blackbox</span><span class="o">=</span><span class="n">SR_A3</span><span class="p">,</span>
+<span class="n">links</span><span class="o">=</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span>
+<span class="n">coupling_type</span><span class="o">=</span><span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDFORWARD</span>
+<span class="p">)</span>
+
+<span class="c1"># MDA setup; construct subproblems MDA</span>
+<span class="n">sp1_MDA</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">MDA</span><span class="p">(</span><span class="n">nAnalyses</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">analyses</span> <span class="o">=</span> <span class="p">[</span><span class="n">DA1</span><span class="p">],</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">2</span><span class="p">]],</span> <span class="n">responses</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">3</span><span class="p">]])</span>
+<span class="n">sp2_MDA</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">MDA</span><span class="p">(</span><span class="n">nAnalyses</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">analyses</span> <span class="o">=</span> <span class="p">[</span><span class="n">DA2</span><span class="p">],</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">7</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">8</span><span class="p">]],</span> <span class="n">responses</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">9</span><span class="p">]])</span>
+<span class="n">sp3_MDA</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">MDA</span><span class="p">(</span><span class="n">nAnalyses</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">analyses</span> <span class="o">=</span> <span class="p">[</span><span class="n">DA3</span><span class="p">],</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">11</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">12</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">13</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">14</span><span class="p">]],</span> <span class="n">responses</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">15</span><span class="p">]])</span>
+
+<span class="c1"># Construct the coordinator</span>
+<span class="n">coord</span> <span class="o">=</span> <span class="n">ADMM</span><span class="p">(</span><span class="n">beta</span> <span class="o">=</span> <span class="mf">1.3</span><span class="p">,</span>
+<span class="n">nsp</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+<span class="n">budget</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+<span class="n">index_of_master_SP</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="n">display</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="n">scaling</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+<span class="n">mode</span> <span class="o">=</span> <span class="s2">&quot;serial&quot;</span><span class="p">,</span>
+<span class="n">M_update_scheme</span><span class="o">=</span> <span class="n">w_scheme</span><span class="o">.</span><span class="n">MEDIAN</span>
+<span class="p">)</span>
+
+<span class="c1"># Construct subproblems</span>
+<span class="n">sp1</span> <span class="o">=</span> <span class="n">SubProblem</span><span class="p">(</span><span class="n">nv</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+<span class="n">index</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+<span class="nb">vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">2</span><span class="p">]],</span>
+<span class="n">resps</span> <span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">3</span><span class="p">]],</span>
+<span class="n">is_main</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="n">analysis</span><span class="o">=</span> <span class="n">sp1_MDA</span><span class="p">,</span>
+<span class="n">coordination</span><span class="o">=</span><span class="n">coord</span><span class="p">,</span>
+<span class="n">opt</span><span class="o">=</span><span class="n">SR_opt1</span><span class="p">,</span>
+<span class="n">fmin_nop</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+<span class="n">budget</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+<span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="n">psize</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span>
+<span class="n">pupdate</span><span class="o">=</span><span class="n">PSIZE_UPDATE</span><span class="o">.</span><span class="n">LAST</span><span class="p">)</span>
+
+<span class="n">sp2</span> <span class="o">=</span> <span class="n">SubProblem</span><span class="p">(</span><span class="n">nv</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+<span class="n">index</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+<span class="nb">vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">7</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">8</span><span class="p">]],</span>
+<span class="n">resps</span> <span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">9</span><span class="p">]],</span>
+<span class="n">is_main</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="n">analysis</span><span class="o">=</span> <span class="n">sp2_MDA</span><span class="p">,</span>
+<span class="n">coordination</span><span class="o">=</span><span class="n">coord</span><span class="p">,</span>
+<span class="n">opt</span><span class="o">=</span><span class="n">SR_opt2</span><span class="p">,</span>
+<span class="n">fmin_nop</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+<span class="n">budget</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+<span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="n">psize</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span>
+<span class="n">pupdate</span><span class="o">=</span><span class="n">PSIZE_UPDATE</span><span class="o">.</span><span class="n">LAST</span>
+<span class="p">)</span>
+
+<span class="n">sp3</span> <span class="o">=</span> <span class="n">SubProblem</span><span class="p">(</span><span class="n">nv</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+<span class="n">index</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+<span class="nb">vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">11</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">12</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">13</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">14</span><span class="p">]],</span>
+<span class="n">resps</span> <span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">15</span><span class="p">]],</span>
+<span class="n">is_main</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="n">analysis</span><span class="o">=</span> <span class="n">sp3_MDA</span><span class="p">,</span>
+<span class="n">coordination</span><span class="o">=</span><span class="n">coord</span><span class="p">,</span>
+<span class="n">opt</span><span class="o">=</span><span class="n">SR_opt3</span><span class="p">,</span>
+<span class="n">fmin_nop</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+<span class="n">budget</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+<span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="n">psize</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span>
+<span class="n">pupdate</span><span class="o">=</span><span class="n">PSIZE_UPDATE</span><span class="o">.</span><span class="n">LAST</span><span class="p">)</span>
+
+<span class="c1"># Construct MDO workflow</span>
+<span class="n">MDAO</span><span class="p">:</span> <span class="n">MDO</span> <span class="o">=</span> <span class="n">MDO</span><span class="p">(</span>
+<span class="n">Architecture</span> <span class="o">=</span> <span class="n">MDO_ARCHITECTURE</span><span class="o">.</span><span class="n">IDF</span><span class="p">,</span>
+<span class="n">Coordinator</span> <span class="o">=</span> <span class="n">coord</span><span class="p">,</span>
+<span class="n">subProblems</span> <span class="o">=</span> <span class="p">[</span><span class="n">sp1</span><span class="p">,</span> <span class="n">sp2</span><span class="p">,</span> <span class="n">sp3</span><span class="p">],</span>
+<span class="n">variables</span> <span class="o">=</span> <span class="n">V</span><span class="p">,</span>
+<span class="n">responses</span> <span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">9</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">15</span><span class="p">]],</span>
+<span class="n">fmin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+<span class="n">hmin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+<span class="n">display</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="n">inc_stop</span> <span class="o">=</span> <span class="mf">1E-9</span><span class="p">,</span>
+<span class="n">stop</span> <span class="o">=</span> <span class="s2">&quot;Iteration budget exhausted&quot;</span><span class="p">,</span>
+<span class="n">tab_inc</span> <span class="o">=</span> <span class="p">[],</span>
+<span class="n">noprogress_stop</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="p">)</span>
+
+
+<span class="c1"># Run the MDO problem</span>
+<span class="n">out</span> <span class="o">=</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;------Run_Summary------&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">MDAO</span><span class="o">.</span><span class="n">stop</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;q = </span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">q</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">:</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">i</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">i</span><span class="o">.</span><span class="n">sp_index</span><span class="si">}</span><span class="s1"> = </span><span class="si">{</span><span class="n">i</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">fmin</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">hmax</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">)):</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;SP_</span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s1">: fmin= </span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">MDA_process</span><span class="o">.</span><span class="n">getOutputs</span><span class="p">()</span><span class="si">}</span><span class="s1">, hmin= </span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">opt</span><span class="p">([</span><span class="n">s</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">get_design_vars</span><span class="p">()]</span> <span class="p">,</span> <span class="p">[])[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">fmin</span> <span class="o">+=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">MDA_process</span><span class="o">.</span><span class="n">getOutputs</span><span class="p">())</span>
+<span class="n">hmin</span><span class="o">=</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">opt</span><span class="p">([</span><span class="n">s</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">get_design_vars</span><span class="p">()]</span> <span class="p">,</span> <span class="p">[])[</span><span class="mi">1</span><span class="p">]</span>
+<span class="k">if</span> <span class="nb">max</span><span class="p">(</span><span class="n">hmin</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">hmax</span><span class="p">:</span>
+   <span class="n">hmax</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">hmin</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;P_main: fmin= </span><span class="si">{</span><span class="n">fmin</span><span class="si">}</span><span class="s1">, hmax= </span><span class="si">{</span><span class="n">hmax</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Final obj value of the main problem: </span><span class="se">\n</span><span class="s1"> </span><span class="si">{</span><span class="n">fmin</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Stop</span><span class="p">:</span> <span class="n">qmax</span> <span class="o">=</span> <span class="mf">5.822068604999231e-10</span> <span class="o">&lt;</span> <span class="mf">1e-09</span>
+<span class="o">------</span><span class="n">Run_Summary</span><span class="o">------</span>
+<span class="n">Max</span> <span class="n">inconsitency</span> <span class="ow">is</span> <span class="n">below</span> <span class="n">stopping</span> <span class="n">threshold</span>
+<span class="n">q</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">7.82041099e-14</span> <span class="o">-</span><span class="mf">5.82206860e-10</span>  <span class="mf">0.00000000e+00</span>  <span class="mf">0.00000000e+00</span>
+<span class="mf">0.00000000e+00</span>  <span class="mf">0.00000000e+00</span><span class="p">]</span>
+<span class="n">x1_1</span> <span class="o">=</span> <span class="mf">3.4999998893203155</span>
+<span class="n">x2_1</span> <span class="o">=</span> <span class="mf">0.7</span>
+<span class="n">x3_1</span> <span class="o">=</span> <span class="mf">17.0</span>
+<span class="n">f1_1</span> <span class="o">=</span> <span class="mf">1581.466590697449</span>
+<span class="n">x1_2</span> <span class="o">=</span> <span class="mf">3.4999998893210975</span>
+<span class="n">x2_2</span> <span class="o">=</span> <span class="mf">0.7</span>
+<span class="n">x3_2</span> <span class="o">=</span> <span class="mf">17.0</span>
+<span class="n">x4_2</span> <span class="o">=</span> <span class="mf">7.3</span>
+<span class="n">x6_2</span> <span class="o">=</span> <span class="mf">3.3502146307821015</span>
+<span class="n">f2_2</span> <span class="o">=</span> <span class="mf">221.91863685660422</span>
+<span class="n">x1_3</span> <span class="o">=</span> <span class="mf">3.499999895142384</span>
+<span class="n">x2_3</span> <span class="o">=</span> <span class="mf">0.7</span>
+<span class="n">x3_3</span> <span class="o">=</span> <span class="mf">17.0</span>
+<span class="n">x5_3</span> <span class="o">=</span> <span class="mf">7.715319699048533</span>
+<span class="n">x7_3</span> <span class="o">=</span> <span class="mf">5.286654424469452</span>
+<span class="n">f3_3</span> <span class="o">=</span> <span class="mf">169.3583713823956</span>
+</pre></div>
+</div>
+</section>
+<section id="geometric-programming">
+<h2>Geometric programming<a class="headerlink" href="#geometric-programming" title="Permalink to this headline"></a></h2>
+<p>Original problem <span class="math notranslate nohighlight">\(\mathcal{P}\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+\text{min}: &amp; \ \ \ z^{2}_1 + z^{2}_2 \\
+\text{w.r.t.}: &amp; \ \ \ z_{1}, z_{2}, z_{3}, z_4, z_5, z_6, z_7, z_8, z_9, z_{10}, z_{11}, z_{12}, z_{13}, z_{14} \\
+\text{s.t. }: \ \ \ &amp; z_{i} \in [10^{-6}, 10^6 ] \ \ \forall i \\
+&amp; \ \ \ z^{2}_1 = z^{2}_{3} + z^{-2}_{4} + z^{2}_{5} \\
+&amp; \ \ \ z^{2}_2 = z^{2}_{5} + z^{2}_{6} + z^{2}_{7} \\
+&amp; \ \ \ z^{2}_3 = z^{2}_{8} + z^{-2}_{9} + z^{-2}_{10} + z^{2}_{11}\\
+&amp; \ \ \ z^{2}_6 = z^{2}_{11} + z^{2}_{12} + z^{2}_{13} + z^{2}_{14} \\
+&amp; \ \ \ z^{-2}_3 + z^{2}_{4} - z^{2}_{5} \leq 0 \\
+&amp; \ \ \ z^{2}_5 + z^{-2}_{6} - z^{2}_{7} \leq 0 \\
+&amp; \ \ \ z^{2}_8 + z^{2}_{9} - z^{2}_{11} \leq 0 \\
+&amp; \ \ \ z^{-2}_8 + z^{2}_{10} - z^{2}_{11} \leq 0 \\
+&amp; \ \ \ z^{2}_{11} + z^{-2}_{12} - z^{2}_{13} \leq 0 \\
+&amp; \ \ \ z^{2}_{11} + z^{2}_{12} - z^{2}_{14} \leq 0
+\tag{$\mathcal{P}$}
+\end{align*}\end{split}\]</div>
+<figure class="align-center" id="ft4">
+<a class="reference internal image-reference" href="_images/GP.png"><img alt="_images/GP.png" src="_images/GP.png" style="width: 400px;" /></a>
+</figure>
+<p>Subproblem <span class="math notranslate nohighlight">\(\mathcal{p}_{1}\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+\text{min}: &amp; \ \ \ t^{2}_{y_{21}} + t^{2}_{y_{31}} + z^{-2}_4 + 2z^{2}_{5}+ z^{2}_{7} + \phi_{y_{21}} (t_{y_{21}}-r_{y_{21}}) + \phi_{y_{31}} (t_{y_{31}}-r_{y_{31}})\\
+\text{w.r.t.}: &amp; \ \ \ t_{y_{21}}, t_{y_{31}}, z_{4}, z_{5}, z_{7} \in [10^{-6}; 10^{6}] \\
+\text{s.t. }: &amp; \ \ \ &amp; \\
+&amp; \ \ \ t^{-2}_{y_{21}}+z^{2}_{4}-z^{2}_{5} \leq 0 \\
+&amp; \ \ \ z^{2}_{5} + t^{-2}_{y_{31}} - z^{2}_{7} \leq 0
+\tag{$\mathcal{p}_{1}$}
+\end{align*}\end{split}\]</div>
+<p>Subproblem <span class="math notranslate nohighlight">\(\mathcal{p}_{2}\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+\text{min}: &amp; \ \ \ \phi_{y_{21}} (t_{y_{21}}-r_{y_{21}}) + \phi_{s_{23}} (t_{s_{23}}-r_{s_{23}})\\
+\text{w.r.t.}: &amp; \ \ \ z_8, z_9, z_{10}, t_{s_{23}}  \in [10^{-6}; 10^{6}] \\
+\text{s.t. }: &amp; \ \ \ &amp; \\
+&amp; \ \ \ z^{2}_8 + z^{2}_{9} - t^{2}_{s_{23}} \leq 0 \\
+&amp; \ \ \ z^{-2}_8 + z^{2}_{10} - t^{2}_{s_{23}} \leq 0 \\
+\text{where} &amp; \ \ \ r_{y_{21}} = \sqrt{z^{2}_{8}+z^{-2}_{9}+z^{-2}_{10}+t^{2}_{s_{23}}}
+\tag{$\mathcal{p}_{2}$}
+\end{align*}\end{split}\]</div>
+<p>Subproblem <span class="math notranslate nohighlight">\(\mathcal{p}_{3}\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+\text{min}: &amp; \ \ \ \phi_{y_{31}} (t_{y_{31}}-r_{y_{31}}) + \phi_{s_{23}} (t_{s_{23}}-r_{s_{23}})\\
+\text{w.r.t.}: &amp; \ \ \ z_{12}, z_{13}, z_{14}, r_{s_{23}}  \in [10^{-6}; 10^{6}] \\
+\text{s.t. }: &amp; \ \ \ &amp; \\
+&amp; \ \ \ r^{2}_{s_{23}} + z^{-2}_{12} - z^{2}_{13} \leq 0 \\
+&amp; \ \ \ r^{2}_{s_{23}} + z^{2}_{12} - z^{2}_{14} \leq 0 \\
+\text{where} &amp; \ \ \ r_{y_{31}} = \sqrt{r^{2}_{s_{23}} + z^{2}_{12} +z^{2}_{13} + z^{2}_{14}}
+\tag{$\mathcal{p}_{3}$}
+\end{align*}\end{split}\]</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">GP_A1</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
+<span class="n">z1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">z</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**-</span><span class="mi">2</span> <span class="o">+</span> <span class="n">z</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+<span class="n">z2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">z</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">z</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span>  <span class="o">+</span> <span class="n">z</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+<span class="k">return</span> <span class="n">z1</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">z2</span><span class="o">**</span><span class="mi">2</span>
+
+<span class="k">def</span> <span class="nf">GP_opt1</span><span class="p">(</span><span class="n">z</span><span class="p">,</span><span class="n">y</span><span class="p">):</span>
+<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+   <span class="k">return</span> <span class="p">[</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**-</span><span class="mi">2</span> <span class="o">+</span> <span class="n">z</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="n">z</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">z</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">z</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">**-</span><span class="mi">2</span>  <span class="o">-</span> <span class="n">z</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">]]</span>
+<span class="k">else</span><span class="p">:</span>
+   <span class="k">return</span> <span class="p">[</span><span class="n">y</span><span class="p">,</span> <span class="p">[</span><span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**-</span><span class="mi">2</span> <span class="o">+</span> <span class="n">z</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="n">z</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">z</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">z</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">**-</span><span class="mi">2</span>  <span class="o">-</span> <span class="n">z</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">]]</span>
+
+<span class="k">def</span> <span class="nf">GP_A2</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
+<span class="n">z3</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">z</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**-</span><span class="mi">2</span> <span class="o">+</span> <span class="n">z</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">**-</span><span class="mi">2</span> <span class="o">+</span> <span class="n">z</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+<span class="k">return</span> <span class="n">z3</span>
+
+<span class="k">def</span> <span class="nf">GP_opt2</span><span class="p">(</span><span class="n">z</span><span class="p">,</span><span class="n">y</span><span class="p">):</span>
+<span class="k">return</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">[</span><span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">z</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="n">z</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**-</span><span class="mi">2</span> <span class="o">+</span> <span class="n">z</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="n">z</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">]]</span>
+
+<span class="k">def</span> <span class="nf">GP_A3</span><span class="p">(</span><span class="n">z</span><span class="p">):</span>
+<span class="n">z6</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">z</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">z</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span><span class="n">z</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+<span class="k">return</span> <span class="n">z6</span>
+
+<span class="k">def</span> <span class="nf">GP_opt3</span><span class="p">(</span><span class="n">z</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+<span class="k">return</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">[</span><span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">z</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**-</span><span class="mi">2</span> <span class="o">-</span> <span class="n">z</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">z</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span><span class="n">z</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="n">z</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">]]</span>
+
+<span class="n">v</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">V</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">variableData</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">s</span>  <span class="o">=</span> <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">SHARED</span>
+<span class="n">ff</span> <span class="o">=</span> <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDFORWARD</span>
+<span class="n">fb</span> <span class="o">=</span> <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDBACK</span>
+<span class="n">un</span> <span class="o">=</span> <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">UNCOUPLED</span>
+<span class="n">dum</span> <span class="o">=</span> <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">DUMMY</span>
+
+
+<span class="n">names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;z3&quot;</span><span class="p">,</span> <span class="s2">&quot;z4&quot;</span><span class="p">,</span> <span class="s2">&quot;z5&quot;</span><span class="p">,</span> <span class="s2">&quot;z6&quot;</span><span class="p">,</span>   <span class="s2">&quot;z7&quot;</span><span class="p">,</span> <span class="s2">&quot;z3&quot;</span><span class="p">,</span> <span class="s2">&quot;z8&quot;</span><span class="p">,</span> <span class="s2">&quot;z9&quot;</span><span class="p">,</span> <span class="s2">&quot;z10&quot;</span><span class="p">,</span> <span class="s2">&quot;z11&quot;</span><span class="p">,</span>   <span class="s2">&quot;z6&quot;</span><span class="p">,</span> <span class="s2">&quot;z11&quot;</span><span class="p">,</span> <span class="s2">&quot;z12&quot;</span><span class="p">,</span> <span class="s2">&quot;z13&quot;</span><span class="p">,</span> <span class="s2">&quot;z14&quot;</span><span class="p">,</span> <span class="s2">&quot;dd&quot;</span><span class="p">]</span>
+<span class="n">spi</span> <span class="o">=</span>   <span class="p">[</span>   <span class="mi">1</span><span class="p">,</span>    <span class="mi">1</span><span class="p">,</span>    <span class="mi">1</span><span class="p">,</span>           <span class="mi">1</span><span class="p">,</span>                <span class="mi">1</span><span class="p">,</span>            <span class="mi">2</span><span class="p">,</span>              <span class="mi">2</span><span class="p">,</span>              <span class="mi">2</span><span class="p">,</span>              <span class="mi">2</span><span class="p">,</span>                <span class="mi">2</span><span class="p">,</span>      <span class="mi">3</span><span class="p">,</span>     <span class="mi">3</span><span class="p">,</span>               <span class="mi">3</span><span class="p">,</span>             <span class="mi">3</span><span class="p">,</span>     <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="n">links</span> <span class="o">=</span> <span class="p">[</span>   <span class="mi">2</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span>    <span class="mi">3</span><span class="p">,</span>   <span class="kc">None</span><span class="p">,</span>    <span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span>      <span class="mi">3</span><span class="p">,</span>      <span class="mi">1</span><span class="p">,</span>     <span class="mi">2</span><span class="p">,</span>  <span class="kc">None</span><span class="p">,</span>  <span class="kc">None</span><span class="p">,</span>  <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+<span class="n">coupling_t</span> <span class="o">=</span> \
+      <span class="p">[</span> <span class="n">fb</span><span class="p">,</span>    <span class="n">un</span><span class="p">,</span>    <span class="n">un</span><span class="p">,</span>     <span class="n">fb</span><span class="p">,</span>             <span class="n">un</span><span class="p">,</span>     <span class="n">ff</span><span class="p">,</span>     <span class="n">un</span><span class="p">,</span>     <span class="n">un</span><span class="p">,</span>     <span class="n">un</span><span class="p">,</span>        <span class="n">s</span><span class="p">,</span>     <span class="n">ff</span><span class="p">,</span>     <span class="n">s</span><span class="p">,</span>    <span class="n">un</span><span class="p">,</span>    <span class="n">un</span><span class="p">,</span>    <span class="n">un</span><span class="p">,</span> <span class="n">ff</span><span class="p">]</span>
+
+<span class="n">lb</span> <span class="o">=</span>    <span class="p">[</span><span class="mf">1e-6</span><span class="p">]</span><span class="o">*</span><span class="mi">15</span>
+<span class="n">ub</span> <span class="o">=</span>    <span class="p">[</span><span class="mf">1e6</span><span class="p">]</span><span class="o">*</span><span class="mi">15</span>
+<span class="n">bl</span> <span class="o">=</span>    <span class="p">[</span><span class="mf">1.</span><span class="p">]</span><span class="o">*</span><span class="mi">15</span>
+<span class="n">scaling</span> <span class="o">=</span> <span class="p">[</span><span class="mf">9.e5</span><span class="p">]</span> <span class="o">*</span> <span class="mi">15</span>
+
+<span class="n">lb</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">15</span><span class="p">)</span>
+<span class="n">ub</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">18</span><span class="p">)</span>
+<span class="n">bl</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">GP_A1</span><span class="p">([</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="mi">5</span><span class="p">))</span>
+<span class="n">scaling</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Variables dictionary with subproblems link</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">16</span><span class="p">):</span>
+<span class="n">v</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;var</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;index&quot;</span><span class="p">:</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span>
+<span class="s2">&quot;sp_index&quot;</span><span class="p">:</span> <span class="n">spi</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="sa">f</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">names</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="s2">&quot;dim&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+<span class="s2">&quot;coupling_type&quot;</span><span class="p">:</span> <span class="n">coupling_t</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="s2">&quot;link&quot;</span><span class="p">:</span> <span class="n">links</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="s2">&quot;baseline&quot;</span><span class="p">:</span> <span class="n">bl</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="s2">&quot;scaling&quot;</span><span class="p">:</span> <span class="n">scaling</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="s2">&quot;lb&quot;</span><span class="p">:</span> <span class="n">lb</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="n">bl</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+<span class="s2">&quot;ub&quot;</span><span class="p">:</span> <span class="n">ub</span><span class="p">[</span><span class="n">i</span><span class="p">]}</span>
+
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">16</span><span class="p">):</span>
+<span class="n">V</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">variableData</span><span class="p">(</span><span class="o">**</span><span class="n">v</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;var</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]))</span>
+
+<span class="c1"># Analyses setup; construct disciplinary analyses</span>
+<span class="n">DA1</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">DA</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">4</span><span class="p">]],</span>
+<span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">15</span><span class="p">]],</span>
+<span class="n">blackbox</span><span class="o">=</span><span class="n">GP_A1</span><span class="p">,</span>
+<span class="n">links</span><span class="o">=</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
+<span class="n">coupling_type</span><span class="o">=</span><span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDBACK</span><span class="p">)</span>
+
+<span class="n">DA2</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">DA</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">7</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">9</span><span class="p">]],</span>
+<span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">5</span><span class="p">]],</span>
+<span class="n">blackbox</span><span class="o">=</span><span class="n">GP_A2</span><span class="p">,</span>
+<span class="n">links</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
+<span class="n">coupling_type</span><span class="o">=</span><span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDFORWARD</span>
+<span class="p">)</span>
+
+<span class="n">DA3</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">DA</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">11</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">12</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">13</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">14</span><span class="p">]],</span>
+<span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">10</span><span class="p">]],</span>
+<span class="n">blackbox</span><span class="o">=</span><span class="n">GP_A3</span><span class="p">,</span>
+<span class="n">links</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+<span class="n">coupling_type</span><span class="o">=</span><span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDFORWARD</span>
+<span class="p">)</span>
+
+<span class="c1"># MDA setup; construct subproblems MDA</span>
+<span class="n">sp1_MDA</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">MDA</span><span class="p">(</span><span class="n">nAnalyses</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">analyses</span> <span class="o">=</span> <span class="p">[</span><span class="n">DA1</span><span class="p">],</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">4</span><span class="p">]],</span> <span class="n">responses</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">15</span><span class="p">]])</span>
+<span class="n">sp2_MDA</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">MDA</span><span class="p">(</span><span class="n">nAnalyses</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">analyses</span> <span class="o">=</span> <span class="p">[</span><span class="n">DA2</span><span class="p">],</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">7</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">9</span><span class="p">]],</span> <span class="n">responses</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">5</span><span class="p">]])</span>
+<span class="n">sp3_MDA</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">MDA</span><span class="p">(</span><span class="n">nAnalyses</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">analyses</span> <span class="o">=</span> <span class="p">[</span><span class="n">DA3</span><span class="p">],</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">11</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">12</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">13</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">14</span><span class="p">]],</span> <span class="n">responses</span><span class="o">=</span><span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">10</span><span class="p">]])</span>
+
+<span class="c1"># Construct the coordinator</span>
+<span class="n">coord</span> <span class="o">=</span> <span class="n">ADMM</span><span class="p">(</span><span class="n">beta</span> <span class="o">=</span> <span class="mf">1.3</span><span class="p">,</span>
+<span class="n">nsp</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+<span class="n">budget</span> <span class="o">=</span> <span class="mi">200</span><span class="p">,</span>
+<span class="n">index_of_master_SP</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="n">display</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="n">scaling</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span>
+<span class="n">mode</span> <span class="o">=</span> <span class="s2">&quot;serial&quot;</span><span class="p">,</span>
+<span class="n">M_update_scheme</span><span class="o">=</span> <span class="n">w_scheme</span><span class="o">.</span><span class="n">MEDIAN</span>
+<span class="p">)</span>
+
+<span class="c1"># Construct subproblems</span>
+<span class="n">sp1</span> <span class="o">=</span> <span class="n">SubProblem</span><span class="p">(</span><span class="n">nv</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+<span class="n">index</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+<span class="nb">vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">4</span><span class="p">]],</span>
+<span class="n">resps</span> <span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">15</span><span class="p">]],</span>
+<span class="n">is_main</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="n">analysis</span><span class="o">=</span> <span class="n">sp1_MDA</span><span class="p">,</span>
+<span class="n">coordination</span><span class="o">=</span><span class="n">coord</span><span class="p">,</span>
+<span class="n">opt</span><span class="o">=</span><span class="n">GP_opt1</span><span class="p">,</span>
+<span class="n">fmin_nop</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+<span class="n">budget</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+<span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="n">psize</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span>
+<span class="n">pupdate</span><span class="o">=</span><span class="n">PSIZE_UPDATE</span><span class="o">.</span><span class="n">LAST</span><span class="p">,</span>
+<span class="n">freal</span><span class="o">=</span><span class="mf">15.</span><span class="p">)</span>
+
+<span class="n">sp2</span> <span class="o">=</span> <span class="n">SubProblem</span><span class="p">(</span><span class="n">nv</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+<span class="n">index</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+<span class="nb">vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">7</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">9</span><span class="p">]],</span>
+<span class="n">resps</span> <span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">5</span><span class="p">]],</span>
+<span class="n">is_main</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="n">analysis</span><span class="o">=</span> <span class="n">sp2_MDA</span><span class="p">,</span>
+<span class="n">coordination</span><span class="o">=</span><span class="n">coord</span><span class="p">,</span>
+<span class="n">opt</span><span class="o">=</span><span class="n">GP_opt2</span><span class="p">,</span>
+<span class="n">fmin_nop</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+<span class="n">budget</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+<span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="n">psize</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span>
+<span class="n">pupdate</span><span class="o">=</span><span class="n">PSIZE_UPDATE</span><span class="o">.</span><span class="n">LAST</span>
+<span class="p">)</span>
+
+<span class="n">sp3</span> <span class="o">=</span> <span class="n">SubProblem</span><span class="p">(</span><span class="n">nv</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+<span class="n">index</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+<span class="nb">vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">11</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">12</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">13</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">14</span><span class="p">]],</span>
+<span class="n">resps</span> <span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">10</span><span class="p">]],</span>
+<span class="n">is_main</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="n">analysis</span><span class="o">=</span> <span class="n">sp3_MDA</span><span class="p">,</span>
+<span class="n">coordination</span><span class="o">=</span><span class="n">coord</span><span class="p">,</span>
+<span class="n">opt</span><span class="o">=</span><span class="n">GP_opt3</span><span class="p">,</span>
+<span class="n">fmin_nop</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+<span class="n">budget</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+<span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="n">psize</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span>
+<span class="n">pupdate</span><span class="o">=</span><span class="n">PSIZE_UPDATE</span><span class="o">.</span><span class="n">LAST</span><span class="p">)</span>
+
+<span class="c1"># Construct MDO workflow</span>
+<span class="n">MDAO</span><span class="p">:</span> <span class="n">MDO</span> <span class="o">=</span> <span class="n">MDO</span><span class="p">(</span>
+<span class="n">Architecture</span> <span class="o">=</span> <span class="n">MDO_ARCHITECTURE</span><span class="o">.</span><span class="n">IDF</span><span class="p">,</span>
+<span class="n">Coordinator</span> <span class="o">=</span> <span class="n">coord</span><span class="p">,</span>
+<span class="n">subProblems</span> <span class="o">=</span> <span class="p">[</span><span class="n">sp1</span><span class="p">,</span> <span class="n">sp2</span><span class="p">,</span> <span class="n">sp3</span><span class="p">],</span>
+<span class="n">variables</span> <span class="o">=</span> <span class="n">V</span><span class="p">,</span>
+<span class="n">responses</span> <span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span> <span class="n">V</span><span class="p">[</span><span class="mi">15</span><span class="p">]],</span>
+<span class="n">fmin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+<span class="n">hmin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+<span class="n">display</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="n">inc_stop</span> <span class="o">=</span> <span class="mf">1E-9</span><span class="p">,</span>
+<span class="n">stop</span> <span class="o">=</span> <span class="s2">&quot;Iteration budget exhausted&quot;</span><span class="p">,</span>
+<span class="n">tab_inc</span> <span class="o">=</span> <span class="p">[],</span>
+<span class="n">noprogress_stop</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="p">)</span>
+
+
+<span class="c1"># Run the MDO problem</span>
+<span class="n">out</span> <span class="o">=</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;------Run_Summary------&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">MDAO</span><span class="o">.</span><span class="n">stop</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;q = </span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">q</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">xsp2</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">xsp3</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">q</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">:</span>
+<span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">sp_index</span> <span class="o">==</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">[</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">index</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">link</span><span class="p">:</span>
+   <span class="n">xsp2</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">i</span><span class="o">.</span><span class="n">sp_index</span> <span class="o">==</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">[</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">index</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">link</span><span class="p">:</span>
+   <span class="n">xsp3</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">i</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">i</span><span class="o">.</span><span class="n">sp_index</span><span class="si">}</span><span class="s1"> = </span><span class="si">{</span><span class="n">i</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="n">fmin</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">hmax</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">)):</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;SP_</span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s1">: fmin= </span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">MDA_process</span><span class="o">.</span><span class="n">getOutputs</span><span class="p">()</span><span class="si">}</span><span class="s1">, hmin= </span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">opt</span><span class="p">([</span><span class="n">s</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">get_design_vars</span><span class="p">()]</span> <span class="p">,</span> <span class="p">[])[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="k">if</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">is_main</span><span class="p">:</span>
+   <span class="n">fmin</span> <span class="o">=</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">MDA_process</span><span class="o">.</span><span class="n">getOutputs</span><span class="p">()</span>
+   <span class="n">hmin</span><span class="o">=</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">opt</span><span class="p">([</span><span class="n">s</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">get_design_vars</span><span class="p">()]</span> <span class="p">,</span> <span class="p">[])[</span><span class="mi">1</span><span class="p">]</span>
+   <span class="k">if</span> <span class="nb">max</span><span class="p">(</span><span class="n">hmin</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">hmax</span><span class="p">:</span>
+      <span class="n">hmax</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">hmin</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;P_main: fmin= </span><span class="si">{</span><span class="n">fmin</span><span class="si">}</span><span class="s1">, hmax= </span><span class="si">{</span><span class="n">hmax</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Final obj value of the main problem: </span><span class="se">\n</span><span class="s1"> </span><span class="si">{</span><span class="n">fmin</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+
+<span class="c1"># Checking the impact of swapping z11_2 and z11_3 on the feasibility of SP2 and SP3, respectively</span>
+
+<span class="n">temp</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">xsp3</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">xsp3</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">xsp2</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+<span class="n">xsp2</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;For </span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">[</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">index</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">_&#39;</span>
+<span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">[</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">index</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">link</span><span class="si">}</span><span class="s1"> to &#39;</span>
+   <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">[</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">index</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">_&#39;</span>
+<span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">[</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">index</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">link</span><span class="si">}</span><span class="s1">, using </span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">[</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">index</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">_&#39;</span>
+<span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">[</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">index</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">link</span><span class="si">}</span><span class="s1">&#39;</span>
+<span class="sa">f</span><span class="s1">&#39; will make h_sp</span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">[</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">index</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">link</span><span class="si">}</span><span class="s1"> = </span><span class="si">{</span><span class="n">GP_opt2</span><span class="p">(</span><span class="n">xsp2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;For </span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">[</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">index</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">_&#39;</span>
+<span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">[</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">index</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">link</span><span class="si">}</span><span class="s1"> to &#39;</span>
+   <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">[</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">index</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">_&#39;</span>
+<span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">[</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">index</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">link</span><span class="si">}</span><span class="s1">, using </span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">[</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">index</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">_&#39;</span>
+<span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">[</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">index</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">link</span><span class="si">}</span><span class="s1">&#39;</span>
+<span class="sa">f</span><span class="s1">&#39; will make h_sp</span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">[</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">index</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">link</span><span class="si">}</span><span class="s1"> = </span><span class="si">{</span><span class="n">GP_opt3</span><span class="p">(</span><span class="n">xsp3</span><span class="p">,</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">------</span><span class="n">Run_Summary</span><span class="o">------</span>
+<span class="n">Iteration</span> <span class="n">budget</span> <span class="n">exhausted</span>
+<span class="n">q</span> <span class="o">=</span> <span class="p">[</span><span class="mf">3.23003112e-07</span> <span class="mf">1.43060452e-05</span> <span class="mf">8.90277829e-01</span><span class="p">]</span>
+<span class="n">z3_1</span> <span class="o">=</span> <span class="mf">2.398289998370998</span>
+<span class="n">z4_1</span> <span class="o">=</span> <span class="mf">0.7582329644099639</span>
+<span class="n">z5_1</span> <span class="o">=</span> <span class="mf">1.11111211111</span>
+<span class="n">z6_1</span> <span class="o">=</span> <span class="mf">1.8764552402611754</span>
+<span class="n">z7_1</span> <span class="o">=</span> <span class="mf">1.2323147798018002</span>
+<span class="n">z3_2</span> <span class="o">=</span> <span class="mf">2.3982896753678857</span>
+<span class="n">z8_2</span> <span class="o">=</span> <span class="mf">1.0481650186930753</span>
+<span class="n">z9_2</span> <span class="o">=</span> <span class="mf">0.7709432938460119</span>
+<span class="n">z10_2</span> <span class="o">=</span> <span class="mf">0.8846995034714752</span>
+<span class="n">z11_2</span> <span class="o">=</span> <span class="mf">1.3011546553413305</span>
+<span class="n">z6_3</span> <span class="o">=</span> <span class="mf">1.8764409342160242</span>
+<span class="n">z11_3</span> <span class="o">=</span> <span class="mf">0.4108768262121927</span>
+<span class="n">z12_3</span> <span class="o">=</span> <span class="mf">1.0071582788266598</span>
+<span class="n">z13_3</span> <span class="o">=</span> <span class="mf">1.0745489499032588</span>
+<span class="n">z14_3</span> <span class="o">=</span> <span class="mf">1.08774425713769</span>
+<span class="n">dd_1</span> <span class="o">=</span> <span class="mf">14.99999996837727</span>
+<span class="n">SP_1</span><span class="p">:</span> <span class="n">fmin</span><span class="o">=</span> <span class="p">[</span><span class="mf">14.99999996837727</span><span class="p">],</span> <span class="n">hmin</span><span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">0.4857941233010683</span><span class="p">,</span> <span class="o">-</span><span class="mf">2.6165797838650917e-05</span><span class="p">]</span>
+<span class="n">SP_2</span><span class="p">:</span> <span class="n">fmin</span><span class="o">=</span> <span class="p">[</span><span class="mf">2.3982896753678857</span><span class="p">],</span> <span class="n">hmin</span><span class="o">=</span> <span class="p">[</span><span class="mf">3.1621576690454845e-08</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.00010216561395548496</span><span class="p">]</span>
+<span class="n">SP_3</span><span class="p">:</span> <span class="n">fmin</span><span class="o">=</span> <span class="p">[</span><span class="mf">1.8764409342160242</span><span class="p">],</span> <span class="n">hmin</span><span class="o">=</span> <span class="p">[</span><span class="mf">3.162211648088942e-08</span><span class="p">,</span> <span class="o">-</span><span class="mf">4.008740894789753e-09</span><span class="p">]</span>
+<span class="n">P_main</span><span class="p">:</span> <span class="n">fmin</span><span class="o">=</span> <span class="p">[</span><span class="mf">14.99999996837727</span><span class="p">],</span> <span class="n">hmax</span><span class="o">=</span> <span class="o">-</span><span class="mf">2.6165797838650917e-05</span>
+<span class="n">Final</span> <span class="n">obj</span> <span class="n">value</span> <span class="n">of</span> <span class="n">the</span> <span class="n">main</span> <span class="n">problem</span><span class="p">:</span>
+<span class="p">[</span><span class="mf">14.99999996837727</span><span class="p">]</span>
+<span class="n">For</span> <span class="n">z11_3</span> <span class="n">to</span> <span class="n">z11_2</span><span class="p">,</span> <span class="n">using</span> <span class="n">z11_3</span> <span class="n">will</span> <span class="n">make</span> <span class="n">h_sp2</span> <span class="o">=</span> <span class="p">[</span><span class="mf">6.067750061945379</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.014480830449391968</span><span class="p">]</span>
+<span class="n">For</span> <span class="n">z11_3</span> <span class="n">to</span> <span class="n">z11_2</span><span class="p">,</span> <span class="n">using</span> <span class="n">z11_2</span> <span class="n">will</span> <span class="n">make</span> <span class="n">h_sp3</span> <span class="o">=</span> <span class="p">[</span><span class="mf">3.097329036049318</span><span class="p">,</span> <span class="mf">4.059378570979726</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="benchmarking.html" class="btn btn-neutral float-left" title="Benchmarking" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="DMDO.html" class="btn btn-neutral float-right" title="DMDO package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright Ahmed Bayoumy, Read the Docs, Inc. &amp; contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

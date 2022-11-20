@@ -1,0 +1,7 @@
+Benchmarking
+############
+This section shows benchmarking results of running ``DMDO-1.3.0`` on selected problems from the literature.
+
+Results
+-------
+TBD

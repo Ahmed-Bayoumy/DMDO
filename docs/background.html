@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Background &mdash; Read the Docs DMDO 1.3.0 documentation</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/proof.css" type="text/css" />
+      <link rel="stylesheet" href="_static/proof.css" type="text/css" />
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script src="_static/proof.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.js"></script>
+        <script async="async" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script src="_static/katex_autorenderer_background.js"></script>
+        <script src="_static/debug.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Benchmarking" href="benchmarking.html" />
+    <link rel="prev" title="Welcome to DMDO’s documentation!" href="index.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> Read the Docs DMDO
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Technical Documentation</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Background</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#when-to-use-dmdo">When to use DMDO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#atc-formulation">ATC formulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#nhatc-formulation">NHATC formulation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#admm-coordinator">ADMM coordinator</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#defining-inconsistencies">Defining inconsistencies</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#nhatc-main-algorithm">NHATC main algorithm</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#mdo-setup">MDO setup</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#variable-declaration">Variable declaration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#disciplinary-analyses">Disciplinary analyses</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#multidisciplinary-analysis">Multidisciplinary analysis</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#id10">ADMM coordinator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#subproblem-j">Subproblem <cite>j</cite></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#mdo">MDO</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#results-display">Results display</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#multipliers-update">Multipliers update</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#inner-loop">Inner loop</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#coordination-loop">Coordination-loop</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="benchmarking.html">Benchmarking</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Demo Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
+</ul>
+<p class="caption" role="heading"><span class="caption-text">Code Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="DMDO.html">DMDO package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="indicesAndTables.html">Indices and tables</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Read the Docs DMDO</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Background</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/background.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="background">
+<h1>Background<a class="headerlink" href="#background" title="Permalink to this headline"></a></h1>
+<p>Engineering systems are often intrinsically decomposable such that they can be developed following a decomposition paradigm. The system decomposed components can be severally developed. This allows optimal system design problem to be decomposed into subproblems, each of which is associated with a system component. Solving these optimization subproblems autonomously requires a coordination scheme to account for systems interaction and to ensure the consistency and optimality of a system-level design.</p>
+<figure class="align-center" id="id11">
+<span id="f0"></span><a class="reference internal image-reference" href="_images/MDO.png"><img alt="_images/MDO.png" src="_images/MDO.png" style="width: 700px;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 1 </span><span class="caption-text">Interdisciplinary interactions</span><a class="headerlink" href="#id11" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>Coordination methods used for distributed multidisciplinary design optimization (MDO) include penalty-based decomposition <span id="id1">[<a class="reference internal" href="index.html#id9" title="Victor DeMiguel and Walter Murray. A local convergence analysis of bilevel decomposition algorithms. Optimization and Engineering, 7(2):99–133, 2006.">1</a>, <a class="reference internal" href="index.html#id10" title="Victor DeMiguel and Francisco J Nogales. On decomposition methods for a class of partially separable nonlinear programs. Mathematics of Operations Research, 33(1):119–139, 2008.">2</a>]</span>, bilevel integrated system synthesis <span id="id2">[<a class="reference internal" href="index.html#id6" title="Jaroslaw Sobieszczanski-Sobieski, Jeremy S Agte, and Robert R Sandusky Jr. Bilevel integrated system synthesis. AIAA journal, 38(1):164–172, 2000.">3</a>, <a class="reference internal" href="index.html#id7" title="Jaroslaw Sobieszczanski-Sobieski, Troy D Altus, Matthew Phillips, and Robert Sandusky. Bilevel integrated system synthesis for concurrent and distributed processing. AIAA journal, 41(10):1996–2003, 2003.">4</a>]</span>, collaborative optimization <span id="id3">[<a class="reference internal" href="index.html#id2" title="Robert David Braun. Collaborative optimization: an architecture for large-scale distributed design. Stanford University, 1996.">5</a>, <a class="reference internal" href="index.html#id3" title="Robert D Braun, Arlene A Moore, and Ilan M Kroo. Collaborative approach to launch vehicle design. Journal of spacecraft and rockets, 34(4):478–486, 1997.">6</a>, <a class="reference internal" href="index.html#id4" title="JiGuan G Lin. Analysis and enhancement of collaborative optimization for multidisciplinary design. AIAA journal, 42(2):348–360, 2004.">7</a>, <a class="reference internal" href="index.html#id5" title="Brian D Roth and Ilan M Kroo. Enhanced collaborative optimization: a decomposition-based method for multidisciplinary design. In International Design Engineering Technical Conferences and Computers and Information in Engineering Conference, volume 43253, 927–936. 2008.">8</a>]</span>, quasi-separable decomposition <span id="id4">[<a class="reference internal" href="index.html#id8" title="Raphael T Haftka and Layne T Watson. Multidisciplinary design optimization with quasiseparable subsystems. Optimization and Engineering, 6(1):9–20, 2005.">9</a>]</span> and alternating directions method of multipliers (ADMM) <span id="id5">[<a class="reference internal" href="index.html#id11" title="Simon Tosserams, LF Pascal Etman, and JE Rooda. An augmented lagrangian decomposition method for quasi-separable problems in mdo. Structural and Multidisciplinary Optimization, 34(3):211–227, 2007.">10</a>, <a class="reference internal" href="index.html#id12" title="Simon Tosserams, LFP Etman, and JE Rooda. Augmented lagrangian coordination for distributed optimal design in mdo. International journal for numerical methods in engineering, 73(13):1885–1910, 2008.">11</a>, <a class="reference internal" href="index.html#id13" title="S Tosserams, LFP Etman, and JE Rooda. Block-separable linking constraints in augmented lagrangian coordination. Structural and Multidisciplinary Optimization, 37(5):521–527, 2009.">12</a>]</span>. We will focus on the analytical target cascading (ATC) method, which, according to the classification in <span id="id6">[<a class="reference internal" href="index.html#id17" title="Simon Tosserams, LF Pascal Etman, and JE Rooda. A classification of methods for distributed system optimization based on formulation structure. Structural and Multidisciplinary Optimization, 39(5):503–517, 2009.">13</a>]</span>, is an alternating method with closed design constraints and open consistency constraints.</p>
+<p>ATC was motivated by translating system-level design targets to design specifications for the subsystems (components) that constitute the system <span id="id7">[<a class="reference internal" href="index.html#id18" title="Nestor Michelena, Hyung Min Kim, and PY Papalambros. A system partitioning and optimization approach to target cascading. In Proceedings of the 12th International Conference on Engineering Design, volume 2, 1109–1112. Munich, 1999.">14</a>, <a class="reference internal" href="index.html#id19" title="Hyung Min Kim, Nestor F Michelena, Panos Y Papalambros, and Tao Jiang. Target cascading in optimal system design. J. Mech. Des., 125(3):474–480, 2003.">15</a>]</span>. Design targets are cascaded using a hierarchical problem decomposition such that subproblems, associated with the components of the system, not only determine targets for their children, but also compute responses to targets they receive and communicate these back to their parents, as depicted in <a class="reference internal" href="#f1"><span class="std std-numref">Fig. 2</span></a>. The objective of a subproblem is to minimize the deviations between the target-response pairs while maintaining feasibility with respect to its local design constraints <span id="id8">[<a class="reference internal" href="index.html#id20" title="S Tosserams, Michael Kokkolaras, LFP Etman, and JE Rooda. A nonhierarchical formulation of analytical target cascading. Journal of Mechanical Design, 2010.">16</a>]</span>.</p>
+<figure class="align-center" id="id12">
+<span id="f1"></span><a class="reference internal image-reference" href="_images/t_r.png"><img alt="_images/t_r.png" src="_images/t_r.png" style="width: 150px;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 2 </span><span class="caption-text">Target-response coupling between the parent subproblem <span class="math notranslate nohighlight">\(p_{i}\)</span> and its child subproblem <span class="math notranslate nohighlight">\(p_{j}\)</span>.</span><a class="headerlink" href="#id12" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>The conventional ATC formulation uses a hierarchical problem decomposition paradigm to decompose the problem into subproblems. The term hierarchical here refers to the functional dependency among system components; responses of high-level components in the hierarchy depend on responses of low-level components in the hierarchy, but not the converse, see <a class="reference internal" href="#f2"><span class="std std-numref">Fig. 3</span></a> (a). However, that might won’t work for coordinating subproblems that do not have a hierarchical decomposition structure. For example, MDO problems are often composed of subproblems governed by analyses that have no hierarchical pattern, see <a class="reference internal" href="#f2"><span class="std std-numref">Fig. 3</span></a> (b). On top of that, the functions of decomposed optimal system design subproblems might depend on variables of more than one subproblem, as shown in <a class="reference internal" href="#f2"><span class="std std-numref">Fig. 3</span></a> (c). Such coupling functions usually represent a system attribute such as mass, cost, volume, or power. Coordinating system-wide requirements using the hierarchical ATC formulation requires the introduction of at least as many target-response pairs as there are subproblems.</p>
+<figure class="align-center" id="id13">
+<span id="f2"></span><a class="reference internal image-reference" href="_images/ATC_FD.png"><img alt="_images/ATC_FD.png" src="_images/ATC_FD.png" style="width: 700px;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 3 </span><span class="caption-text">Functional dependence structure of the original and proposed ATC formulations: The arrows indicate the flow of subproblem responses; the shaded boxes are used to represent the dependence of system-wide functions on subproblem variables.</span><a class="headerlink" href="#id13" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>Nonhierarchical analytical target cascading (NHATC) is an extension to ATC that aims to include nonhierarchical target-response coupling among subproblems so that functional dependencies in nonhierarchical problem decomposition can be handled by the ATC process while preserving the unique target-response coupling structure that distinguishes ATC from other coordination methods.</p>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline"></a></h2>
+<p>As the complexity of engineering systems grows, the engineering design task becomes more challenging due to distributed design processes that mostly rely on big historical data and/or experts opinion. Multidisciplinary design optimization (MDO) aims at leveraging system’s performance that relies on the evaluated design criteria of several disciplines and processes. MDO is critical to coordinating concurrent analysis and design activities in order to account for and exploit the interactions of multiple physics-based engineering disciplines such as aerodynamics, structures, thermodynamics, etc., as well as the disciplines pertinent to life-cycle aspects. For instance, <a class="reference internal" href="#f3"><span class="std std-numref">Fig. 4</span></a> shows the coupling relationships among various interacting disciplines in the design process of the supersonic business jet system that includes recursive workflows, which usually don’t converge, and shared design variables.</p>
+<figure class="align-center" id="id14">
+<span id="f3"></span><a class="reference internal image-reference" href="_images/realistic_MDO.png"><img alt="_images/realistic_MDO.png" src="_images/realistic_MDO.png" style="width: 450px;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 4 </span><span class="caption-text">Data dependencies for business jet problem. Single arrows indicate direction of response flow, and double arrows indicate shared variables.</span><a class="headerlink" href="#id14" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+</section>
+<section id="when-to-use-dmdo">
+<h2>When to use DMDO<a class="headerlink" href="#when-to-use-dmdo" title="Permalink to this headline"></a></h2>
+<p>Solving one large MDO problem all-in-one works great if the multidisciplinary (system) analysis (MDA) converges, so the following checklist will help you to decide whether using DMDO is a recommended choice.</p>
+<ul class="simple">
+<li><p>For single- and multi-objective studies, use DMDO if you deal with any of the following situations</p>
+<ul>
+<li><p>If the MDA process doesn’t converge (MDA typically does not converge for tightly-coupled systems)</p></li>
+<li><p>If the optimization algorithm used cannot exploit available disciplinary knowledge (if any)</p></li>
+<li><p>If the optimization algorithm cannot handle large-diemnsional design space</p></li>
+</ul>
+</li>
+<li><p>For multi-objective studies, use DMDO if you deal with any of the following situations</p>
+<ul>
+<li><p>If the optimization algorithm cannot deal with large-dimensional functions space</p></li>
+<li><p>If the unrealistic designs dominate the Pareto plot</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="atc-formulation">
+<h2>ATC formulation<a class="headerlink" href="#atc-formulation" title="Permalink to this headline"></a></h2>
+<p>Before we move ahead to NHATC formulation, let us give a glimpse to the ATC formulation. We start with the following definitions of design targets and responses</p>
+<div class="admonition important">
+<p class="admonition-title">Definition: Target and response variables</p>
+<p>Let the subproblem <span class="math notranslate nohighlight">\(\mathcal{p}_{ij}\)</span> at the level <span class="math notranslate nohighlight">\(i\)</span> be the parent subproblem for its children subproblems <span class="math notranslate nohighlight">\(\mathcal{p}_{(i+1)k} | k \in \mathcal{C}_{ij}\)</span>. The design targets <span class="math notranslate nohighlight">\({\bf t}_{(i+1)k}\)</span> are computed by <span class="math notranslate nohighlight">\(\mathcal{p}_{ij}\)</span> and translated to its children <span class="math notranslate nohighlight">\(\mathcal{p}_{(i+1)k}\)</span>; in turn, the children <span class="math notranslate nohighlight">\(\mathcal{p}_{(i+1)k}\)</span> compute responses <span class="math notranslate nohighlight">\({\bf r}_{(i+1)k}\)</span> and return them back to <span class="math notranslate nohighlight">\(\mathcal{p}_{ij}\)</span>.</p>
+</div>
+<p>Responses of higher-level components are functions of responses of lower-level components, hierarchical ATC aims at minimizing the gap between what is required by higher-level components and what is achievable by lower-level components. The hierarchical augmented Lagrangian ATC subproblem can now be formulated as</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+     \left\{
+     \begin{array}{l}
+     \text{min} \,\, f_{ij}(\bar{{\bf x}}_{ij}) + \phi({\bf t}_{ij}-{\bf r}_{ij}) + \sum_{k \in \mathcal{C}_{ij}} \phi({\bf t}_{(i+1)k}-{\bf r}_{(i+1)k}), \\
+     \text{w.r.t}\,\, \bar{{\bf x}}_{ij}, \\
+     \text{s.t.}\,\, {\bf g}_{ij}(\bar{{\bf x}}_{ij}) \leq {\bf 0}, \\
+     \,\,\,\,\,\,\,\,\, {\bf h}_{ij}(\bar{{\bf x}}_{ij}) = {\bf 0}, \\
+     \text{with}\,\, {\bf r}_{ij}={\bf a}_{ij}({\bf x}_{ij}, {\bf t}_{(i+1)k_{1}}, ..., {\bf t}_{(i+1)k_{c_{ij}}}), \\
+     \,\,\,\,\,\,\,\,\,\,\, \bar{{\bf x}}_{ij} = [{\bf x}_{ij}, {\bf r}_{ij}, {\bf t}_{(i+1)k_{1}}, ..., {\bf t}_{(i+1)k_{c_{ij}}}],
+     \end{array}
+     \right.
+\tag{$\mathcal{p}_{ij}$}
+\end{align*}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\bar{{\bf x}}_{ij}\)</span> are the optimization variables for subproblem <span class="math notranslate nohighlight">\(j\)</span> at level <span class="math notranslate nohighlight">\(i\)</span>, <span class="math notranslate nohighlight">\({\bf x}_{ij}\)</span> are local design variables, and <span class="math notranslate nohighlight">\({\bf r}_{ij}\)</span> are response variables related to the targets <span class="math notranslate nohighlight">\({\bf t}_{ij}\)</span> computed by the parent of subproblem <span class="math notranslate nohighlight">\(j\)</span>. Subproblem <span class="math notranslate nohighlight">\(j\)</span> computes targets <span class="math notranslate nohighlight">\({\bf t}_{(i+1)k}\)</span> for the set of its children <span class="math notranslate nohighlight">\(\mathcal{{C}_{ij}}\)</span>; in turn, the children compute responses <span class="math notranslate nohighlight">\({\bf r}_{(i+1)k}\)</span> and return them to the parent. The function <span class="math notranslate nohighlight">\(f_{ij}\)</span> is the local objective, and vector functions <span class="math notranslate nohighlight">\({\bf g}_{ij}\)</span> and <span class="math notranslate nohighlight">\({\bf h}_{ij}\)</span> represent local inequality and equality constraints, respectively.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>A local objective function and local constraints are not required for the ATC process.</p>
+</div>
+<p>Functions <span class="math notranslate nohighlight">\({\bf a}_{ij}\)</span> represent the analyses required to compute responses <span class="math notranslate nohighlight">\({\bf r}_{ij}\)</span>. The augmented Lagrangian function <span class="math notranslate nohighlight">\(\phi\)</span> relaxes the consistency equality constraints <span class="math notranslate nohighlight">\({\bf c}_{ij}={\bf t}_{ij}-{\bf r}_{ij}={\bf 0}\)</span> as follows:</p>
+<div class="math notranslate nohighlight">
+\[\phi({\bf t}_{ij}-{\bf r}_{ij}) = {\bf v}^{T}_{ij}({\bf t}_{ij}-{\bf r}_{ij}) + ||{\bf w}^{T}_{ij}\circ  ({\bf t}_{ij}-{\bf r}_{ij})||^{2}_{2}\]</div>
+<p>where <span class="math notranslate nohighlight">\({\bf v}_{ij}\)</span> and <span class="math notranslate nohighlight">\({\bf w}_{ij}\)</span> are penalty parameters selected by an external mechanism. The symbol <span class="math notranslate nohighlight">\(\circ\)</span> represents the Hadamard product: an entry-wise multiplication of two vectors, such that <span class="math notranslate nohighlight">\({\bf a}\circ{\bf b}=[a_{1},...,a_{n}]^{T}\circ[b_{1},...,b_{n}]^{T}=[a_{1}b_{1},...,a_{n}b_{n}]^{T}\)</span>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The hierarchical ATC formulation allows negotiation only between parents and children. NHATC formulation allows that subproblems can send and receive targets to and from, respectively, any other subproblem. In this formulation, subproblems have <em>neighbors</em> among which targets and responses are communicated.</p>
+</div>
+</section>
+<section id="nhatc-formulation">
+<h2>NHATC formulation<a class="headerlink" href="#nhatc-formulation" title="Permalink to this headline"></a></h2>
+<p>NHATC formulation is nonhierarchical, so the index <span class="math notranslate nohighlight">\(i\)</span> can be dropped. However, we do maintain a double index notation, which now denotes the direction of communication between subproblem <span class="math notranslate nohighlight">\(j\)</span> and its neighbor <span class="math notranslate nohighlight">\(n\)</span>. The first index denotes the sending subproblem and the second index denotes the receiving subproblem.</p>
+<div class="admonition important">
+<p class="admonition-title">Definition: Subproblem and neighbors</p>
+<p>Let <span class="math notranslate nohighlight">\(\mathcal{T}_{j}\)</span> be the set of neighbors for which subproblem <span class="math notranslate nohighlight">\(j\)</span> sets targets, and let <span class="math notranslate nohighlight">\(\mathcal{R}_{j}=\cup^{M}_{n=1}{j|j\in\mathcal{T}_{n}}\)</span> be the set of neighbors from which subproblem <span class="math notranslate nohighlight">\(j\)</span> receives targets (i.e., the set of neighbors for which subproblem <span class="math notranslate nohighlight">\(j\)</span> computes responses). Define <span class="math notranslate nohighlight">\({\bf t}_{nj}\)</span> the targets that subproblem <span class="math notranslate nohighlight">\({j}\)</span> receives from its neighbor <span class="math notranslate nohighlight">\(n\)</span>. Define <span class="math notranslate nohighlight">\({\bf r}_{jn}\)</span> are the responses computed by subproblem <span class="math notranslate nohighlight">\(j\)</span> to match the targets from neighbor <span class="math notranslate nohighlight">\(n\)</span>.</p>
+</div>
+<p>Furthermore, <a class="reference internal" href="#f4"><span class="std std-numref">Fig. 5</span></a> illustrates the target-response pairs between subproblem <span class="math notranslate nohighlight">\(j\)</span> and both types of neighbors.</p>
+<figure class="align-center" id="id15">
+<span id="f4"></span><a class="reference internal image-reference" href="_images/neighbors.png"><img alt="_images/neighbors.png" src="_images/neighbors.png" style="width: 250px;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 5 </span><span class="caption-text">Nonhierarchical target and response flow between subproblem <span class="math notranslate nohighlight">\(j\)</span> and its neighbors</span><a class="headerlink" href="#id15" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>We have two sets of consistency constraints related to subproblem <span class="math notranslate nohighlight">\(j\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}{\bf c}_{nj} = {\bf t}_{nj}-{\bf r}_{jn} = {\bf 0}, \,\,\,\, n\in \mathcal{R}_{j} \\
+{\bf c}_{jm} = {\bf t}_{nj}-{\bf r}_{jn} = {\bf 0}, \,\,\,\, m\in \mathcal{T}_{j}\end{split}\]</div>
+<p>The NHATC subproblem formulation is</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+     \left\{
+     \begin{array}{l}
+     \text{min} \,\, f_{j}(\bar{{\bf x}}_{j}) + \phi({\bf t}_{nj}-{\bf r}_{jn}) + \sum_{m \in \mathcal{R}_{j}} \phi({\bf t}_{jm}-{\bf r}_{mj}), \\
+     \text{w.r.t}\,\, \bar{{\bf x}}_{j}, \\
+     \text{s.t.}\,\, {\bf g}_{j}(\bar{{\bf x}}_{j}) \leq {\bf 0}, \\
+     \,\,\,\,\,\,\,\,\, {\bf h}_{j}(\bar{{\bf x}}_{j}) = {\bf 0}, \\
+     \text{with}\,\, {\bf r}_{jn}={\bf S}_{jn}{\bf a}_{j}({\bf x}_{j}, {\bf t}_{jm}|m \in \mathcal{T}_{j}),\,\,\, n\in \mathcal{R}_{j} \\
+     \,\,\,\,\,\,\,\,\,\,\, \bar{{\bf x}}_{j} = [{\bf x}_{j}, {\bf r}_{jn}|n\in\mathcal{R}_{j}, {\bf t}_{jm}|m \in \mathcal{T}_{j}],
+     \end{array}
+     \right.
+\tag{$\mathcal{p}_{j}$}
+\end{align*}\end{split}\]</div>
+</section>
+<section id="admm-coordinator">
+<h2>ADMM coordinator<a class="headerlink" href="#admm-coordinator" title="Permalink to this headline"></a></h2>
+<p>Now we explain how the ADMM algorithm works and how it penalizes violated inconsistency open constraints.</p>
+<section id="defining-inconsistencies">
+<h3>Defining inconsistencies<a class="headerlink" href="#defining-inconsistencies" title="Permalink to this headline"></a></h3>
+<p>The scaled inconsistencies between each pair of linked variables are concatenated in the vector <span class="math notranslate nohighlight">\({\bf q} \in {\bf R}^{n_{q}}\)</span>.</p>
+<p>We use both <span class="math notranslate nohighlight">\({\bf L}\)</span> and <span class="math notranslate nohighlight">\({\bf J}\)</span> attributes to build the linking map <span class="math notranslate nohighlight">\({\bf N}_{j} = [\bar{{\bf I}}_{j}, \underline{{\bf I}}_{j}]\)</span> among variables of the MDO problem. In DMDO, the function responsible on building the linker matrix called <cite>set_pair</cite> which is one of the <cite>SubProblem</cite> class methods. <a class="reference internal" href="#a1"><span class="std std-numref">Algorithm 1</span></a> shows how the linker matrix is built in DMDO.</p>
+<div class="pseudocode" id="id16">
+<span id="a1"></span><div class="pseudocode-caption">
+</div><div class="pseudocode-content">
+<pre id="1" style="display:hidden;">
+             \begin{algorithm}
+ \caption{Linker matrix}
+ \begin{algorithmic}
+ \STATE{Given ${\bf L}_{j}$, ${\bf D}_{j}$, ${\bf C}_{j}$, ${\bf N}_{j}$, $i$}
+ \PROCEDURE{Build-linker-matrix}{}
+     \STATE{$\bar{\bf l}_{j}=\{\}$ and $\underline{\bf l}_{j}=\{\}$}
+     \FOR{$k \gets 1$ \textbf{to} $n_{\bf x}$}
+       \IF{${\bf D}_{j}[k] = i \land  {\bf C}_{j}[k] \neq 0 \land {\bf L}_{j}[k] \notin \bar{\bf l}_{j}$}
+         \STATE{$\bar{\bf l}_{j}[k] = {\bf D}_{j}[k]$}
+         \FOR{$r \gets 1$ \textbf{to} $n_{\bf x}$}
+           \IF{${\bf D}_{j}[r] \neq i \land {\bf L}_{j}[r] \notin \underline{\bf l}_{j} \land {\bf N}_{j}[i] = {\bf N}_{j}[r]$}
+             \STATE{$\underline{\bf l}_{j}[r] = {\bf L}_{j}[r]$}
+           \ENDIF
+         \ENDFOR
+       \ENDIF
+     \ENDFOR
+ \ENDPROCEDURE
+ \end{algorithmic}
+ \end{algorithm}
+        </pre></div></div><p>We also need to build a scaling vector <span class="math notranslate nohighlight">\(\mathbf{s} \in \mathbb{R}^{n_{x}}_{+} \forall i \in \{1...n_{x}\}\)</span> where</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+    {\bf s}[i]  =
+    \left\{
+    \begin{array}{l}
+    1 &amp;&amp; \text{if} \,\,\, \bar{{\bf x}}[i]-\underline{{\bf x}}[i]\in \{0, \infty\}\\
+    \bar{{\bf x}}[i]-\underline{{\bf x}}[i] &amp;&amp; \text{otherwise.}
+    \end{array}
+    \right.
+\end{align*}\end{split}\]</div>
+<p>If one of the variables is not bounded, then scaling cannot be applied. Now we can define the inconsistency vector</p>
+<div class="math notranslate nohighlight">
+\[\begin{align*}
+       \begin{array}{l}
+       \mathbf{q}(x) = (\mathbf{x}[\bar{\mathbf{I}}]-\mathbf{x}[\underline{\mathbf{I}}]) \oslash \frac{\mathbf{s}[\bar{\mathbf{I}}]+\mathbf{s}[\underline{\mathbf{I}}]}{2},
+       \end{array}
+\end{align*}\]</div>
+<p><span class="math notranslate nohighlight">\(\mathbf{q} \in \mathbb{R}^{n_{q}}\)</span>. Now, we need to define the single penalty function <span id="id9">[<a class="reference internal" href="index.html#id20" title="S Tosserams, Michael Kokkolaras, LFP Etman, and JE Rooda. A nonhierarchical formulation of analytical target cascading. Journal of Mechanical Design, 2010.">16</a>]</span></p>
+<div class="math notranslate nohighlight">
+\[\begin{align*}
+        \begin{array}{l}
+        \phi(\mathbf{q}) = \mathbf{v}_{t}\mathbf{q} + ||\mathbf{w}_{t}\circ\mathbf{q}||^{2}_{2}
+        \end{array}
+\end{align*}\]</div>
+<p>The penalty parameters <span class="math notranslate nohighlight">\(\mathbf{v}_{t} \in \mathbb{R}^{n_{q}}\)</span> and <span class="math notranslate nohighlight">\(\mathbf{w}_{t} \in \mathbb{R}^{n_{q}}\)</span> are initialized as</p>
+<div class="math notranslate nohighlight">
+\[\begin{align*}
+        \begin{array}{l}
+        \mathbf{v}_{t} = [0,0,...,0]
+        \end{array}
+\end{align*}\]</div>
+<div class="math notranslate nohighlight">
+\[\begin{align*}
+        \begin{array}{l}
+        \mathbf{w}_{t} = [1,1,...,1]
+        \end{array}
+\end{align*}\]</div>
+<p>These parameters are updated at the end of the coordination loop using the method of multipliers scheme</p>
+<div class="math notranslate nohighlight">
+\[\begin{align*}
+        \begin{array}{l}
+        \mathbf{v}_{t+1} = \mathbf{v}_{t} + 2 \mathbf{w}_{t} \circ \mathbf{w}_{t}\mathbf{q}_{t}
+        \end{array}
+\end{align*}\]</div>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+        \mathbf{w}_{t+1}[l] =
+        \left\{
+        \begin{array}{l}
+        \mathbf{w}_{t}[l] &amp;&amp; \text{if} \,\,\, |\mathbf{q}_{t}[l]| \leq \gamma |\mathbf{q}_{t-1}[l]|\\
+        \beta \mathbf{w}_{t}[l] &amp;&amp; \text{otherwise}
+        \end{array}
+        \right. &amp;&amp; \forall l\in \{1...n_{q}\}
+\end{align*}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\beta &gt; 1\)</span> and <span class="math notranslate nohighlight">\(0 \leq \gamma \leq 1\)</span> are fixed parameters for the entire ADMM coordinator.</p>
+<p>The coordinator is constructed as shown in the following code block.</p>
+</section>
+</section>
+<section id="nhatc-main-algorithm">
+<h2>NHATC main algorithm<a class="headerlink" href="#nhatc-main-algorithm" title="Permalink to this headline"></a></h2>
+<p>In this section we will demonstrate how each step of the NHATC algorithm, shown in <a class="reference internal" href="#a2"><span class="std std-numref">Algorithm 2</span></a>, works and how it is implemented in DMDO.</p>
+<div class="pseudocode" id="id17">
+<span id="a2"></span><div class="pseudocode-caption">
+</div><div class="pseudocode-content">
+<pre id="2" style="display:hidden;">
+             \begin{algorithm}
+ \caption{NHATC}
+ \begin{algorithmic}
+ \STATE{Given $f : \mathbb{R}^{n} \mapsto  \mathbb{R} \cup \{ \infty \}$, variables declaration, initial values for the ADMM penalties, a starting point $x^{0} \in \Omega$ and extreme barrier function $f_{\Omega}(x)$}
+ \PROCEDURE{MDO-Setup}{}
+     \STATE{Group the variables in a single vector ${\bf x}$ where each variable is an instantiation of a data class that holds defined variables attributes}
+     \STATE{Calculate the scaling vector ${\bf S}$}
+     \STATE{Calculate the pairing/linking matrix using Algorithm 1.}
+     \STATE{Define the disciplinary analyses $[{\bf y}_{j}] \leftarrow A_{j}({\bf x}[{\bf D}_{j}])$.}
+     \STATE{Define the multidisciplinary analysis workflows included in each subproblem $[\mathbf{Y}_{j}] \leftarrow p_{\text{MDA}_{j}}(\mathbf{y}_{j}, \mathbf{x}[\mathbf{D}_{j}])$.}
+     \STATE{Define subproblems $[f_{j}, \mathbf{g}_{j}, \mathbf{h}_{j}, y_{c_{j}}] \leftarrow p_{j}(\mathbf{Y}_{j}, \mathbf{x}[\mathbf{D}_{j}])$.}
+     \STATE{Define the MDO problem.}
+ \ENDPROCEDURE
+ \PROCEDURE{Update}{}
+     \STATE{Update the ADMM penalty parameters ${\bf w}$ and ${\bf v}$ based on the selected update scheme.}
+ \ENDPROCEDURE
+ \PROCEDURE{Inner-loop}{}
+     \FOR{$j\leq n_{\text{subproblems}}$}
+         \STATE{Get the linker matrix for the subproblem $p_{j}$}
+         \STATE{Get the target variables ${\bf t}_{jm}$ for the subproblem $p_{j}$}
+         \STATE{Prepare the design vector for $p_{j}$ based on ${\bf t}_{jm}, {\bf r}_{jn}, {\bf x}_{j}$  for the subproblem $p_{j}$}
+         \STATE{Set the solver input parameters and options based on the optimization method selected}
+         \STATE{Solve $p_{j}$ where open inconsistency constraints are calculated and penalized within the evaluator callable under the subproblem class}
+     \ENDFOR
+ \ENDPROCEDURE
+ \PROCEDURE{Coordination-loop}{}
+     \WHILE{\TRUE}
+           \STATE{${\bf x}_{i} \gets {\bf x}_{i+1}$}
+           \STATE{Go to Inner-loop()}
+           \STATE{Update the design point with the best solution found from the inner loop ${\bf x}_{i+1} \gets {\bf x}^{*}$}
+           \STATE{Calculate global inconsistency vector ${\bf q} = ({\bf x}_{i}-{\bf x}_{i+1}) \oslash {\bf S}$}
+           \STATE{Go to Update()}
+           \STATE{Go to Terminate()}
+     \ENDWHILE
+ \ENDPROCEDURE
+ \PROCEDURE{Terminate}{}
+     \IF{$\text{max}({\bf q}({\bf x})) \geq \epsilon_{stop} \lor i \leq n_{\text{budget}}$}
+         \STATE $i \gets i+1$
+     \ELSE
+         \STATE stop
+     \ENDIF
+ \ENDPROCEDURE
+ \end{algorithmic}
+ \end{algorithm}
+        </pre></div></div><p>We will use a simple problem to demonstrate how the algorithm and its implementation work. The problem :math::<cite>mathcal{P}</cite> is defined as</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+    \left\{
+    \begin{array}{l}
+    \text{min} \,\, u+v+a+b, \\
+    \text{w.r.t}\,\, u,v,w, \\
+    \text{s.t.}\,\, a = \log(u) + \log(v) + \log(b), \\
+    \,\,\,\,\,\,\,\, b = u^{-1} + w^{-1} + a^{-1}, \\
+    \,\,\,\,\,\,\,\, w +b -10 \leq 0, \\
+    \,\,\,\,\,\,\,\, 0 \leq u,v,w,a,b \leq 10.
+    \end{array}
+    \right.
+\tag{$\mathcal{P}$}
+\end{align*}\end{split}\]</div>
+<p>The problem workflow is shown in <a class="reference internal" href="#f5"><span class="std std-numref">Fig. 6</span></a> while its partitioned flow is depicted in <a class="reference internal" href="#f6"><span class="std std-numref">Fig. 7</span></a>.</p>
+<figure class="align-center" id="id18">
+<span id="f5"></span><a class="reference internal image-reference" href="_images/basicMDO.png"><img alt="_images/basicMDO.png" src="_images/basicMDO.png" style="width: 250px;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 6 </span><span class="caption-text">Simple MDO workflow.</span><a class="headerlink" href="#id18" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<figure class="align-center" id="id19">
+<span id="f6"></span><a class="reference internal image-reference" href="_images/basic_partitioned.png"><img alt="_images/basic_partitioned.png" src="_images/basic_partitioned.png" style="width: 300px;" /></a>
+<figcaption>
+<p><span class="caption-number">Fig. 7 </span><span class="caption-text">Partitioned simple MDO problem.</span><a class="headerlink" href="#id19" title="Permalink to this image"></a></p>
+</figcaption>
+</figure>
+<p>The definition of subproblem 1 is</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+        \left\{
+        \begin{array}{l}
+        \text{min} \,\, u_{1} + v + a_{1} + b_{1} + \phi_{u}(u_{1}-u_{2}) + \phi_{a}(a_{1}-a_{2}) + \phi_{b}(b_{1}-b_{2}), \\
+        \text{w.r.t}\,\, u_{1},v,b_{1}, \\
+        \text{s.t.}\,\, a_{1} = \log(u_{1}) + \log(v_{1}) + \log(b_{1}), \\
+        \,\,\,\,\,\,\,\, 0 \leq u_{1},v,a_{1},b_{1} \leq 10,
+        \end{array}
+        \right.
+\tag{$\mathcal{p}_{1}$}
+\end{align*}\end{split}\]</div>
+<p>and subproblem 2 is</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+        \left\{
+        \begin{array}{l}
+        \text{min} \,\, \phi_{u}(u_{1}-u_{2}) + \phi_{a}(a_{1}-a_{2}) + \phi_{b}(b_{1}-b_{2}), \\
+        \text{w.r.t}\,\, u_{2},w,a_{2}, \\
+        \text{s.t.}\,\, b = u^{-1}_{2} + w^{-1} + a^{-1}_{2}, \\
+        \,\,\,\,\,\,\,\, w +b_{2} -10 \leq 0, \\
+        \,\,\,\,\,\,\,\, 0 \leq u_{2},w,a_{2},b_{2} \leq 10.
+        \end{array}
+        \right.
+\tag{$\mathcal{p}_{2}$}
+\end{align*}\end{split}\]</div>
+<section id="mdo-setup">
+<h3>MDO setup<a class="headerlink" href="#mdo-setup" title="Permalink to this headline"></a></h3>
+<p>In this step, we either define the MDO problem setup manually or we introduce a serialized definition from a <code class="docutils literal notranslate"><span class="pre">YAML</span></code> input file to DMDO to autobuild the problem. We will start with the manual setup and then will show a sample of the <code class="docutils literal notranslate"><span class="pre">YAML</span></code> input file.</p>
+</section>
+<section id="variable-declaration">
+<h3>Variable declaration<a class="headerlink" href="#variable-declaration" title="Permalink to this headline"></a></h3>
+<p>The MDO workflow shown in <a class="reference internal" href="#f6"><span class="std std-numref">Fig. 7</span></a> dictates that we have eight variables (after problem decomposition); two local variables <span class="math notranslate nohighlight">\(w, v\)</span> and six copies of coupling and shared variables <span class="math notranslate nohighlight">\(u_{1}, u_{2}, a_{1}, a_{2}, b_{1}, b_{2}.\)</span> So we start by regrouping those variables into a single variables vector</p>
+<div class="math notranslate nohighlight">
+\[\begin{align*}
+        \begin{array}{l}
+        \mathbf{x} = [u_{1}, v, a_{1}, b_{1}, u_{2}, w, b_{2}, b_{2}] \in \mathbb{R}^{n_{x}}.
+        \end{array}
+\end{align*}\]</div>
+<p>For each variable of <span class="math notranslate nohighlight">\({\bf x}\)</span>, we declare the following list of attributes:</p>
+<ul class="simple">
+<li><p><span class="math notranslate nohighlight">\(i\)</span>: Variable’s index where <span class="math notranslate nohighlight">\(i \in \{0,1,  ...,n_{x} \}\)</span></p></li>
+<li><p><span class="math notranslate nohighlight">\(\mathbf{J}\)</span>: List of subproblem indices; this list holds the index of the subproblem where the variable <span class="math notranslate nohighlight">\(x_{i}\)</span> appears in.</p></li>
+<li><p><span class="math notranslate nohighlight">\(\mathbf{N}\)</span>: List of variable names (In DMDO, we don’t assign the subproblem index to the variable name, so we introduce the variables copy by explicitly duplicating the name)</p></li>
+<li><p><span class="math notranslate nohighlight">\(n_{v}\)</span>: List of each variable’s dimensions</p></li>
+<li><p><span class="math notranslate nohighlight">\(\mathbf{C}_{t}\)</span>: List of coupling types; it holds the coupling type w.r.t to the subproblem index (not w.r.t the linked one)
+* Shared
+* Uncoupled
+* Feedforward
+* Feedback
+* Dummy</p></li>
+<li><p><span class="math notranslate nohighlight">\(\mathbf{L}\)</span>: List of subproblem links; the index of the subproblem that the variable is linked to; each variable can be assigned to a scalar integer value for a single link or a list of integer values for multiple links</p></li>
+<li><p><span class="math notranslate nohighlight">\(\mathbf{x}_{0}\)</span>: The initial design point</p></li>
+<li><p><span class="math notranslate nohighlight">\(\mathbf{S}\)</span>: List of scaling factors</p></li>
+<li><p><span class="math notranslate nohighlight">\(\bar{\mathbf{x}}\)</span>: Variable’s lower bound</p></li>
+<li><p><span class="math notranslate nohighlight">\(\underline{\mathbf{x}}\)</span>: Variable’s upper bound</p></li>
+</ul>
+<p>Without loss of generality, it is recommended to define scalar variables; however in <code class="docutils literal notranslate"><span class="pre">DMDO</span></code>, variables can be vectors of any length.
+Let’s see how we can declare variables attributes in <code class="docutils literal notranslate"><span class="pre">DMDO</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#  Variables setup</span>
+<span class="n">x</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">X</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">variableData</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="c1"># Define variable names</span>
+<span class="n">N</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;u&quot;</span><span class="p">,</span> <span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">,</span> <span class="s2">&quot;u&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;b&quot;</span><span class="p">]</span>
+<span class="n">nx</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+<span class="c1"># Subproblem indices: Indices should be non-zero</span>
+<span class="n">J</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span>
+<span class="c1"># Subproblems links</span>
+<span class="n">L</span> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="c1"># Coupling types</span>
+<span class="n">Ct</span> <span class="o">=</span> <span class="p">[</span><span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">SHARED</span><span class="p">,</span> <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">UNCOUPLED</span><span class="p">,</span> <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDFORWARD</span><span class="p">,</span>
+<span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDBACK</span><span class="p">,</span> <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">SHARED</span><span class="p">,</span> <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">UNCOUPLED</span><span class="p">,</span>
+<span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDBACK</span><span class="p">,</span> <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDFORWARD</span><span class="p">]</span>
+<span class="c1"># Lower bounds</span>
+<span class="n">lb</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.</span><span class="p">]</span><span class="o">*</span><span class="mi">8</span>
+<span class="c1"># Upper bounds</span>
+<span class="n">ub</span> <span class="o">=</span> <span class="p">[</span><span class="mf">10.</span><span class="p">]</span><span class="o">*</span><span class="mi">8</span>
+<span class="c1"># Baseline</span>
+<span class="n">x0</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.</span><span class="p">]</span><span class="o">*</span><span class="mi">8</span>
+<span class="c1"># Scaling</span>
+<span class="n">scaling</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">subtract</span><span class="p">(</span><span class="n">ub</span><span class="p">,</span><span class="n">lb</span><span class="p">)</span>
+
+<span class="c1"># Inconsistency scaling</span>
+<span class="n">Qscaling</span><span class="o">=</span><span class="p">[]</span>
+<span class="c1"># Create a dictionary for each variable</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nx</span><span class="p">):</span>
+  <span class="n">x</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;var</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;index&quot;</span><span class="p">:</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span>
+  <span class="s2">&quot;sp_index&quot;</span><span class="p">:</span> <span class="n">J</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+  <span class="sa">f</span><span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">N</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+  <span class="s2">&quot;dim&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+  <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="mf">0.</span><span class="p">,</span>
+  <span class="s2">&quot;coupling_type&quot;</span><span class="p">:</span> <span class="n">Ct</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+  <span class="s2">&quot;link&quot;</span><span class="p">:</span> <span class="n">L</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+  <span class="s2">&quot;baseline&quot;</span><span class="p">:</span> <span class="n">x0</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+  <span class="s2">&quot;scaling&quot;</span><span class="p">:</span> <span class="n">scaling</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+  <span class="s2">&quot;lb&quot;</span><span class="p">:</span> <span class="n">lb</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+  <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="n">x0</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+  <span class="s2">&quot;ub&quot;</span><span class="p">:</span> <span class="n">ub</span><span class="p">[</span><span class="n">i</span><span class="p">]}</span>
+  <span class="n">Qscaling</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="o">/</span><span class="n">scaling</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="mi">1</span><span class="o">/</span><span class="n">scaling</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span> <span class="ow">and</span> <span class="mi">1</span><span class="o">/</span><span class="n">scaling</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="k">else</span> <span class="mf">1.</span><span class="p">)</span>
+
+
+<span class="c1"># Instantiate the variableData class for each variable using its according dictionary</span>
+<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nx</span><span class="p">):</span>
+  <span class="n">X</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">variableData</span><span class="p">(</span><span class="o">**</span><span class="n">x</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;var</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]))</span>
+</pre></div>
+</div>
+</section>
+<section id="disciplinary-analyses">
+<h3>Disciplinary analyses<a class="headerlink" href="#disciplinary-analyses" title="Permalink to this headline"></a></h3>
+<p>After constructing the list of the <code class="docutils literal notranslate"><span class="pre">variablesData</span></code> class instantiations, then we can instantiate the <code class="docutils literal notranslate"><span class="pre">process</span></code> class of each disciplinary analysis (DA). For the sake of simplicity, we use callable functions to execute the analysis.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">A1</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+  <span class="n">LAMBDA</span> <span class="o">=</span> <span class="mf">0.0</span>
+  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)):</span>
+    <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mf">0.</span><span class="p">:</span>
+      <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-12</span>
+  <span class="k">return</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">LAMBDA</span><span class="p">)</span> <span class="o">+</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">LAMBDA</span><span class="p">)</span> <span class="o">+</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">+</span><span class="n">LAMBDA</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">A2</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+  <span class="n">LAMBDA</span> <span class="o">=</span> <span class="mf">0.0</span>
+  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)):</span>
+    <span class="k">if</span> <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mf">0.</span><span class="p">:</span>
+      <span class="n">x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1e-12</span>
+  <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="mf">1.</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">LAMBDA</span><span class="p">))</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="mf">1.</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">LAMBDA</span><span class="p">))</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="mf">1.</span><span class="p">,</span> <span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">+</span><span class="n">LAMBDA</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>We introduce the <code class="docutils literal notranslate"><span class="pre">variableData</span></code> along with the analysis callable functions to the DA <code class="docutils literal notranslate"><span class="pre">process</span></code> class instantiations:</p>
+<div class="math notranslate nohighlight">
+\[\begin{align*}
+        \begin{array}{l}
+        [\mathbf{y}_{j}] \leftarrow A_{j}(\mathbf{x}[\mathbf{D}_{j}]).
+        \end{array}
+\end{align*}\]</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Analyses setup; construct disciplinary analyses</span>
+<span class="n">DA1</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">DA</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">3</span><span class="p">]],</span>
+<span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">2</span><span class="p">]],</span>
+<span class="n">blackbox</span><span class="o">=</span><span class="n">A1</span><span class="p">,</span>
+<span class="n">links</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<span class="n">coupling_type</span><span class="o">=</span><span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDFORWARD</span>
+<span class="p">)</span>
+
+<span class="n">DA2</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">DA</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">6</span><span class="p">]],</span>
+<span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">7</span><span class="p">]],</span>
+<span class="n">blackbox</span><span class="o">=</span><span class="n">A2</span><span class="p">,</span>
+<span class="n">links</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="n">coupling_type</span><span class="o">=</span><span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDFORWARD</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="multidisciplinary-analysis">
+<h3>Multidisciplinary analysis<a class="headerlink" href="#multidisciplinary-analysis" title="Permalink to this headline"></a></h3>
+<p>The response outputs of <span class="math notranslate nohighlight">\(A_{j}(\mathbf{x}[\mathbf{D}_{j}])\)</span> will be used to evaluate the MDA processes of each MDO subproblem.</p>
+<div class="math notranslate nohighlight">
+\[\begin{align*}
+        \begin{array}{l}
+        [\mathbf{Y}_{j}] \leftarrow p_{\text{MDA}_{j}}(\mathbf{y}_{j}, \mathbf{x}[\mathbf{D}_{j}]).
+        \end{array}
+\end{align*}\]</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># MDA setup; construct subproblems MDA</span>
+<span class="n">sp1_MDA</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">MDA</span><span class="p">(</span><span class="n">nAnalyses</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">analyses</span> <span class="o">=</span> <span class="p">[</span><span class="n">DA1</span><span class="p">],</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">3</span><span class="p">]],</span> <span class="n">responses</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
+<span class="n">sp2_MDA</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">MDA</span><span class="p">(</span><span class="n">nAnalyses</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">analyses</span> <span class="o">=</span> <span class="p">[</span><span class="n">DA2</span><span class="p">],</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">6</span><span class="p">]],</span> <span class="n">responses</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">7</span><span class="p">]])</span>
+</pre></div>
+</div>
+<p>The vector <span class="math notranslate nohighlight">\(\mathbf{Y}_{j}\)</span> should include all the dependent design variables including the coupling variables of the subproblem <span class="math notranslate nohighlight">\(j\)</span> in the same order of the MDA process returned outputs.</p>
+</section>
+<section id="id10">
+<h3>ADMM coordinator<a class="headerlink" href="#id10" title="Permalink to this headline"></a></h3>
+<p>The coordinator object is constructed as shown in the following code block:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span> <span class="c1"># Construct the coordinator</span>
+<span class="n">coord</span> <span class="o">=</span> <span class="n">ADMM</span><span class="p">(</span><span class="n">beta</span> <span class="o">=</span> <span class="mf">1.3</span><span class="p">,</span>
+<span class="n">nsp</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+<span class="n">budget</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+<span class="n">index_of_master_SP</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="n">display</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="n">scaling</span> <span class="o">=</span> <span class="n">Qscaling</span><span class="p">,</span>
+<span class="n">mode</span> <span class="o">=</span> <span class="s2">&quot;serial&quot;</span><span class="p">,</span>
+<span class="n">M_update_scheme</span><span class="o">=</span> <span class="n">w_scheme</span><span class="o">.</span><span class="n">MEDIAN</span><span class="p">,</span>
+<span class="n">store_q_io</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="subproblem-j">
+<h3>Subproblem <cite>j</cite><a class="headerlink" href="#subproblem-j" title="Permalink to this headline"></a></h3>
+<p>Now we can formulate the optimization subproblem <span class="math notranslate nohighlight">\(j\)</span> at iteration <span class="math notranslate nohighlight">\(i\)</span> as follows</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{align*}
+        \left\{
+        \begin{array}{l}
+        \text{min} \,\, f_{j} + \phi_{t}(\mathbf{q}(\mathbf{x})) \\
+        \text{w.r.t}\,\, \mathbf{x}[\mathbf{D}_{j}] \\
+        \text{s.t.}\,\, \underline{\mathbf{x}}[\mathbf{D}_{j}] \leq \mathbf{x}[\mathbf{D}_{j}] \leq \bar{\mathbf{x}}[\mathbf{D}_{j}]\\
+        \mathbf{g}_{j} \leq 0\\
+        \mathbf{h}_{j} = 0\\
+        \text{where} \,\,\,\, \mathbf{x}[\mathbf{C}_{j}] \leftarrow \mathbf{y}_{j}\\
+        [\mathbf{Y}_{j}] \leftarrow p_{\text{MDA}_{j}}(\mathbf{y}_{j}, \mathbf{x}[\mathbf{D}_{j}])\\
+        [f_{j}, \mathbf{g}_{j}, \mathbf{h}_{j}, y_{c_{j}}] \leftarrow p_{\text{MDO}_{j}}(\mathbf{Y}_{j}, \mathbf{x}[\mathbf{D}_{j}]).
+        \end{array}
+        \right.
+\tag{$\mathcal{{p}_{j}}$}
+\end{align*}\end{split}\]</div>
+<p>The following code block shows how to construct the MDO subproblems</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">opt1</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+  <span class="k">return</span> <span class="p">[</span><span class="nb">sum</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">+</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.</span><span class="p">]]</span>
+
+<span class="k">def</span> <span class="nf">opt2</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+  <span class="k">return</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="mf">10.</span><span class="p">]]</span>
+
+<span class="c1"># Construct subproblems</span>
+<span class="c1"># Construct subproblems</span>
+<span class="n">sp1</span> <span class="o">=</span> <span class="n">SubProblem</span><span class="p">(</span><span class="n">nv</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+<span class="n">index</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+<span class="nb">vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">3</span><span class="p">]],</span>
+<span class="n">resps</span> <span class="o">=</span> <span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">2</span><span class="p">]],</span>
+<span class="n">is_main</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+<span class="n">analysis</span><span class="o">=</span> <span class="n">sp1_MDA</span><span class="p">,</span>
+<span class="n">coordination</span><span class="o">=</span><span class="n">coord</span><span class="p">,</span>
+<span class="n">opt</span><span class="o">=</span><span class="n">opt1</span><span class="p">,</span>
+<span class="n">fmin_nop</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+<span class="n">budget</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+<span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="n">psize</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span>
+<span class="n">pupdate</span><span class="o">=</span><span class="n">PSIZE_UPDATE</span><span class="o">.</span><span class="n">LAST</span><span class="p">,</span>
+<span class="n">freal</span><span class="o">=</span><span class="mf">2.625</span><span class="p">)</span>
+
+<span class="n">sp2</span> <span class="o">=</span> <span class="n">SubProblem</span><span class="p">(</span><span class="n">nv</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+<span class="n">index</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+<span class="nb">vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">6</span><span class="p">]],</span>
+<span class="n">resps</span> <span class="o">=</span> <span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">7</span><span class="p">]],</span>
+<span class="n">is_main</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="n">analysis</span><span class="o">=</span> <span class="n">sp2_MDA</span><span class="p">,</span>
+<span class="n">coordination</span><span class="o">=</span><span class="n">coord</span><span class="p">,</span>
+<span class="n">opt</span><span class="o">=</span><span class="n">opt2</span><span class="p">,</span>
+<span class="n">fmin_nop</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+<span class="n">budget</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+<span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+<span class="n">psize</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span>
+<span class="n">pupdate</span><span class="o">=</span><span class="n">PSIZE_UPDATE</span><span class="o">.</span><span class="n">LAST</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="mdo">
+<h3>MDO<a class="headerlink" href="#mdo" title="Permalink to this headline"></a></h3>
+<p>Finally, we construct the MDAO process as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Construct MDO workflow</span>
+<span class="n">MDAO</span><span class="p">:</span> <span class="n">MDO</span> <span class="o">=</span> <span class="n">MDO</span><span class="p">(</span>
+<span class="n">Architecture</span> <span class="o">=</span> <span class="n">MDO_ARCHITECTURE</span><span class="o">.</span><span class="n">IDF</span><span class="p">,</span>
+<span class="n">Coordinator</span> <span class="o">=</span> <span class="n">coord</span><span class="p">,</span>
+<span class="n">subProblems</span> <span class="o">=</span> <span class="p">[</span><span class="n">sp1</span><span class="p">,</span> <span class="n">sp2</span><span class="p">],</span>
+<span class="n">variables</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span>
+<span class="n">responses</span> <span class="o">=</span> <span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">7</span><span class="p">]],</span>
+<span class="n">fmin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+<span class="n">hmin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+<span class="n">display</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="n">inc_stop</span> <span class="o">=</span> <span class="mf">1E-9</span><span class="p">,</span>
+<span class="n">stop</span> <span class="o">=</span> <span class="s2">&quot;Iteration budget exhausted&quot;</span><span class="p">,</span>
+<span class="n">tab_inc</span> <span class="o">=</span> <span class="p">[],</span>
+<span class="n">noprogress_stop</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="p">)</span>
+
+<span class="n">coord2</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">coord</span><span class="p">)</span>
+<span class="n">coord2</span><span class="o">.</span><span class="n">budget</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">sp_12</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">sp1</span><span class="p">)</span>
+<span class="n">sp_12</span><span class="o">.</span><span class="n">budget</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">sp_12</span><span class="o">.</span><span class="n">coord</span> <span class="o">=</span> <span class="n">coord2</span>
+<span class="n">sp_22</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">sp2</span><span class="p">)</span>
+<span class="n">sp_22</span><span class="o">.</span><span class="n">coord</span> <span class="o">=</span> <span class="n">coord2</span>
+
+<span class="n">sp_22</span><span class="o">.</span><span class="n">budget</span> <span class="o">=</span> <span class="mi">10</span>
+<span class="n">MDAO2</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">MDAO</span><span class="p">)</span>
+<span class="n">MDAO2</span><span class="o">.</span><span class="n">subProblems</span> <span class="o">=</span> <span class="p">[</span><span class="n">sp_12</span><span class="p">,</span> <span class="n">sp_22</span><span class="p">]</span>
+<span class="n">MDAO2</span><span class="o">.</span><span class="n">Coordinator</span> <span class="o">=</span> <span class="n">coord2</span>
+<span class="n">MDAO2</span><span class="o">.</span><span class="n">display</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">MDAO2</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="c1"># Run the MDO problem</span>
+<span class="n">out</span> <span class="o">=</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="results-display">
+<h3>Results display<a class="headerlink" href="#results-display" title="Permalink to this headline"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">0</span> <span class="o">||</span> <span class="n">qmax</span><span class="p">:</span> <span class="mf">9.57399606704712e-08</span> <span class="o">||</span> <span class="n">Obj</span><span class="p">:</span> <span class="mf">1.9999990426003933</span> <span class="o">||</span> <span class="n">dx</span><span class="p">:</span> <span class="mf">1.7320508075691419</span> <span class="o">||</span> <span class="nb">max</span><span class="p">(</span><span class="n">w</span><span class="p">):</span> <span class="mf">1.0</span>
+<span class="n">Highest</span> <span class="n">inconsistency</span> <span class="p">:</span> <span class="n">u_2</span> <span class="n">to</span> <span class="n">u_1</span>
+<span class="mi">1</span> <span class="o">||</span> <span class="n">qmax</span><span class="p">:</span> <span class="mf">9.765662252902985e-05</span> <span class="o">||</span> <span class="n">Obj</span><span class="p">:</span> <span class="mf">1.9990234337747097</span> <span class="o">||</span> <span class="n">dx</span><span class="p">:</span> <span class="mf">1.7320510828730173</span> <span class="o">||</span> <span class="nb">max</span><span class="p">(</span><span class="n">w</span><span class="p">):</span> <span class="mf">1.6900000000000002</span>
+<span class="n">Highest</span> <span class="n">inconsistency</span> <span class="p">:</span> <span class="n">u_2</span> <span class="n">to</span> <span class="n">u_1</span>
+<span class="mi">2</span> <span class="o">||</span> <span class="n">qmax</span><span class="p">:</span> <span class="mf">0.1</span> <span class="o">||</span> <span class="n">Obj</span><span class="p">:</span> <span class="mf">1.0</span> <span class="o">||</span> <span class="n">dx</span><span class="p">:</span> <span class="mf">2.0</span> <span class="o">||</span> <span class="nb">max</span><span class="p">(</span><span class="n">w</span><span class="p">):</span> <span class="mf">2.8561000000000005</span>
+<span class="n">Highest</span> <span class="n">inconsistency</span> <span class="p">:</span> <span class="n">u_2</span> <span class="n">to</span> <span class="n">u_1</span>
+<span class="mi">3</span> <span class="o">||</span> <span class="n">qmax</span><span class="p">:</span> <span class="mf">0.1</span> <span class="o">||</span> <span class="n">Obj</span><span class="p">:</span> <span class="mf">1.0</span> <span class="o">||</span> <span class="n">dx</span><span class="p">:</span> <span class="mf">2.0</span> <span class="o">||</span> <span class="nb">max</span><span class="p">(</span><span class="n">w</span><span class="p">):</span> <span class="mf">4.826809000000002</span>
+<span class="n">Highest</span> <span class="n">inconsistency</span> <span class="p">:</span> <span class="n">u_2</span> <span class="n">to</span> <span class="n">u_1</span>
+<span class="mi">4</span> <span class="o">||</span> <span class="n">qmax</span><span class="p">:</span> <span class="mf">0.050097656250000004</span> <span class="o">||</span> <span class="n">Obj</span><span class="p">:</span> <span class="mf">1.4990234375</span> <span class="o">||</span> <span class="n">dx</span><span class="p">:</span> <span class="mf">1.803046731555873</span> <span class="o">||</span> <span class="nb">max</span><span class="p">(</span><span class="n">w</span><span class="p">):</span> <span class="mf">8.157307210000004</span>
+<span class="n">Highest</span> <span class="n">inconsistency</span> <span class="p">:</span> <span class="n">u_2</span> <span class="n">to</span> <span class="n">u_1</span>
+<span class="mi">5</span> <span class="o">||</span> <span class="n">qmax</span><span class="p">:</span> <span class="mf">0.012402343750000001</span> <span class="o">||</span> <span class="n">Obj</span><span class="p">:</span> <span class="mf">2.1240234375</span> <span class="o">||</span> <span class="n">dx</span><span class="p">:</span> <span class="mf">1.7364854773505354</span> <span class="o">||</span> <span class="nb">max</span><span class="p">(</span><span class="n">w</span><span class="p">):</span> <span class="mf">13.785849184900009</span>
+<span class="n">Highest</span> <span class="n">inconsistency</span> <span class="p">:</span> <span class="n">b_2</span> <span class="n">to</span> <span class="n">b_1</span>
+<span class="mi">6</span> <span class="o">||</span> <span class="n">qmax</span><span class="p">:</span> <span class="mf">0.0016601562500000002</span> <span class="o">||</span> <span class="n">Obj</span><span class="p">:</span> <span class="mf">1.9833984375</span> <span class="o">||</span> <span class="n">dx</span><span class="p">:</span> <span class="mf">1.732130368037418</span> <span class="o">||</span> <span class="nb">max</span><span class="p">(</span><span class="n">w</span><span class="p">):</span> <span class="mf">23.298085122481016</span>
+<span class="n">Highest</span> <span class="n">inconsistency</span> <span class="p">:</span> <span class="n">u_2</span> <span class="n">to</span> <span class="n">u_1</span>
+<span class="mi">7</span> <span class="o">||</span> <span class="n">qmax</span><span class="p">:</span> <span class="mf">0.0</span> <span class="o">||</span> <span class="n">Obj</span><span class="p">:</span> <span class="mf">2.0</span> <span class="o">||</span> <span class="n">dx</span><span class="p">:</span> <span class="mf">1.7320508075688772</span> <span class="o">||</span> <span class="nb">max</span><span class="p">(</span><span class="n">w</span><span class="p">):</span> <span class="mf">39.37376385699292</span>
+<span class="n">Highest</span> <span class="n">inconsistency</span> <span class="p">:</span> <span class="n">u_2</span> <span class="n">to</span> <span class="n">u_1</span>
+<span class="n">Stop</span><span class="p">:</span> <span class="n">qmax</span> <span class="o">=</span> <span class="mf">0.0</span> <span class="o">&lt;</span> <span class="mf">1e-09</span>
+<span class="n">Stop</span><span class="p">:</span> <span class="n">qmax</span> <span class="o">=</span> <span class="mf">4.656612873077393e-10</span> <span class="o">&lt;</span> <span class="mf">1e-09</span>
+</pre></div>
+</div>
+</section>
+<section id="multipliers-update">
+<h3>Multipliers update<a class="headerlink" href="#multipliers-update" title="Permalink to this headline"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">update_multipliers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+  <span class="bp">self</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">v</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span>
+          <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">w</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">w</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">))</span>
+  <span class="bp">self</span><span class="o">.</span><span class="n">calc_inconsistency_old</span><span class="p">()</span>
+  <span class="bp">self</span><span class="o">.</span><span class="n">q_stall</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">greater</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">gamma</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qold</span><span class="p">))</span>
+  <span class="n">increase_w</span> <span class="o">=</span> <span class="p">[]</span>
+  <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_update_scheme</span> <span class="o">==</span> <span class="n">w_scheme</span><span class="o">.</span><span class="n">MEDIAN</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_stall</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+      <span class="n">increase_w</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">2.</span> <span class="o">*</span> <span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">q_stall</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="ow">and</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">greater_equal</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">[</span><span class="n">i</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">))))))</span>
+  <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_update_scheme</span> <span class="o">==</span> <span class="n">w_scheme</span><span class="o">.</span><span class="n">MAX</span><span class="p">:</span>
+    <span class="n">tc</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">greater_equal</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">)))</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_stall</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+      <span class="n">increase_w</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q_stall</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">and</span> <span class="n">tc</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+  <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_update_scheme</span> <span class="o">==</span> <span class="n">w_scheme</span><span class="o">.</span><span class="n">NORMAL</span><span class="p">:</span>
+    <span class="n">increase_w</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_stall</span>
+  <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">M_update_scheme</span> <span class="o">==</span> <span class="n">w_scheme</span><span class="o">.</span><span class="n">RANK</span><span class="p">:</span>
+    <span class="n">temp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>
+    <span class="n">rank</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span>
+    <span class="n">rank</span><span class="p">[</span><span class="n">temp</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">q</span><span class="p">))</span>
+    <span class="n">increase_w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_stall</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">rank</span><span class="p">)))</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="ne">IOError</span><span class="p">,</span> <span class="s2">&quot;Multipliers update scheme is not recognized!&quot;</span><span class="p">)</span>
+
+  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">w</span><span class="p">)):</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">w</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">w</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">beta</span><span class="p">,</span> <span class="n">increase_w</span><span class="p">[</span><span class="n">i</span><span class="p">])))</span>
+
+  <span class="bp">self</span><span class="o">.</span><span class="n">w</span>
+</pre></div>
+</div>
+</section>
+<section id="inner-loop">
+<h3>Inner loop<a class="headerlink" href="#inner-loop" title="Permalink to this headline"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="sd">&quot;&quot;&quot; ADMM inner loop &quot;&quot;&quot;</span>
+<span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">)):</span>
+  <span class="k">if</span> <span class="nb">iter</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">coord</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">set_pair</span><span class="p">()</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">xavg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">coord</span><span class="o">.</span><span class="n">_linker</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">coord</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">w</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">coord</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">coord</span><span class="o">.</span><span class="n">master_vars</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">)</span>
+
+  <span class="n">out_sp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">v</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">w</span><span class="p">)</span>
+  <span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">coord</span><span class="p">)</span>
+  <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">index_of_master_SP</span><span class="p">:</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">fmin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">fmin_nop</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">solver</span> <span class="o">==</span> <span class="s2">&quot;OMADS&quot;</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">hmin</span> <span class="o">=</span> <span class="n">out_sp</span><span class="p">[</span><span class="s2">&quot;hmin&quot;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">hmin</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+<section id="coordination-loop">
+<h3>Coordination-loop<a class="headerlink" href="#coordination-loop" title="Permalink to this headline"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+  <span class="k">global</span> <span class="n">eps_fio</span><span class="p">,</span> <span class="n">eps_qio</span>
+  <span class="c1"># Note: once you run MDAO, the data stored in eps_fio and eps_qio shall be deleted. It is recommended to store such data to a different variable before running another MDAO</span>
+  <span class="n">eps_fio</span> <span class="o">=</span> <span class="p">[]</span>
+  <span class="n">eps_qio</span> <span class="o">=</span> <span class="p">[]</span>
+  <span class="sd">&quot;&quot;&quot; Run the MDO process &quot;&quot;&quot;</span>
+  <span class="c1">#  COMPLETE: fix the setup of the local (associated with SP) and global (associated with MDO) coordinators</span>
+  <span class="k">for</span> <span class="nb">iter</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">budget</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">iter</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars_old</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars_old</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">variables</span><span class="p">)</span>
+
+    <span class="sd">&quot;&quot;&quot; ADMM inner loop &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">)):</span>
+      <span class="k">if</span> <span class="nb">iter</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">coord</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">set_pair</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xavg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">coord</span><span class="o">.</span><span class="n">_linker</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">v</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">coord</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">w</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">coord</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+      <span class="k">else</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">coord</span><span class="o">.</span><span class="n">master_vars</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">)</span>
+
+      <span class="n">out_sp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">v</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">w</span><span class="p">)</span>
+      <span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">coord</span><span class="p">)</span>
+      <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">index</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">index_of_master_SP</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fmin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">fmin_nop</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">s</span><span class="p">]</span><span class="o">.</span><span class="n">solver</span> <span class="o">==</span> <span class="s2">&quot;OMADS&quot;</span><span class="p">:</span>
+          <span class="bp">self</span><span class="o">.</span><span class="n">hmin</span> <span class="o">=</span> <span class="n">out_sp</span><span class="p">[</span><span class="s2">&quot;hmin&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+          <span class="bp">self</span><span class="o">.</span><span class="n">hmin</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.</span><span class="p">]</span>
+
+    <span class="sd">&quot;&quot;&quot; Display convergence &quot;&quot;&quot;</span>
+    <span class="n">dx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_master_vars_difference</span><span class="p">()</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">display</span><span class="p">:</span>
+      <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="nb">iter</span><span class="si">}</span><span class="s1"> || qmax: </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">q</span><span class="p">))</span><span class="si">}</span><span class="s1"> || Obj: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">fmin</span><span class="si">}</span><span class="s1"> || dx: </span><span class="si">{</span><span class="n">dx</span><span class="si">}</span><span class="s1"> || max(w): </span><span class="si">{</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">w</span><span class="p">)</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+      <span class="n">index</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">q</span><span class="p">)</span>
+      <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Highest inconsistency : </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">index</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">_&#39;</span>
+        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">index</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">link</span><span class="si">}</span><span class="s1"> to &#39;</span>
+          <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">index</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">_&#39;</span>
+        <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">_linker</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="n">index</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">link</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
+    <span class="sd">&quot;&quot;&quot; Update LM and PM &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">update_multipliers</span><span class="p">()</span>
+
+    <span class="sd">&quot;&quot;&quot; Stopping criteria &quot;&quot;&quot;</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">tab_inc</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">q</span><span class="p">)))</span>
+    <span class="n">stop</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">check_termination_critt</span><span class="p">(</span><span class="nb">iter</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">stop</span><span class="p">:</span>
+      <span class="k">break</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">eps_qio</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">eps_qio</span><span class="p">)</span>
+    <span class="bp">self</span><span class="o">.</span><span class="n">eps_fio</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">eps_fio</span><span class="p">)</span>
+  <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">q</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="index.html" class="btn btn-neutral float-left" title="Welcome to DMDO’s documentation!" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="benchmarking.html" class="btn btn-neutral float-right" title="Benchmarking" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright Ahmed Bayoumy, Read the Docs, Inc. &amp; contributors.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
