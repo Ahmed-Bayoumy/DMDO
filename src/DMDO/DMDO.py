@@ -1300,7 +1300,7 @@ if __name__ == "__main__":
   #COMPLETED: Feature: Move the MDO test functions and BM problems to the test folder and prepare the DMDO package to be published on PyPi
   #TODO: Feature: Develop a simple UI widget that facilitates simple MDO setup using the compact table or N2-chart
   #TODO: Feature: Import RAF and SML libraries once they are published on PYPI.com
-  #FIXME: Bug: Add user and technical documentation 
+  #COMPLETED: Bug: Add user and technical documentation 
   #FIXME: Bug: Enable the output report generation that summarizes the MDO history and final results
   p_file: str = ""
 
