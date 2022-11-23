@@ -46,8 +46,6 @@ terminal window under the src directory. The path of the JSON template, which co
 python ./src/DMDO/DMDO.py ./tests/test_files/Basic_MDO.yaml
 ```
 
-After installing the libraries listed in the `requirements.txt`, `DMDO/DMDO.py` can be called directly from a 
-terminal window under the main directory. The path of the `YAML` template, which contains the problem input parameters, should be entered as an input argument to the `DMDO.py` call. 
 
 
 
