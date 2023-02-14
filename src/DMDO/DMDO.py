@@ -100,6 +100,7 @@ class w_scheme(Enum):
   MAX = auto()
   NORMAL = auto()
   RANK = auto()
+  LSTM = auto()
 
 class MODEL_TYPE(Enum):
   SURROGATE = auto()
@@ -371,6 +372,7 @@ class ADMM_data(coordinationData):
   save_q_in: bool = False
   save_q_in_out: bool = False
   eps_fo: List = None
+  W: np.ndarray = np.zeros([0,0])
 
 # COMPLETE: ADMM needs to be customized for this code
 @dataclass
@@ -394,6 +396,44 @@ class ADMM(ADMM_data):
     self.save_q_in_out = store_q_io
     self.eps_fo = []
     self.index = index
+  
+  def sigmoid(self, x: np.ndarray):
+    """
+    Compute the sigmoid of x
+
+    Parameters
+    ----------
+    x : array_like
+        A scalar or numpy array of any size.
+
+    Returns
+    -------
+     s : array_like
+         sigmoid(x)
+    """
+    x = np.clip( x, -500, 500 )           # protect against overflow
+    s = 1.0/(1.0+np.exp(-x))
+
+    return s
+  
+  def tanh(self, x: np.ndarray):
+    """
+    Compute the sigmoid of x
+
+    Parameters
+    ----------
+    x : array_like
+        A scalar or numpy array of any size.
+
+    Returns
+    -------
+     s : array_like
+         tanh(x)
+    """
+    x = np.clip( x, -500, 500 )           # protect against overflow
+    s = np.arctan(x)
+
+    return s
 
   def clone_point(self, p: variableData):
     self.var_group.append(p)
@@ -477,12 +517,31 @@ class ADMM(ADMM_data):
     if np.iscomplex(self.phi) or np.isnan(self.phi):
       self.phi = np.inf
 
-  def update_multipliers(self):
+  def update_multipliers(self, iter):
     self.v = np.add(self.v, np.multiply(
             np.multiply(np.multiply(2, self.w), self.w), self.q))
     self.calc_inconsistency_old()
     self.q_stall = np.greater(np.abs(self.q), self.gamma*np.abs(self.qold))
     increase_w = []
+    wold = copy.deepcopy(self.w)
+    dq = np.empty_like(self.w)
+
+    
+
+    if False and iter > 0:
+      dq = (np.abs(self.q) - np.abs(self.qold))
+      # Forget gate
+      f =self.sigmoid(dq)
+      # Input gate for the multipliers update
+      for i in range(len(self.w)):
+        self.w[i] *= f[i]
+        self.w[i] += np.tanh(dq[i]+np.abs(np.subtract(self.w[i],wold[i])))*f[i] 
+      # Selection gate
+        # self.q_stall[i] = np.tanh(self.q[i]) * f[i]
+
+      
+
+    
     if self.M_update_scheme == w_scheme.MEDIAN:
       for i in range(self.q_stall.shape[0]):
         increase_w.append(2. * ((self.q_stall[i]) and (np.greater_equal(np.abs(self.q[i]), np.median(np.abs(self.q))))))
@@ -499,11 +558,32 @@ class ADMM(ADMM_data):
       increase_w = np.multiply(np.multiply(2, self.q_stall), np.divide(rank, np.max(rank)))
     else:
       raise Exception(IOError, "Multipliers update scheme is not recognized!")
+    
 
     for i in range(len(self.w)):
+      # if True and iter > 0:
+      #   increase_w[i] = np.tanh(self.w[i]) * f[i]
+      #   self.w[i] = copy.deepcopy(wold[i])
       self.w[i] = copy.deepcopy(np.multiply(self.w[i], np.power(self.beta, increase_w[i])))
+    
+    if False and iter > 0:
+      dq = (np.abs(self.q) - np.abs(self.qold))
+      # Forget gate
+      f =self.sigmoid(dq+np.abs(np.subtract(self.w,wold)))
+      # Input gate for the next iteration
+      for i in range(len(self.w)):
+        self.w[i] *= f[i]
+        self.w[i] += np.tanh(dq[i]+np.abs(np.subtract(self.w[i],wold[i])))*f[i] 
 
-    self.w
+      
+    
+    
+
+      
+    
+    
+    self.W = (np.array(self.w) - np.array(wold))/(self.q-self.qold)
+    
 
 class partitionedProblemData:
   nv: int
@@ -676,7 +756,7 @@ class SubProblem(partitionedProblemData):
     self.coord.calc_penalty(q_indices)
 
     if self.realistic_objective:
-      con.append(y-self.frealistic)
+      con = con + [abs(y[0]-self.frealistic)]
     if self.solver == "OMADS":
       return [fun[0]+self.coord.phi, con]
     else:
@@ -694,18 +774,18 @@ class SubProblem(partitionedProblemData):
                   "var_names": self.get_list_vars_names(self.get_design_vars()),
                   "scaling": self.get_design_vars_scaling(self.get_design_vars()),
                   "post_dir": "./post"}
-      pinit = min(max(self.tol, self.psize), 1)
+      pinit = min(max(self.tol, self.psize), 1.)
       options = {
         "seed": 0,
-        "budget": 2*self.budget*len(self.vars),
+        "budget": 2*self.budget*len(bl),
         "tol": max(pinit/1000, self.tol),
         "psize_init": pinit,
         "display": self.display,
         "opportunistic": False,
         "check_cache": True,
-        "store_cache": False,
+        "store_cache": True,
         "collect_y": False,
-        "rich_direction": False,
+        "rich_direction": True,
         "precision": "high",
         "save_results": False,
         "save_coordinates": False,
@@ -870,6 +950,7 @@ class MDO(MDO_data):
           self.Coordinator.w = [1.] * len(self.subProblems[s].coord._linker[0])
         else:
           self.subProblems[s].coord.master_vars = copy.deepcopy(self.Coordinator.master_vars)
+          self.subProblems[s].coord.W = copy.deepcopy(self.Coordinator.W)
 
         out_sp = self.subProblems[s].solve(self.Coordinator.v, self.Coordinator.w)
         self.Coordinator = copy.deepcopy(self.subProblems[s].coord)
@@ -890,7 +971,7 @@ class MDO(MDO_data):
             f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].name}_'
           f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].link}')
       """ Update LM and PM """
-      self.Coordinator.update_multipliers()
+      self.Coordinator.update_multipliers(iter)
 
       """ Stopping criteria """
       self.tab_inc.append(np.max(np.abs(self.Coordinator.q)))
@@ -954,6 +1035,8 @@ class problemSetup:
       return w_scheme.RANK
     elif inp.lower() == "median":
       return w_scheme.MEDIAN
+    elif inp.lower() == "lstm":
+      return w_scheme.LSTM
     else:
       return None
 

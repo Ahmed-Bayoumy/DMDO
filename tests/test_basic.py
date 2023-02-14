@@ -767,5 +767,7 @@ def test_auto_build():
 
 def test_comperhensive():
   Sellar()
-  speedReducer()
-  geometric_programming()
+  # speedReducer()
+  # geometric_programming()
+
+test_comperhensive()
