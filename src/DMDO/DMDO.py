@@ -113,6 +113,7 @@ class COUPLING_TYPE(Enum):
   FEEDFORWARD = auto()
   UNCOUPLED = auto()
   DUMMY = auto()
+  CONSTANT = auto()
 
 class COUPLING_STRENGTH(Enum):
   TIGHT = auto()
@@ -136,6 +137,7 @@ class variableData:
   ub: float = None
   type: int = VAR_TYPE.CONTINUOUS
   index: int = None
+  set: str = None
 
 
   def __sub__(self, other):
@@ -476,13 +478,52 @@ class ADMM(ADMM_data):
 
     if np.iscomplex(self.phi) or np.isnan(self.phi):
       self.phi = np.inf
+  
+  def sigmoid(self, x: np.ndarray):
+    """
+    Compute the sigmoid of x
 
-  def update_multipliers(self):
+    Parameters
+    ----------
+    x : array_like
+        A scalar or numpy array of any size.
+
+    Returns
+    -------
+     s : array_like
+         sigmoid(x)
+    """
+    x = np.clip( x, -500, 500 )           # protect against overflow
+    s = 1.0/(1.0+np.exp(-x))
+
+    return s
+  
+  def tanh(self, x: np.ndarray):
+    """
+    Compute the sigmoid of x
+
+    Parameters
+    ----------
+    x : array_like
+        A scalar or numpy array of any size.
+
+    Returns
+    -------
+     s : array_like
+         tanh(x)
+    """
+    x = np.clip( x, -500, 500 )           # protect against overflow
+    s = np.arctan(x)
+
+    return s
+
+  def update_multipliers(self, iter):
     self.v = np.add(self.v, np.multiply(
             np.multiply(np.multiply(2, self.w), self.w), self.q))
     self.calc_inconsistency_old()
     self.q_stall = np.greater(np.abs(self.q), self.gamma*np.abs(self.qold))
     increase_w = []
+    wold = copy.deepcopy(self.w)
     if self.M_update_scheme == w_scheme.MEDIAN:
       for i in range(self.q_stall.shape[0]):
         increase_w.append(2. * ((self.q_stall[i]) and (np.greater_equal(np.abs(self.q[i]), np.median(np.abs(self.q))))))
@@ -503,7 +544,14 @@ class ADMM(ADMM_data):
     for i in range(len(self.w)):
       self.w[i] = copy.deepcopy(np.multiply(self.w[i], np.power(self.beta, increase_w[i])))
 
-    self.w
+    if False and iter > 0:
+      dq = (np.abs(self.q) - np.abs(self.qold))
+      # Forget gate
+      f =self.sigmoid(dq+np.abs(np.subtract(self.w,wold)))
+      # Input gate for the next iteration
+      for i in range(len(self.w)):
+        self.w[i] *= f[i]
+        self.w[i] += np.tanh(dq[i]+np.abs(np.subtract(self.w[i],wold[i])))*f[i] 
 
 class partitionedProblemData:
   nv: int
@@ -531,11 +579,12 @@ class partitionedProblemData:
   psize_init: int
   tol: float
   scipy: Dict
+  sets: Dict
 
 @dataclass
 class SubProblem(partitionedProblemData):
   # Constructor
-  def __init__(self, nv, index, vars, resps, is_main, analysis, coordination, opt, fmin_nop, budget, display, psize, pupdate, scipy=None, freal=None, tol=1E-12, solver='OMADS'):
+  def __init__(self, nv, index, vars, resps, is_main, analysis, coordination, opt, fmin_nop, budget, display, psize, pupdate, scipy=None, freal=None, tol=1E-12, solver='OMADS', sets=None):
     self.nv = nv
     self.index = index
     self.vars = copy.deepcopy(vars)
@@ -560,6 +609,7 @@ class SubProblem(partitionedProblemData):
     else:
       warning(f'Inappropriate solver method definition for subproblem # {self.index}! OMADS will be used.')
       self.solver = 'OMADS'
+    self.sets = sets
     
 
     if (self.solver == 'scipy' and (scipy == None or "options" not in self.scipy or "method" not in self.scipy)):
@@ -589,10 +639,16 @@ class SubProblem(partitionedProblemData):
         v.append(self.vars[i])
     return v
 
-  def set_variables_value(self, vlist: List):
+  def set_variables_value(self, vlist: List, clist: List=None):
+    kv = 0
+    kc = 0
     for i in range(len(self.vars)):
-      if self.vars[i].coupling_type != COUPLING_TYPE.FEEDFORWARD:
-        self.vars[i].value = vlist[i]
+      if self.vars[i].coupling_type != COUPLING_TYPE.FEEDFORWARD and self.vars[i].coupling_type != COUPLING_TYPE.CONSTANT:
+        self.vars[i].value = vlist[kv]
+        kv += 1
+      elif self.vars[i].coupling_type == COUPLING_TYPE.CONSTANT:
+        self.vars[i].value = clist[kc]
+        kc += 1
 
   def set_pair(self):
     indices1 = []
@@ -642,14 +698,15 @@ class SubProblem(partitionedProblemData):
     
 
 
-  def evaluate(self, vlist: List[float]):
+  def evaluate(self, vlist: List[float]=None, clist: List[float]=None):
     if self.coord.save_q_in_out:
       global eps_fio
     # If no variables were provided use existing value of the variables of the current subproblem (might happen during initialization)
     if vlist is None:
       v: List = self.get_design_vars()
       vlist = self.get_list_vars(v)
-    self.set_variables_value(vlist)
+    
+    self.set_variables_value(vlist, clist)
     self.MDA_process.setInputs(self.vars)
     self.MDA_process.run()
     y = self.MDA_process.getOutputs()
@@ -688,12 +745,18 @@ class SubProblem(partitionedProblemData):
     bl = self.get_list_vars(self.get_design_vars())
     if self.solver == 'OMADS' or self.solver != 'scipy':
       eval = {"blackbox": self.evaluate}
+      if self.sets is None:
+        self.sets = {}
       param = {"baseline": bl,
                   "lb": self.get_list_vars_lb(self.get_design_vars()),
                   "ub": self.get_list_vars_ub(self.get_design_vars()),
                   "var_names": self.get_list_vars_names(self.get_design_vars()),
+                  "var_type": self.get_vars_types(self.get_design_vars()),
+                  "var_sets": self.sets,
                   "scaling": self.get_design_vars_scaling(self.get_design_vars()),
-                  "post_dir": "./post"}
+                  "post_dir": "./post",
+                  "constants": self.get_list_constant_updates(self.get_design_vars()),
+                  "constants_name": self.get_list_const_names(self.get_design_vars())}
       pinit = min(max(self.tol, self.psize), 1)
       options = {
         "seed": 0,
@@ -703,7 +766,7 @@ class SubProblem(partitionedProblemData):
         "display": self.display,
         "opportunistic": False,
         "check_cache": True,
-        "store_cache": False,
+        "store_cache": True,
         "collect_y": False,
         "rich_direction": False,
         "precision": "high",
@@ -765,31 +828,78 @@ class SubProblem(partitionedProblemData):
   def get_list_vars(self, vars:List[variableData]):
     v = []
     for i in range(len(vars)):
-      v.append(vars[i].value)
+      if vars[i].coupling_type != COUPLING_TYPE.CONSTANT:
+        v.append(vars[i].value)
     return v
 
   def get_list_vars_ub(self, vars:List[variableData]):
     v = []
     for i in range(len(vars)):
-      v.append(vars[i].ub)
+      if vars[i].coupling_type != COUPLING_TYPE.CONSTANT:
+        v.append(vars[i].ub)
     return v
 
   def get_list_vars_lb(self, vars:List[variableData]):
     v = []
     for i in range(len(vars)):
-      v.append(vars[i].lb)
+      if vars[i].coupling_type != COUPLING_TYPE.CONSTANT:
+        v.append(vars[i].lb)
     return v
 
   def get_design_vars_scaling(self, vars:List[variableData]):
     v = []
     for i in range(len(self.vars)):
-      v.append(self.vars[i].scaling)
+      if vars[i].coupling_type != COUPLING_TYPE.CONSTANT:
+        v.append(self.vars[i].scaling)
     return v
+  
+  # def get_sets(self, vars:List[variableData]):
+  #   v = []
+  #   for i in range(len(self.vars)):
+  #     if vars[i].coupling_type != COUPLING_TYPE.CONSTANT and vars[i].set is not in v:
+  #       v.append(self.vars[i].set)
+  #   return v
 
   def get_list_vars_names(self,vars:List[variableData]):
     v = []
     for i in range(len(vars)):
-      v.append(vars[i].name)
+      if vars[i].coupling_type != COUPLING_TYPE.CONSTANT:
+        v.append(vars[i].name)
+    return v
+  
+  def get_list_const_names(self,vars:List[variableData]):
+    v = []
+    for i in range(len(vars)):
+      if vars[i].coupling_type == COUPLING_TYPE.CONSTANT:
+        v.append(vars[i].name)
+    if isinstance(v, list) and len(v)>0:
+      return v
+    else:
+      return None
+  
+  def get_list_constant_updates(self, vars: List[variableData]):
+    v = []
+    for i in range(len(vars)):
+      if vars[i].coupling_type == COUPLING_TYPE.CONSTANT:
+        v.append(vars[i].value)
+    if isinstance(v, list) and len(v)>0:
+      return v
+    else:
+      return None
+
+  def get_vars_types(self,vars:List[variableData]):
+    v = []
+    for i in range(len(vars)):
+      if vars[i].coupling_type != COUPLING_TYPE.CONSTANT:
+        if vars[i].type == VAR_TYPE.CONTINUOUS:
+          v.append("R")
+        elif vars[i].type == VAR_TYPE.INTEGER:
+          v.append("I")
+        elif vars[i].type == VAR_TYPE.CATEGORICAL:
+          v.append("C")
+        else:
+          v.append(vars[i].type)
+    
     return v
 
 @dataclass
@@ -890,7 +1000,7 @@ class MDO(MDO_data):
             f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].name}_'
           f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].link}')
       """ Update LM and PM """
-      self.Coordinator.update_multipliers()
+      self.Coordinator.update_multipliers(iter)
 
       """ Stopping criteria """
       self.tab_inc.append(np.max(np.abs(self.Coordinator.q)))
@@ -925,6 +1035,11 @@ class problemSetup:
   MDAO: MDO = None
   Qscaling: List = None
   userData: USER = None
+  Sets: Dict = None
+
+  def get_varSets(self):
+    if "sets" in self.data or "Sets" in self.data:
+      self.Sets = self.data["Sets"]
 
   def setup_couplingList(self)->List:
     """ Build the list of the coupling types """
@@ -941,8 +1056,10 @@ class problemSetup:
         ct.append(COUPLING_TYPE.FEEDBACK)
       elif vin[i][3] == 'dummy':
         ct.append(COUPLING_TYPE.DUMMY)
+      elif vin[i][3] == 'CP':
+        ct.append(COUPLING_TYPE.CONSTANT)
       else:
-        raise IOError(f'Unrecognized coupling type {vin[i][2]} is introduced to the variables dictionary at this key {i}')
+        raise IOError(f'Unrecognized coupling type {vin[i][3]} is introduced to the variables dictionary at this key {i}')
     return ct
   
   def getWupdateScheme(self, inp: str) -> int:
@@ -1005,6 +1122,8 @@ class problemSetup:
     bl: List = [vin[i][5] for i in vin]
     ub: List = [vin[i][6] for i in vin]
     dim: List = [vin[i][7] for i in vin]
+    vtype: List = [vin[i][8]  if len(vin[i])>8 else "R" for i in vin]
+    vsets: List = [(vin[i][8].split('_')[1:][0] if len(vin[i][8])>1 else None)  if len(vin[i])>8 else None for i in vin]
 
     scaling = np.subtract(ub,lb)
     self.Qscaling = []
@@ -1023,7 +1142,9 @@ class problemSetup:
           "scaling": scaling[i],
           "lb": lb[i],
           "value": bl[i],
-          "ub": ub[i]}
+          "ub": ub[i],
+          "type": vtype[i],
+          "set": vsets[i]}
           c += 1
           self.Qscaling.append(.1/scaling[i] if .1/scaling[i] != np.inf and .1/scaling[i] != np.nan else 1.)
         c -=1
@@ -1039,7 +1160,9 @@ class problemSetup:
         "scaling": scaling[i],
         "lb": lb[i],
         "value": bl[i],
-        "ub": ub[i]}
+        "ub": ub[i],
+        "type": vtype[i],
+        "set": vsets[i]}
         self.Qscaling.append(.1/scaling[i] if .1/scaling[i] != np.inf and .1/scaling[i] != np.nan else 1.)
     
     for i in range(len(names)):
@@ -1183,7 +1306,8 @@ class problemSetup:
         pupdate=self.getPollUpdate(SP[i]["pupdate"]) if "pupdate" in SP[i] and self.getPollUpdate(SP[i]["pupdate"]) is not None else PSIZE_UPDATE.LAST,
         freal=SP[i]["freal"] if "freal" in SP[i] else None,
         solver=SP[i]["solver"] if "solver" in SP[i] else "OMADS",
-        scipy= SP[i]["scipy"] if "scipy" in SP[i] else None
+        scipy= SP[i]["scipy"] if "scipy" in SP[i] else None,
+        sets=self.Sets
       ))
 
   def MDOSetup(self):
@@ -1201,7 +1325,7 @@ class problemSetup:
       inc_stop=MDAO["inc_stop"] if "inc_stop" in MDAO and isinstance(MDAO["inc_stop"], float) else 1E-9,
       stop=MDAO["stop"] if "stop" in MDAO and isinstance(MDAO["stop"], str) else "Iteration budget exhausted",
       tab_inc = MDAO["tab_inc"] if "tab_inc" in MDAO and isinstance(MDAO["tab_inc"], list) else [],
-      noprogress_stop= MDAO["noprogress_stop"] if "noprogress_stop" in MDAO and isinstance(MDAO["noprogress_stop"], int) else 100,
+      noprogress_stop= MDAO["noprogress_stop"] if "noprogress_stop" in MDAO and isinstance(MDAO["noprogress_stop"], int) else 100
     )
   
   def UserData(self):
@@ -1219,6 +1343,7 @@ class problemSetup:
     self.DASetup()
     self.MDASetup()
     self.COORDSetup()
+    self.get_varSets()
     self.SPSetup()
     self.MDOSetup()
     self.UserData()
