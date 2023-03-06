@@ -155,6 +155,40 @@ class variableData:
       return np.divide(self.value, other.value)
     else:
       return np.divide(self.value, other)
+  
+  def __update__(self, other):
+    if type(other)!=variableData and type(self.value) != type(other):
+      raise IOError(f'The variables data dunder equality method of {self.name} expects a variable data object as an input or variable values with the same type of {self.name}!')
+    if isinstance(other, variableData):
+      self =  copy.deepcopy(other)
+    elif isinstance(other, list) or isinstance(other, np.ndarray):
+      l = self.dim
+      if len(other) != l and self.cond_on is None:
+        raise IOError(f'The feedback of {self.name} does not have the same size. That variable size is not conditional though!')
+      if len(other) > l:
+        dif = len(other)-l
+        self.value = self.value + [self.value[l-1] for _ in other[dif+1:]]
+        self.baseline += [self.baseline[l-1]]*dif
+        self.lb += [self.lb[l-1]]*dif
+        self.ub += [self.ub[l-1]]*dif
+        self.scaling += [self.scaling[l-1]]*dif
+        self.type += [self.type[l-1]]*dif
+      elif len(other) < l:
+        dif = l - len(other)
+        self.value = self.value[:-dif]
+        self.baseline = self.baseline[:-dif]
+        self.lb = self.lb[:-dif]
+        self.ub = self.ub[:-dif]
+        self.scaling = self.scaling[:-dif]
+        self.type = self.type[:-dif]
+      else:
+        self.value = other
+      self.dim = len(other)
+    elif isinstance(other, int) or isinstance(other, float) or isinstance(other, str):
+      self.value = other
+    else:
+      raise IOError(f'The variables data dunder equality method expects an object with the same type a list of values or a scalar numerical/textual value!')
+
 
 @dataclass
 class Process_data(Protocol):
@@ -287,12 +321,8 @@ class DA(DA_Data):
     if len(self.outputs) > 1 and (isinstance(values, list) or isinstance(values, np.ndarray)):
       o = 0
       for i in range(len(self.outputs)):
-        for ik in range(self.outputs[i].dim):
-          if self.outputs[i].dim > 1:
-            self.outputs[i].value[ik] = copy.deepcopy(values[o])
-          else:
-            self.outputs[i].value = copy.deepcopy(values[o])
-          o += 1
+        self.outputs[i].__update__(values[o])
+        o += 1
     elif len(self.outputs) == 1 and not isinstance(values, list):
       if self.outputs[0].dim != len(values):
         raise IOError(f'The size of the analysis outputs does not match the subproblem #{self.index}!')
@@ -452,10 +482,27 @@ class ADMM(ADMM_data):
 
         
         # Check whether linked variables have same dimension
-        if dim1 != dim2:
+        if dim1 != dim2 and self.master_vars[self._linker[0, i]-1].cond_on is None:
           raise Exception(IOError, f'The variable {self.master_vars[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} does not have the same dimension!')
-        
         else:
+          if dim1 != dim2:
+            if len(val1) > len(val2):
+              l = len(val2)
+              dif = len(val1) - len(val2)
+              val2 = val2 + [2*val1[l+ii] for ii in range(dif)]
+              type2 += [type2[l-1]]*dif
+              # TODO: Enhance the set logic
+              if isinstance(set2_name, list):
+               set2_name += [set2_name[l-1]]*dif
+            else:
+              l = len(val1)
+              dif = len(val2) - len(val1)
+              val1 = val1 + [2*val2[l+ii] for ii in range(dif)]
+              type1 += [type1[l-1]]*dif
+              # TODO: Enhance the set logic
+              if isinstance(set1_name, list):
+                set1_name += [set1_name[l-1]]*dif
+            
           for ik in range(dim1):
             t1 = type1[ik] if isinstance(type1, list) else type1
             t2 = type2[ik] if isinstance(type2, list) else type2
@@ -463,17 +510,17 @@ class ADMM(ADMM_data):
             sn2 = set2_name[ik] if isinstance(set2_name, list) else set2_name
             tl0.append(self._linker[0, i])
             tl1.append(self._linker[1, i])
-            if t1 != t2:
+            if t1[0] != t2[0]:
               raise Exception(IOError, f'The variable {self.master_vars[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} does not have the same type(s)!')
             if t1[0].lower() != "r" and t1[0].lower() != "i" and t1[0].lower() != "d" and t1[0].lower() != "c":
               raise Exception(IOError, f'The variable {self.master_vars[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} has unknown type(s)!')
             if t1[0].lower() == "c":
               v1 = val1[ik] if isinstance(val1, list) else val1
               v2 = val2[ik] if isinstance(val2, list) else val2
-              if v1 == v2:
-                  q_temp = np.append(q_temp, 0.)
+              if isinstance(val1, list) and isinstance(val2, list):
+                q_temp = np.append(q_temp, sum([not x for x in np.equal(val1,val2)]))
               else:
-                q_temp = np.append(q_temp, 1.)
+                q_temp = np.append(q_temp, 0 if val1 == val2 else 1)
               continue
             else:
               v1 = val1[ik] if isinstance(val1, list) else val1
@@ -524,23 +571,91 @@ class ADMM(ADMM_data):
 
 
   def calc_inconsistency_old(self):
+    if self.save_q_in_out:
+      global eps_qio
     q_temp : np.ndarray = np.zeros([0,0])
+    tl0: List = []
+    tl1: List = []
     for i in range(self._linker.shape[1]):
       if self.master_vars_old:
-        if (isinstance(self.scaling, list) and len(self.scaling) == len(self.master_vars_old)):
-          qscale = np.multiply(np.add(self.scaling[self._linker[0, i]-1], self.scaling[self._linker[1, i]-1]), 0.5)
-          q_temp = np.append(q_temp, np.multiply(subtract(((self.master_vars_old[self._linker[0, i]-1].value)),
-                  ((self.master_vars_old[self._linker[1, i]-1].value))), qscale))
-        elif isinstance(self.scaling, float) or  isinstance(self.scaling, int):
-          q_temp = np.append(q_temp, np.multiply(subtract(((self.master_vars_old[self._linker[0, i]-1].value)),
-                  ((self.master_vars_old[self._linker[1, i]-1].value))), self.scaling))
+        # TODO: Add a sanity check early on to ensure that linked parameters has the same type and linked to the same set if they were of discrete type and may be add a dunder methed to handle all the necessary equality checks
+        #  Check if linked parameters have same type
+        type1: Any = self.master_vars_old[self._linker[0, i]-1].type
+        type2: Any = self.master_vars_old[self._linker[1, i]-1].type
+        val1: Any = self.master_vars_old[self._linker[0, i]-1].value
+        val2: Any = self.master_vars_old[self._linker[1, i]-1].value
+        dim1: int = self.master_vars_old[self._linker[0, i]-1].dim
+        dim2: int = self.master_vars_old[self._linker[1, i]-1].dim
+        name1: str = self.master_vars_old[self._linker[0, i]-1].name
+        name2: str = self.master_vars_old[self._linker[1, i]-1].name
+        set1_name: Any = self.master_vars_old[self._linker[1, i]-1].set
+        set2_name: Any = self.master_vars_old[self._linker[1, i]-1].set
+
+
+        
+        # Check whether linked variables have same dimension
+        if dim1 != dim2:
+          raise Exception(IOError, f'The variable {self.master_vars_old[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} does not have the same dimension!')
+        
         else:
-          q_temp = np.append(q_temp, np.multiply(subtract(((self.master_vars_old[self._linker[0, i]-1].value)),
-                  ((self.master_vars_old[self._linker[1, i]-1].value))), np.min(self.scaling)))
-          warning("The inconsistency scaling factors are defined in a list which has a different size from the master variables vector! The minimum value of the provided scaling list will be used to scale the inconsistency vector.")
+          for ik in range(dim1):
+            t1 = type1[ik] if isinstance(type1, list) else type1
+            t2 = type2[ik] if isinstance(type2, list) else type2
+            sn1 = set1_name[ik] if isinstance(set1_name, list) else set1_name
+            sn2 = set2_name[ik] if isinstance(set2_name, list) else set2_name
+            tl0.append(self._linker[0, i])
+            tl1.append(self._linker[1, i])
+            if t1 != t2:
+              raise Exception(IOError, f'The variable {self.master_vars_old[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} does not have the same type(s)!')
+            if t1[0].lower() != "r" and t1[0].lower() != "i" and t1[0].lower() != "d" and t1[0].lower() != "c":
+              raise Exception(IOError, f'The variable {self.master_vars_old[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} has unknown type(s)!')
+            if t1[0].lower() == "c":
+              v1 = val1[ik] if isinstance(val1, list) else val1
+              v2 = val2[ik] if isinstance(val2, list) else val2
+              if v1 == v2:
+                  q_temp = np.append(q_temp, 0.)
+              else:
+                q_temp = np.append(q_temp, 1.)
+              continue
+            else:
+              v1 = val1[ik] if isinstance(val1, list) else val1
+              v2 = val2[ik] if isinstance(val2, list) else val2
+            if t1[0].lower() == "d":
+              i1 = self.sets[sn1].index(v1)
+              i2 = self.sets[sn2].index(v2)
+            if  (isinstance(self.scaling, list) and len(self.scaling) == len(self.master_vars_old)):
+              qscale = np.multiply(np.add(self.scaling[self._linker[0, i]-1], self.scaling[self._linker[1, i]-1]), 0.5)
+              if t1[0].lower() == "d":
+                q_temp = np.append(q_temp, np.multiply(subtract(i1, i2), qscale))
+              else:
+                q_temp = np.append(q_temp, np.multiply(subtract(v1, v2), qscale))
+            elif isinstance(self.scaling, float) or  isinstance(self.scaling, int):
+              if t1[0].lower() == "d":
+                q_temp = np.append(q_temp, np.multiply(subtract(i1, i2), self.scaling))
+              else:
+                q_temp = np.append(q_temp, np.multiply(subtract(v1, v2), self.scaling))
+            else:
+              if t1[0].lower() == "d":
+                q_temp = np.append(q_temp, np.multiply(subtract(i1, i2), min(self.scaling)))
+              else:
+                q_temp = np.append(q_temp, np.multiply(subtract(v1, v2), min(self.scaling)))
+              warning("The inconsistency scaling factors are defined in a list which has a different size from the master variables vector! The minimum value of the provided scaling list will be used to scale the inconsistency vector.")
       else:
         raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
     self.qold = copy.deepcopy(q_temp)
+
+  def update_master_vector_val(self, vars: List[variableData], resps: List[variableData], sets):
+    if self.master_vars:
+      for i in range(len(vars)):
+        self.master_vars[vars[i].index-1] = copy.deepcopy(vars[i])
+        typ = vars[i].type[0].lower() if vars[i].dim == 1 else vars[i].type[0][0].lower()
+        self.master_vars[vars[i].index-1].value = vars[i].value #if (typ != "c" and typ != "d") else sets[vars[i].set].index(vars[i].value)
+      for i in range(len(resps)):
+        self.master_vars[resps[i].index-1] = copy.deepcopy(resps[i])
+        typ = resps[i].type[0].lower() if resps[i].dim == 1 else resps[i].type[0][0].lower()
+        self.master_vars[resps[i].index-1].value = resps[i].value #if (typ != "c" and typ != "d") else sets[resps[i].set].index(resps[i].value)
+    else:
+      raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
 
   def update_master_vector(self, vars: List[variableData], resps: List[variableData]):
     if self.master_vars:
@@ -719,6 +834,18 @@ class SubProblem(partitionedProblemData):
       if self.vars[i].coupling_type != COUPLING_TYPE.FEEDFORWARD:
         v.append(self.vars[i])
     return v
+  
+  def modify_cond_vars(self, V: variableData):
+     # TODO: Add a check to support conditionality on other variable properties
+    for i in range(len(self.vars)):
+      if self.vars[i].cond_on != None:
+        for v in V:
+          if self.index == v.sp_index and v.name == self.vars[i].cond_on:
+            if self.vars[i].dim > v.value:
+              self.vars[i].value = self.vars[i].value[:int(v.value)]
+            elif self.vars[i].dim < v.value:
+              self.vars[i].value = self.vars[i].value + [self.vars[i].value[-1]] * (v.dim-self.vars[i].dim)
+            self.vars[i].dim = int(v.value)
 
   def set_variables_value(self, vlist: List, clist: List=None):
     kv = 0
@@ -822,6 +949,8 @@ class SubProblem(partitionedProblemData):
     self.coord.calc_inconsistency()
     q_indices: List = self.getLocalIndices()
     self.coord.calc_penalty(q_indices)
+    # TODO: change the name of this routine
+    self.coord.update_master_vector_val(self.vars, self.MDA_process.responses, self.sets)
 
     if self.realistic_objective:
       con.append(y-self.frealistic)
@@ -931,9 +1060,12 @@ class SubProblem(partitionedProblemData):
       if vars[i].coupling_type != COUPLING_TYPE.CONSTANT:
         if isinstance(vars[i].value, list):
           for j in range(len(vars[i].value)):
-            v.append(vars[i].value[j])
+            typ = vars[i].type[0].lower() if vars[i].dim == 1 else vars[i].type[0][0].lower()
+            temp = vars[i].value[j] if (typ != "c" and typ != "d") else self.sets[vars[i].set].index(vars[i].value[j])
+            v.append(temp)
         else:
-          v.append(vars[i].value)
+          typ = vars[i].type[0].lower() if vars[i].dim == 1 else vars[i].type[0][0].lower()
+          v.append(vars[i].value if (typ != "c" and typ != "d") else self.sets[vars[i].set].index(vars[i].value))
     return v
 
   def get_list_vars_ub(self, vars:List[variableData]):
@@ -1007,9 +1139,9 @@ class SubProblem(partitionedProblemData):
       if vars[i].coupling_type == COUPLING_TYPE.CONSTANT:
         if isinstance(vars[i].value, list):
           for j in range(len(vars[i].value)):
-            v.append(vars[i].value[j] if (vars[i].type[j].lower() == 'r' or vars[i].type[j].lower() == 'i') else self.sets[vars[i].set][vars[i].value[j]])
+            v.append(vars[i].value[j] if (vars[i].type[j].lower() == 'r' or vars[i].type[j].lower() == 'i') else vars[i].value[j])
         else:
-          v.append(vars[i].value if (vars[i].type[0].lower() == 'r' or vars[i].type[0].lower() == 'i') else self.sets[vars[i].set][vars[i].value])
+          v.append(vars[i].value if (vars[i].type[0].lower() == 'r' or vars[i].type[0].lower() == 'i') else vars[i].value)
     if isinstance(v, list) and len(v)>0:
       return v
     else:
@@ -1074,7 +1206,26 @@ class MDO(MDO_data):
     x =[]
     xold =[]
     for i in range(len(self.Coordinator.master_vars)):
-      dx.append(self.Coordinator.master_vars[i] - self.Coordinator.master_vars_old[i])
+      mv_clone = copy.deepcopy(self.Coordinator.master_vars[i])
+      mvold_clone = copy.deepcopy(self.Coordinator.master_vars_old[i])
+      mv_type = mv_clone.type[0][0].lower() if isinstance(mv_clone.type, list) else mv_clone.type[0].lower()
+
+      if mv_clone.dim > 1:
+        for k in range(mv_clone.dim):
+          if mv_type == 'c' or mv_type == 'd':
+            mv_clone.value[k] = self.sets[mv_clone.set].index(self.Coordinator.master_vars[i].value[k])
+            mvold_clone.value[k] = self.sets[mvold_clone.set].index(self.Coordinator.master_vars_old[i].value[k])
+      else:
+        if mv_type == 'c' or mv_type == 'd':
+            mv_clone.value = self.sets[mv_clone.set].index(self.Coordinator.master_vars[i].value)
+            mvold_clone.value = self.sets[mvold_clone.set].index(self.Coordinator.master_vars_old[i].value)
+      if mv_type =='c':
+        if mv_clone.value == mvold_clone.value:
+          dx.append(0)
+        else:
+          dx.append(1)
+      else:
+        dx.append(mv_clone - mvold_clone)
       x.append(self.Coordinator.master_vars[i].value)
       xold.append(self.Coordinator.master_vars_old[i].value)
     return np.linalg.norm(dx, 2)
@@ -1127,6 +1278,7 @@ class MDO(MDO_data):
           self.Coordinator.w = [1.] * self.get_weights_size(s)
         else:
           self.subProblems[s].coord.master_vars = copy.deepcopy(self.Coordinator.master_vars)
+        self.subProblems[s].modify_cond_vars(self.Coordinator.master_vars)
 
         out_sp = self.subProblems[s].solve(self.Coordinator.v, self.Coordinator.w)
         self.Coordinator = copy.deepcopy(self.subProblems[s].coord)
@@ -1268,11 +1420,13 @@ class problemSetup:
     links: List = [vin[i][2] if vin[i][2] != "None" else None for i in vin]
     coupling_t: List = self.setup_couplingList()
     lb: List = [vin[i][4] for i in vin]
-    bl: List = [vin[i][5] for i in vin]
+    
     ub: List = [vin[i][6] for i in vin]
     dim: List = [vin[i][7] for i in vin]
     vtype: List = [vin[i][8]  if len(vin[i])>8 else "R" for i in vin]
     vsets: List = [(vin[i][8].split('_')[1:][0] if len(vin[i][8])>1 else None)  if len(vin[i])>8 else None for i in vin]
+
+    bl: List = [self.data["Sets"][vsets[list(vin.keys()).index(i)]].index(vin[i][5]) if (vtype[list(vin.keys()).index(i)] == 'c' or vtype[list(vin.keys()).index(i)] == 'i') else vin[i][5] for i in vin]
 
     scaling = np.subtract(ub,lb)
     self.Qscaling = []
@@ -1481,6 +1635,7 @@ class problemSetup:
       tab_inc = MDAO["tab_inc"] if "tab_inc" in MDAO and isinstance(MDAO["tab_inc"], list) else [],
       noprogress_stop= MDAO["noprogress_stop"] if "noprogress_stop" in MDAO and isinstance(MDAO["noprogress_stop"], int) else 100
     )
+    self.MDAO.sets = self.data["Sets"]
   
   def UserData(self):
     """ Set user data attr """
