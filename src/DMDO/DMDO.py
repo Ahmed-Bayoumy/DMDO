@@ -43,7 +43,8 @@ import OMADS
 from enum import Enum, auto
 from scipy.optimize import minimize, Bounds
 import yaml
-
+import csv
+import shutil
 
 @dataclass
 class BMMDO:
@@ -142,6 +143,22 @@ class variableData:
 
 
   def __sub__(self, other):
+    if type(other)!=variableData:
+      raise IOError(f'The variables data dunder subtraction from {self.name} expects a variable data object as an input but {type(other)} is invoked!')
+    if self.dim > 1:
+      if other.dim == 1:
+        raise IOError(f'The variables data dunder subtraction from {self.name} expects a vector of variables but a scalar is invoked!')
+      if self.dim> other.dim:
+        dif = self.dim-other.dim
+        other.value += [0]*dif
+        other.dim = self.dim
+      elif self.dim<other.dim:
+        dif = other.dim-self.dim
+        val: list = copy.deepcopy(self.value)
+        val += [0]*dif
+        return np.subtract(val, other.value)
+
+
     return np.subtract(self.value, other.value)
 
   def __add__(self, other):
@@ -167,7 +184,8 @@ class variableData:
         raise IOError(f'The feedback of {self.name} does not have the same size. That variable size is not conditional though!')
       if len(other) > l:
         dif = len(other)-l
-        self.value = self.value + [self.value[l-1] for _ in other[dif+1:]]
+        for io in range(l, len(other)):
+          self.value.append(other[io])
         self.baseline += [self.baseline[l-1]]*dif
         self.lb += [self.lb[l-1]]*dif
         self.ub += [self.ub[l-1]]*dif
@@ -323,10 +341,13 @@ class DA(DA_Data):
       for i in range(len(self.outputs)):
         self.outputs[i].__update__(values[o])
         o += 1
-    elif len(self.outputs) == 1 and not isinstance(values, list):
-      if self.outputs[0].dim != len(values):
-        raise IOError(f'The size of the analysis outputs does not match the subproblem #{self.index}!')
-      self.outputs[0].value = copy.deepcopy(values)
+    elif len(self.outputs) == 1 and (isinstance(values, list) or isinstance(values, np.ndarray)):
+      if self.outputs[0].dim>1:
+        if self.outputs[0].dim != len(values):
+          raise IOError(f'The size of the analysis outputs does not match the subproblem #{self.index}!')
+        self.outputs[0].value = copy.deepcopy(values)
+      else:
+        self.outputs[0].value = values[0]
     else:
       raise RuntimeError(f'The number of expected response outputs of DA{self.index} associated with {self.blackbox} is {len(self.outputs)} however the analysis returned only a single value!')
 
@@ -456,7 +477,204 @@ class ADMM(ADMM_data):
 
     self._linker.append(a)
     self._linker.append(b)
+  
+  def are_master_dims_consistent(self):
+    for i in range(self._linker.shape[1]):
+      dim1: int = self.master_vars[self._linker[0, i]-1].dim
+      dim2: int = self.master_vars[self._linker[1, i]-1].dim
+      name1: int = self.master_vars[self._linker[0, i]-1].name
+      name2: int = self.master_vars[self._linker[1, i]-1].name
+      if dim1 != dim2:
+        raise IOError(f"Global master variables {name1} and {name2} should have the same dimensions!")
+  
+  def get_total_n_dimensions(self)->int:
+    out:int = 0
+    for i in range(self._linker.shape[1]):
+      out+=self.master_vars[self._linker[0, i]-1].dim
+    return out
 
+  def batch_q(self, qin) -> list:
+    """ This routine should be called after calculating the unbatched inconsistency vector """
+    self.are_master_dims_consistent()
+    ntot = self.get_total_n_dimensions()
+    if ntot != len(qin):
+      raise IOError("The size of variables inconsistency vector doesn't match the total number of variables dimension!")
+    qout: List = []
+    c = 0
+    for i in range(self._linker.shape[1]):
+      dim: int = self.master_vars[self._linker[0, i]-1].dim
+      if dim >1:
+        subvect = []
+        for _ in range(dim):
+          subvect.append(qin[c])
+          c+=1
+        qout.append(subvect)
+      else:
+        qout.append(qin[c])
+        c+=1
+    return qout
+  
+  def get_total_n_dimensions_old(self)->int:
+    out:int = 0
+    for i in range(self._linker.shape[1]):
+      out+=self.master_vars_old[self._linker[0, i]-1].dim
+    return out
+
+  def batch_q_old(self, qin) -> list:
+    """ This routine should be called after calculating the unbatched inconsistency vector """
+    self.are_master_dims_consistent()
+    ntot = self.get_total_n_dimensions_old()
+    if ntot != len(qin):
+      raise IOError("The size of variables inconsistency vector doesn't match the total number of variables dimension!")
+    qout: List = []
+    c = 0
+    for i in range(self._linker.shape[1]):
+      dim: int = self.master_vars_old[self._linker[0, i]-1].dim
+      if dim >1:
+        subvect = []
+        for _ in range(dim):
+          subvect.append(qin[c])
+          c+=1
+        qout.append(subvect)
+      else:
+        qout.append(qin[c])
+        c+=1
+    return qout
+  
+
+  def unbatch_q(self, qin):
+    self.are_master_dims_consistent()
+    nlinks = self._linker.shape[1]
+    if nlinks != len(qin):
+      raise IOError("The size of the introduced batched variables inconsistency vector doesn't match the total number of links available!")
+    qout = []
+    for i in range(nlinks):
+      dim: int = self.master_vars[self._linker[0, i]-1].dim
+      if dim >1:
+        subvect = qin[i]
+        for j in range(len(subvect)):
+          qout.append(subvect[j])
+      else:
+        qout.append(qin[i])
+
+    return qout
+  
+  def unbatch_multipliers(self, win, vin):
+    """ This routine should be called before calculating the unbatched multipliers vector vector """
+    wout: list = []
+    vout: list = []
+    for i in range(self._linker.shape[1]):
+      dim: int = self.master_vars[self._linker[0, i]-1].dim
+      if dim >1:
+        wsv = win[i]
+        vsv = vin[i]
+        for j in range(len(wsv)):
+          wout.append(wsv[j])
+          vout.append(vsv[j])
+      else:
+        wout.append(win[i])
+        vout.append(vin[i])
+
+    return wout, vout
+  
+  def batch_multipliers(self):
+    """ This routine should be called before calculating the unbatched multipliers vector vector """
+    wout: list = []
+    vout: list = []
+    c = 0
+    for i in range(self._linker.shape[1]):
+      dim: int = self.master_vars[self._linker[0, i]-1].dim
+      if dim >1:
+        wsv = []
+        vsv = []
+        for _ in range(dim):
+          wsv.append(self.w[c])
+          vsv.append(self.v[c])
+          c+=1
+        wout.append(wsv)
+        vout.append(vsv)
+      else:
+        wout.append(self.w[c])
+        vout.append(self.v[c])
+        c+=1
+    return wout, vout
+
+  def modify_multipliers(self, qin, win, vin):
+    for i in range(len(qin)):
+      if isinstance(qin[i], list) and len(win[i]) != len(qin[i]):
+        if len(qin[i]) > len(win[i]):
+          for _ in range(len(qin[i])-len(win[i])):
+            win[i].append(1.)
+            vin[i].append(0.)
+        elif len(win[i]) > len(qin[i]):
+          win[i] = win[i][:len(qin[i])]
+          vin[i] = vin[i][:len(qin[i])]
+    self.w, self.v = self.unbatch_multipliers(win, vin)
+  
+  def update_all_cond_linked(self, index):
+    name = self.master_vars[index].name
+    dim = self.master_vars[index].dim
+    value = self.master_vars[index].value
+
+    for i in range(len(self.master_vars)):
+      if index != i:
+        namet = self.master_vars[i].name
+      else:
+        continue
+      if namet == name:
+        dt = self.master_vars[i].dim
+        vt = self.master_vars[i].value
+        tt = self.master_vars[i].type
+        ubt = self.master_vars[i].ub
+        lbt = self.master_vars[i].lb
+        blt = self.master_vars[i].baseline
+        st = self.master_vars[i].scaling
+        sett = self.master_vars[i].set 
+        if dim > dt:
+          l = len(vt)
+          dif = dim - dt
+          vt = vt + [value[l+ii] for ii in range(dif)]
+          tt += [tt[l-1]]*dif
+          lbt += [lbt[l-1]]*dif
+          ubt += [ubt[l-1]]*dif
+          blt += [blt[l-1]]*dif
+          st += [st[l-1]]*dif
+          # TODO: Enhance the set logic
+          if isinstance(sett, list):
+            sett += [sett[l-1]]*dif
+        elif dim < dt:
+          l = len(value)
+          dif = dt - dim
+          vt = vt[:len(vt)-dif]
+          tt = tt[:len(tt)-dif]
+          lbt = lbt[:len(lbt)-dif]
+          ubt = ubt[:len(ubt)-dif]
+          st = st[:len(st)-dif]
+          blt = blt[:len(blt)-dif]
+        else:
+          continue
+          # TODO: Enhance the set logic
+        dt = len(vt)
+        self.master_vars[i].type = tt
+        self.master_vars[i].value = vt
+        self.master_vars[i].dim = dt
+        self.master_vars[i].set = sett
+        self.master_vars[i].baseline = blt
+        self.master_vars[i].scaling = st
+        self.master_vars[i].lb = lbt
+        self.master_vars[i].ub = ubt
+
+  def update_conditional_vars(self):
+    for i in range(self._linker.shape[1]):
+      dim1: int = self.master_vars[self._linker[0, i]-1].dim
+      dim2: int = self.master_vars[self._linker[1, i]-1].dim
+
+      # Check whether linked variables have same dimension
+      if dim1 != dim2 and self.master_vars[self._linker[0, i]-1].cond_on is None:
+          raise Exception(IOError, f'The variable {self.master_vars[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} does not have the same dimension!')
+      else:
+        if self.master_vars[self._linker[0, i]-1].coupling_type == COUPLING_TYPE.FEEDFORWARD:
+          self.update_all_cond_linked(self._linker[0, i]-1)
 
   def calc_inconsistency(self):
     if self.save_q_in_out:
@@ -464,6 +682,7 @@ class ADMM(ADMM_data):
     q_temp : np.ndarray = np.zeros([0,0])
     tl0: List = []
     tl1: List = []
+    self.update_conditional_vars()
     for i in range(self._linker.shape[1]):
       if self.master_vars:
         # TODO: Add a sanity check early on to ensure that linked parameters has the same type and linked to the same set if they were of discrete type and may be add a dunder methed to handle all the necessary equality checks
@@ -474,78 +693,54 @@ class ADMM(ADMM_data):
         val2: Any = self.master_vars[self._linker[1, i]-1].value
         dim1: int = self.master_vars[self._linker[0, i]-1].dim
         dim2: int = self.master_vars[self._linker[1, i]-1].dim
-        name1: str = self.master_vars[self._linker[0, i]-1].name
-        name2: str = self.master_vars[self._linker[1, i]-1].name
         set1_name: Any = self.master_vars[self._linker[1, i]-1].set
         set2_name: Any = self.master_vars[self._linker[1, i]-1].set
 
-
-        
-        # Check whether linked variables have same dimension
-        if dim1 != dim2 and self.master_vars[self._linker[0, i]-1].cond_on is None:
-          raise Exception(IOError, f'The variable {self.master_vars[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} does not have the same dimension!')
-        else:
-          if dim1 != dim2:
-            if len(val1) > len(val2):
-              l = len(val2)
-              dif = len(val1) - len(val2)
-              val2 = val2 + [2*val1[l+ii] for ii in range(dif)]
-              type2 += [type2[l-1]]*dif
-              # TODO: Enhance the set logic
-              if isinstance(set2_name, list):
-               set2_name += [set2_name[l-1]]*dif
+        #COMPLETED: The variables coupling relationships and their size dependencies need a review
+        qtest: List = []
+        for ik in range(dim1):
+          t1 = type1[ik] if isinstance(type1, list) else type1
+          t2 = type2[ik] if isinstance(type2, list) else type2
+          sn1 = set1_name[ik] if isinstance(set1_name, list) else set1_name
+          sn2 = set2_name[ik] if isinstance(set2_name, list) else set2_name
+          tl0.append(self._linker[0, i])
+          tl1.append(self._linker[1, i])
+          if t1[0] != t2[0]:
+            raise Exception(IOError, f'The variable {self.master_vars[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} does not have the same type(s)!')
+          if t1[0].lower() != "r" and t1[0].lower() != "i" and t1[0].lower() != "d" and t1[0].lower() != "c":
+            raise Exception(IOError, f'The variable {self.master_vars[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} has unknown type(s)!')
+          if t1[0].lower() == "c":
+            v1 = val1[ik] if isinstance(val1, list) else val1
+            v2 = val2[ik] if isinstance(val2, list) else val2
+            if isinstance(val1, list) and isinstance(val2, list):
+              q_temp = np.append(q_temp, sum([not x for x in np.equal(val1,val2)]))
             else:
-              l = len(val1)
-              dif = len(val2) - len(val1)
-              val1 = val1 + [2*val2[l+ii] for ii in range(dif)]
-              type1 += [type1[l-1]]*dif
-              # TODO: Enhance the set logic
-              if isinstance(set1_name, list):
-                set1_name += [set1_name[l-1]]*dif
-            
-          for ik in range(dim1):
-            t1 = type1[ik] if isinstance(type1, list) else type1
-            t2 = type2[ik] if isinstance(type2, list) else type2
-            sn1 = set1_name[ik] if isinstance(set1_name, list) else set1_name
-            sn2 = set2_name[ik] if isinstance(set2_name, list) else set2_name
-            tl0.append(self._linker[0, i])
-            tl1.append(self._linker[1, i])
-            if t1[0] != t2[0]:
-              raise Exception(IOError, f'The variable {self.master_vars[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} does not have the same type(s)!')
-            if t1[0].lower() != "r" and t1[0].lower() != "i" and t1[0].lower() != "d" and t1[0].lower() != "c":
-              raise Exception(IOError, f'The variable {self.master_vars[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} has unknown type(s)!')
-            if t1[0].lower() == "c":
-              v1 = val1[ik] if isinstance(val1, list) else val1
-              v2 = val2[ik] if isinstance(val2, list) else val2
-              if isinstance(val1, list) and isinstance(val2, list):
-                q_temp = np.append(q_temp, sum([not x for x in np.equal(val1,val2)]))
-              else:
-                q_temp = np.append(q_temp, 0 if val1 == val2 else 1)
-              continue
-            else:
-              v1 = val1[ik] if isinstance(val1, list) else val1
-              v2 = val2[ik] if isinstance(val2, list) else val2
+              q_temp = np.append(q_temp, 0 if val1 == val2 else 1)
+            continue
+          else:
+            v1 = val1[ik] if isinstance(val1, list) else val1
+            v2 = val2[ik] if isinstance(val2, list) else val2
+          if t1[0].lower() == "d":
+            i1 = self.sets[sn1].index(v1)
+            i2 = self.sets[sn2].index(v2)
+          if  (isinstance(self.scaling, list) and len(self.scaling) == len(self.master_vars)):
+            qscale = np.multiply(np.add(self.scaling[self._linker[0, i]-1], self.scaling[self._linker[1, i]-1]), 0.5)
             if t1[0].lower() == "d":
-              i1 = self.sets[sn1].index(v1)
-              i2 = self.sets[sn2].index(v2)
-            if  (isinstance(self.scaling, list) and len(self.scaling) == len(self.master_vars)):
-              qscale = np.multiply(np.add(self.scaling[self._linker[0, i]-1], self.scaling[self._linker[1, i]-1]), 0.5)
-              if t1[0].lower() == "d":
-                q_temp = np.append(q_temp, np.multiply(subtract(i1, i2), qscale))
-              else:
-                q_temp = np.append(q_temp, np.multiply(subtract(v1, v2), qscale))
-            elif isinstance(self.scaling, float) or  isinstance(self.scaling, int):
-              if t1[0].lower() == "d":
-                q_temp = np.append(q_temp, np.multiply(subtract(i1, i2), self.scaling))
-              else:
-                q_temp = np.append(q_temp, np.multiply(subtract(v1, v2), self.scaling))
+              q_temp = np.append(q_temp, np.multiply(subtract(i1, i2), qscale))
             else:
-              if t1[0].lower() == "d":
-                q_temp = np.append(q_temp, np.multiply(subtract(i1, i2), min(self.scaling)))
-              else:
-                q_temp = np.append(q_temp, np.multiply(subtract(v1, v2), min(self.scaling)))
-              warning("The inconsistency scaling factors are defined in a list which has a different size from the master variables vector! The minimum value of the provided scaling list will be used to scale the inconsistency vector.")
-
+              q_temp = np.append(q_temp, np.multiply(subtract(v1, v2), qscale))
+          elif isinstance(self.scaling, float) or  isinstance(self.scaling, int):
+            if t1[0].lower() == "d":
+              q_temp = np.append(q_temp, np.multiply(subtract(i1, i2), self.scaling))
+            else:
+              q_temp = np.append(q_temp, np.multiply(subtract(v1, v2), self.scaling))
+          else:
+            if t1[0].lower() == "d":
+              q_temp = np.append(q_temp, np.multiply(subtract(i1, i2), min(self.scaling)))
+            else:
+              q_temp = np.append(q_temp, np.multiply(subtract(v1, v2), min(self.scaling)))
+            warning("The inconsistency scaling factors are defined in a list which has a different size from the master variables vector! The minimum value of the provided scaling list will be used to scale the inconsistency vector.")
+        
           # if  (isinstance(self.scaling, list) and len(self.scaling) == len(self.master_vars)):
           #   qscale = np.multiply(np.add(self.scaling[self._linker[0, i]-1], self.scaling[self._linker[1, i]-1]), 0.5)
           #   q_temp = np.append(q_temp, np.multiply(subtract(((self.master_vars[self._linker[0, i]-1].value)),
@@ -559,7 +754,8 @@ class ADMM(ADMM_data):
           #   warning("The inconsistency scaling factors are defined in a list which has a different size from the master variables vector! The minimum value of the provided scaling list will be used to scale the inconsistency vector.")
       else:
         raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
-
+    # qb: list = self.batch_q(q_temp)
+    # self.modify_multipliers(qb, wb, vb)
     self.q = copy.deepcopy(q_temp)
     self.extended_linker = copy.deepcopy(np.array([tl0, tl1]))
     if self.save_q_out:
@@ -567,9 +763,7 @@ class ADMM(ADMM_data):
     if self.save_q_in_out:
       eps_qio.append(np.max([abs(x) for x in q_temp]))
 
-
-
-
+  #COMPLETED: This should be consistent with the calc_inc
   def calc_inconsistency_old(self):
     if self.save_q_in_out:
       global eps_qio
@@ -586,60 +780,55 @@ class ADMM(ADMM_data):
         val2: Any = self.master_vars_old[self._linker[1, i]-1].value
         dim1: int = self.master_vars_old[self._linker[0, i]-1].dim
         dim2: int = self.master_vars_old[self._linker[1, i]-1].dim
-        name1: str = self.master_vars_old[self._linker[0, i]-1].name
-        name2: str = self.master_vars_old[self._linker[1, i]-1].name
         set1_name: Any = self.master_vars_old[self._linker[1, i]-1].set
         set2_name: Any = self.master_vars_old[self._linker[1, i]-1].set
 
 
         
         # Check whether linked variables have same dimension
-        if dim1 != dim2:
-          raise Exception(IOError, f'The variable {self.master_vars_old[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} does not have the same dimension!')
-        
-        else:
-          for ik in range(dim1):
-            t1 = type1[ik] if isinstance(type1, list) else type1
-            t2 = type2[ik] if isinstance(type2, list) else type2
-            sn1 = set1_name[ik] if isinstance(set1_name, list) else set1_name
-            sn2 = set2_name[ik] if isinstance(set2_name, list) else set2_name
-            tl0.append(self._linker[0, i])
-            tl1.append(self._linker[1, i])
-            if t1 != t2:
-              raise Exception(IOError, f'The variable {self.master_vars_old[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} does not have the same type(s)!')
-            if t1[0].lower() != "r" and t1[0].lower() != "i" and t1[0].lower() != "d" and t1[0].lower() != "c":
-              raise Exception(IOError, f'The variable {self.master_vars_old[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} has unknown type(s)!')
-            if t1[0].lower() == "c":
-              v1 = val1[ik] if isinstance(val1, list) else val1
-              v2 = val2[ik] if isinstance(val2, list) else val2
-              if v1 == v2:
-                  q_temp = np.append(q_temp, 0.)
-              else:
-                q_temp = np.append(q_temp, 1.)
-              continue
+        qtest: List = []
+        for ik in range(dim1):
+          t1 = type1[ik] if isinstance(type1, list) else type1
+          t2 = type2[ik] if isinstance(type2, list) else type2
+          sn1 = set1_name[ik] if isinstance(set1_name, list) else set1_name
+          sn2 = set2_name[ik] if isinstance(set2_name, list) else set2_name
+          tl0.append(self._linker[0, i])
+          tl1.append(self._linker[1, i])
+          if t1 != t2:
+            raise Exception(IOError, f'The variable {self.master_vars_old[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} does not have the same type(s)!')
+          if t1[0].lower() != "r" and t1[0].lower() != "i" and t1[0].lower() != "d" and t1[0].lower() != "c":
+            raise Exception(IOError, f'The variable {self.master_vars_old[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} has unknown type(s)!')
+          if t1[0].lower() == "c":
+            v1 = val1[ik] if isinstance(val1, list) else val1
+            v2 = val2[ik] if isinstance(val2, list) else val2
+            if v1 == v2:
+                q_temp = np.append(q_temp, 0.)
             else:
-              v1 = val1[ik] if isinstance(val1, list) else val1
-              v2 = val2[ik] if isinstance(val2, list) else val2
+              q_temp = np.append(q_temp, 1.)
+            continue
+          else:
+            v1 = val1[ik] if isinstance(val1, list) else val1
+            v2 = val2[ik] if isinstance(val2, list) else val2
+          if t1[0].lower() == "d":
+            i1 = self.sets[sn1].index(v1)
+            i2 = self.sets[sn2].index(v2)
+          if  (isinstance(self.scaling, list) and len(self.scaling) == len(self.master_vars_old)):
+            qscale = np.multiply(np.add(self.scaling[self._linker[0, i]-1], self.scaling[self._linker[1, i]-1]), 0.5)
             if t1[0].lower() == "d":
-              i1 = self.sets[sn1].index(v1)
-              i2 = self.sets[sn2].index(v2)
-            if  (isinstance(self.scaling, list) and len(self.scaling) == len(self.master_vars_old)):
-              qscale = np.multiply(np.add(self.scaling[self._linker[0, i]-1], self.scaling[self._linker[1, i]-1]), 0.5)
-              if t1[0].lower() == "d":
-                q_temp = np.append(q_temp, np.multiply(subtract(i1, i2), qscale))
-              else:
-                q_temp = np.append(q_temp, np.multiply(subtract(v1, v2), qscale))
-            elif isinstance(self.scaling, float) or  isinstance(self.scaling, int):
-              if t1[0].lower() == "d":
-                q_temp = np.append(q_temp, np.multiply(subtract(i1, i2), self.scaling))
-              else:
-                q_temp = np.append(q_temp, np.multiply(subtract(v1, v2), self.scaling))
+              q_temp = np.append(q_temp, np.multiply(subtract(i1, i2), qscale))
             else:
-              if t1[0].lower() == "d":
-                q_temp = np.append(q_temp, np.multiply(subtract(i1, i2), min(self.scaling)))
-              else:
-                q_temp = np.append(q_temp, np.multiply(subtract(v1, v2), min(self.scaling)))
-              warning("The inconsistency scaling factors are defined in a list which has a different size from the master variables vector! The minimum value of the provided scaling list will be used to scale the inconsistency vector.")
+              q_temp = np.append(q_temp, np.multiply(subtract(v1, v2), qscale))
+          elif isinstance(self.scaling, float) or  isinstance(self.scaling, int):
+            if t1[0].lower() == "d":
+              q_temp = np.append(q_temp, np.multiply(subtract(i1, i2), self.scaling))
+            else:
+              q_temp = np.append(q_temp, np.multiply(subtract(v1, v2), self.scaling))
+          else:
+            if t1[0].lower() == "d":
+              q_temp = np.append(q_temp, np.multiply(subtract(i1, i2), min(self.scaling)))
+            else:
+              q_temp = np.append(q_temp, np.multiply(subtract(v1, v2), min(self.scaling)))
+            warning("The inconsistency scaling factors are defined in a list which has a different size from the master variables vector! The minimum value of the provided scaling list will be used to scale the inconsistency vector.")
       else:
         raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
     self.qold = copy.deepcopy(q_temp)
@@ -668,9 +857,20 @@ class ADMM(ADMM_data):
 
 
   def calc_penalty(self, q_indices):
+    if len(self.w) != len(self.v):
+      raise RuntimeError('The multipliers vectors w and v have inconsistent size!')
+    if len(self.q) != len(self.w):
+      raise RuntimeError("The variables inconsistency vector has different size from the multipliers vectoe w and v!")
     phi = np.add(np.multiply(self.v, self.q), np.multiply(np.multiply(self.w, self.w), np.multiply(self.q, self.q)))
+    phib = self.batch_q(phi)
     #COMPLETE: Sum relevant components of q to accelerate the convergence of variables consistency
-    self.phi = np.sum(phi[q_indices])
+    s = 0
+    for i in q_indices:
+      if isinstance(i, list):
+        s += sum(phi[i])
+      else:
+        s += phi[i]
+    self.phi = s
 
     if np.iscomplex(self.phi) or np.isnan(self.phi):
       self.phi = np.inf
@@ -717,6 +917,22 @@ class ADMM(ADMM_data):
     self.v = np.add(self.v, np.multiply(
             np.multiply(np.multiply(2, self.w), self.w), self.q))
     self.calc_inconsistency_old()
+    old = self.batch_q_old(self.qold)
+    current = self.batch_q(self.q)
+    for i in range(len(current)):
+      if isinstance(current[i], list):
+        if len(current[i]) > len(old[i]):
+          old[i] += [0]*(len(current[i])-len(old[i]))
+        elif len(current[i]) < len(old[i]):
+          current[i] += [0]*(len(old[i])-len(current[i]))
+        else:
+          continue
+      else:
+        continue
+    
+    self.q = self.unbatch_q(current)
+    self.qold = self.unbatch_q(old)
+
     self.q_stall = np.greater(np.abs(self.q), self.gamma*np.abs(self.qold))
     increase_w = []
     wold = copy.deepcopy(self.w)
@@ -766,6 +982,7 @@ class partitionedProblemData:
   constraints: List[float] = [np.inf]
   frealistic: float = 0.
   scaling: float = 10.
+  Il_file: str = None
   coord: ADMM
   opt: Callable
   fmin_nop: float
@@ -840,12 +1057,14 @@ class SubProblem(partitionedProblemData):
     for i in range(len(self.vars)):
       if self.vars[i].cond_on != None:
         for v in V:
-          if self.index == v.sp_index and v.name == self.vars[i].cond_on:
-            if self.vars[i].dim > v.value:
-              self.vars[i].value = self.vars[i].value[:int(v.value)]
-            elif self.vars[i].dim < v.value:
-              self.vars[i].value = self.vars[i].value + [self.vars[i].value[-1]] * (v.dim-self.vars[i].dim)
-            self.vars[i].dim = int(v.value)
+          if self.index == v.sp_index and v.name == self.vars[i].name and v.cond_on != None:
+            if self.vars[i].dim > v.dim:
+              temp = self.vars[i].value[:v.dim]
+              self.vars[i].__update__(temp)
+            elif self.vars[i].dim < v.dim:
+              temp = copy.deepcopy(self.vars[i].value)
+              temp += [0]*(v.dim-self.vars[i].dim)
+              self.vars[i].__update__(temp)
 
   def set_variables_value(self, vlist: List, clist: List=None):
     kv = 0
@@ -915,7 +1134,35 @@ class SubProblem(partitionedProblemData):
     return local_link
     
 
-
+  def initialize_IL_res_file(self, file):
+    if not os.path.exists(file):
+      mode = 'x'
+    else:
+      mode = 'w'
+    with open(file, mode=mode) as csv_file:
+      keys = ['Iter#', 'qmax', 'Obj', 'x', 'y', 'const']
+      writer = csv.DictWriter(csv_file, fieldnames=keys)
+      writer.writeheader()    # add column names in the CSV file
+  
+  def prepare_post(self, file):
+    ht = os.path.split(file)
+    name = file.split('.')[0]
+    ext = file.split('.')[1]
+    pd = os.path.join(ht[0], f'{name}_post')
+    pdsb = os.path.join(pd, f'SP_{self.index}')
+    pfo = os.path.join(pdsb, f'SB_{self.index}_{self.iter}.out')
+    if not os.path.exists(pdsb):
+      os.mkdir(pdsb)
+    self.postDir = pdsb
+    self.Il_file = pfo
+    self.initialize_IL_res_file(pfo)
+    
+  def Add_IL_res_row(self, r: Dict):
+    with open(self.Il_file, mode='a') as csv_file:
+      keys = ['Iter#', 'qmax', 'Obj', 'x', 'y', 'const']
+      writer = csv.DictWriter(csv_file, fieldnames=keys)
+      writer.writerow(r)    # add column names in the CSV file
+  
   def evaluate(self, vlist: List[float]=None, clist: List[float]=None):
     if self.coord.save_q_in_out:
       global eps_fio
@@ -926,6 +1173,7 @@ class SubProblem(partitionedProblemData):
     
     self.set_variables_value(vlist, clist)
     self.MDA_process.setInputs(self.vars)
+    wb, vb = self.coord.batch_multipliers()
     self.MDA_process.run()
     y = self.MDA_process.getOutputs()
 
@@ -947,6 +1195,18 @@ class SubProblem(partitionedProblemData):
     self.set_pair()
     self.coord.update_master_vector(self.vars, self.MDA_process.responses)
     self.coord.calc_inconsistency()
+    qb = self.coord.batch_q(self.coord.q)
+    qtemp = []
+    for i in range(len(qb)):
+      if isinstance(qb[i], list):
+        qtemp.append(max(qb[i]))
+      else:
+        qtemp.append(qb[i])
+    self.coord.modify_multipliers(qb, wb, vb)
+    if self.Il_file is not None:
+      self.Add_IL_res_row({'Iter#': self.iter, 'qmax':max(qtemp), 'Obj': fun[0], 'x': vlist, 'y': y, 'const': clist})
+    
+    # TODO: Fix the local indices to select from a batched q list
     q_indices: List = self.getLocalIndices()
     self.coord.calc_penalty(q_indices)
     # TODO: change the name of this routine
@@ -959,7 +1219,11 @@ class SubProblem(partitionedProblemData):
     else:
       return fun[0]+self.coord.phi+max(max(con),0)**2
 
-  def solve(self, v, w):
+  def solve(self, v, w, file: str = None, iter: int = None):
+    if file is not None:
+      self.iter = iter
+      self.prepare_post(file + f'_{iter}')
+
     self.coord.v = copy.deepcopy(v)
     self.coord.w = copy.deepcopy(w)
     bl = self.get_list_vars(self.get_design_vars())
@@ -1228,7 +1492,14 @@ class MDO(MDO_data):
         dx.append(mv_clone - mvold_clone)
       x.append(self.Coordinator.master_vars[i].value)
       xold.append(self.Coordinator.master_vars_old[i].value)
-    return np.linalg.norm(dx, 2)
+    DX: list = []
+    for i in range(len(dx)):
+      if isinstance(dx[i], list) or isinstance(dx[i], np.ndarray):
+        for j in range(len(dx[i])):
+          DX.append(dx[i][j])
+      else:
+        DX.append(dx[i])
+    return np.linalg.norm(DX, 2)
 
   def check_termination_critt(self, iter):
     if iter > 1 and np.abs(self.tab_inc[iter]) < self.inc_stop:
@@ -1252,13 +1523,44 @@ class MDO(MDO_data):
       out += self.subProblems[sp_i].coord.master_vars[link1[i]-1].dim
     
     return out
-    
   
-  def run(self):
+  def initialize_OL_res_file(self, file):
+    if not os.path.exists(file):
+      mode = 'x'
+    else:
+      mode = 'w'
+    with open(file, mode=mode) as csv_file:
+      keys = ['Iter#', 'qmax', 'Obj', 'dx', 'max(w)', 'Coupling_with_qmax', 'xmin']
+      writer = csv.DictWriter(csv_file, fieldnames=keys)
+      writer.writeheader()    # add column names in the CSV file
+  
+  def prepare_post(self, file):
+    ht = os.path.split(file)
+    name = file.split('.')[0]
+    ext = file.split('.')[1]
+    pd = os.path.join(ht[0], f'{name}_post')
+    pfo = os.path.join(pd, 'OL_hist.out')
+    if os.path.exists(pd):
+      shutil.rmtree(pd)
+    os.mkdir(pd)
+    self.postDir = pd
+    self.Ol_file = pfo
+    self.initialize_OL_res_file(pfo)
+    
+  def Add_OL_res_row(self, r: Dict):
+    with open(self.Ol_file, mode='a') as csv_file:
+      keys = ['Iter#', 'qmax', 'Obj', 'dx', 'max(w)', 'Coupling_with_qmax', 'xmin']
+      writer = csv.DictWriter(csv_file, fieldnames=keys)
+      writer.writerow(r)    # add column names in the CSV file
+  
+  def run(self, file):
     global eps_fio, eps_qio
     # Note: once you run MDAO, the data stored in eps_fio and eps_qio shall be deleted. It is recommended to store such data to a different variable before running another MDAO
     eps_fio = []
     eps_qio = []
+    self.prepare_post(file)
+
+
     """ Run the MDO process """
     #  COMPLETE: fix the setup of the local (associated with SP) and global (associated with MDO) coordinators
     for iter in range(self.Coordinator.budget):
@@ -1279,8 +1581,8 @@ class MDO(MDO_data):
         else:
           self.subProblems[s].coord.master_vars = copy.deepcopy(self.Coordinator.master_vars)
         self.subProblems[s].modify_cond_vars(self.Coordinator.master_vars)
-
-        out_sp = self.subProblems[s].solve(self.Coordinator.v, self.Coordinator.w)
+      
+        out_sp = self.subProblems[s].solve(self.Coordinator.v, self.Coordinator.w, file=file, iter=iter)
         self.Coordinator = copy.deepcopy(self.subProblems[s].coord)
         if self.subProblems[s].index == self.Coordinator.index_of_master_SP:
           self.fmin = self.subProblems[s].fmin_nop
@@ -1293,11 +1595,24 @@ class MDO(MDO_data):
       dx = self.get_master_vars_difference()
       if self.display:
         print(f'{iter} || qmax: {np.max(np.abs(self.Coordinator.q))} || Obj: {self.fmin} || dx: {dx} || max(w): {np.max(self.Coordinator.w)}')
-        index = np.argmax(self.Coordinator.q)
+        qb = self.Coordinator.batch_q(self.Coordinator.q)
+        ql: list = []
+        for i in range(len(qb)):
+          if isinstance(qb[i], list):
+            ql.append(max(np.abs(qb[i])))
+          else:
+            ql.append(abs(qb[i]))
+
+        index = np.argmax(ql)
         print(f'Highest inconsistency : {self.Coordinator.master_vars[self.Coordinator.extended_linker[0,index]-1].name}_'
           f'{self.Coordinator.master_vars[self.Coordinator.extended_linker[0,index]-1].link} to '
             f'{self.Coordinator.master_vars[self.Coordinator.extended_linker[1,index]-1].name}_'
           f'{self.Coordinator.master_vars[self.Coordinator.extended_linker[1,index]-1].link}')
+      """ Write OL results to the file"""
+      self.Add_OL_res_row({'Iter#': f'{iter}', 'qmax': f'{np.max(np.abs(self.Coordinator.q))}', 'Obj': f'{self.fmin}', 'dx': f'{dx}', 'max(w)': f'{np.max(self.Coordinator.w)}', 'Coupling_with_qmax': f'{self.Coordinator.master_vars[self.Coordinator.extended_linker[0,index]-1].name}_'
+          f'{self.Coordinator.master_vars[self.Coordinator.extended_linker[0,index]-1].link} to '
+            f'{self.Coordinator.master_vars[self.Coordinator.extended_linker[1,index]-1].name}_'
+          f'{self.Coordinator.master_vars[self.Coordinator.extended_linker[1,index]-1].link}', 'xmin': f'{[self.Coordinator.master_vars[i].value for i in range(len(self.Coordinator.master_vars))]}'})
       """ Update LM and PM """
       self.Coordinator.update_multipliers(iter)
 
@@ -1686,7 +2001,7 @@ def main(*args) -> Dict[str, Any]:
   if args[1].lower() != "run":
     return MDAO
 
-  MDAO.run()
+  MDAO.run(file)
 
   if MDAO.display == True:
     print(f'------Run_Summary------')
