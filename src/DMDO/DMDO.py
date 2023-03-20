@@ -1074,17 +1074,21 @@ class SubProblem(partitionedProblemData):
         if self.vars[i].dim > 1:
           for ik in range(self.vars[i].dim):
             self.vars[i].value[ik] = vlist[kv]
+            self.vars[i].baseline[ik] = vlist[kv]
             kv += 1
         else:
           self.vars[i].value = vlist[kv]
+          self.vars[i].baseline = vlist[kv]
           kv += 1
       elif self.vars[i].coupling_type == COUPLING_TYPE.CONSTANT:
         if self.vars[i].dim > 1:
           for ik in range(self.vars[i].dim):
             self.vars[i].value[ik] = clist[kc]
+            self.vars[i].baseline[ik] = clist[kc]
             kc += 1
         else:
           self.vars[i].value = clist[kc]
+          self.vars[i].baseline = clist[kc]
           kc += 1
 
   def set_pair(self):
@@ -1223,7 +1227,7 @@ class SubProblem(partitionedProblemData):
     if file is not None:
       self.iter = iter
       self.prepare_post(file + f'_{iter}')
-
+    self.set_dependent_baseline(self.coord.master_vars)
     self.coord.v = copy.deepcopy(v)
     self.coord.w = copy.deepcopy(w)
     bl = self.get_list_vars(self.get_design_vars())
@@ -1310,26 +1314,26 @@ class SubProblem(partitionedProblemData):
         con.append(float(vc[i].lb-vc[i].value))
     return con
 
-  def set_dependent_vars(self, vars: List[variableData]):
+  def set_dependent_baseline(self, vars: List[variableData]):
     for i in range(len(vars)):
-      if vars[i].link == self.index:
-        if vars[i].coupling_type == COUPLING_TYPE.FEEDFORWARD or vars[i].coupling_type == COUPLING_TYPE.SHARED:
+      if vars[i].sp_index == self.index:
+        if vars[i].coupling_type == COUPLING_TYPE.FEEDFORWARD or vars[i].coupling_type == COUPLING_TYPE.SHARED or vars[i].coupling_type == COUPLING_TYPE.CONSTANT:
           for j in range(len(self.vars)):
             if self.vars[j].name == vars[i].name:
-              self.vars[j].value = vars[i].value
+              self.vars[j].baseline = vars[i].value
 
   def get_list_vars(self, vars:List[variableData]):
     v = []
     for i in range(len(vars)):
       if vars[i].coupling_type != COUPLING_TYPE.CONSTANT:
-        if isinstance(vars[i].value, list):
-          for j in range(len(vars[i].value)):
+        if isinstance(vars[i].baseline, list):
+          for j in range(len(vars[i].baseline)):
             typ = vars[i].type[0].lower() if vars[i].dim == 1 else vars[i].type[0][0].lower()
-            temp = vars[i].value[j] if (typ != "c" and typ != "d") else self.sets[vars[i].set].index(vars[i].value[j])
+            temp = vars[i].baseline[j] if (typ != "c" and typ != "d") else self.sets[vars[i].set].index(vars[i].baseline[j])
             v.append(temp)
         else:
           typ = vars[i].type[0].lower() if vars[i].dim == 1 else vars[i].type[0][0].lower()
-          v.append(vars[i].value if (typ != "c" and typ != "d") else self.sets[vars[i].set].index(vars[i].value))
+          v.append(vars[i].baseline if (typ != "c" and typ != "d") else self.sets[vars[i].set].index(vars[i].baseline))
     return v
 
   def get_list_vars_ub(self, vars:List[variableData]):
@@ -1401,11 +1405,11 @@ class SubProblem(partitionedProblemData):
     v = []
     for i in range(len(vars)):
       if vars[i].coupling_type == COUPLING_TYPE.CONSTANT:
-        if isinstance(vars[i].value, list):
-          for j in range(len(vars[i].value)):
-            v.append(vars[i].value[j] if (vars[i].type[j].lower() == 'r' or vars[i].type[j].lower() == 'i') else vars[i].value[j])
+        if isinstance(vars[i].baseline, list):
+          for j in range(len(vars[i].baseline)):
+            v.append(vars[i].baseline[j] if (vars[i].type[j].lower() == 'r' or vars[i].type[j].lower() == 'i') else vars[i].baseline[j])
         else:
-          v.append(vars[i].value if (vars[i].type[0].lower() == 'r' or vars[i].type[0].lower() == 'i') else vars[i].value)
+          v.append(vars[i].baseline if (vars[i].type[0].lower() == 'r' or vars[i].type[0].lower() == 'i') else vars[i].baseline)
     if isinstance(v, list) and len(v)>0:
       return v
     else:
