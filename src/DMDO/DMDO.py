@@ -141,23 +141,42 @@ class variableData:
   set: str = None
   cond_on: str = None
 
+  def extend_noncat(self, other):
+    """ TODO: Extend the other values vector size to the self values vector size"""
+    return other
+  
+  def shrink_noncat(self, other):
+    """ TODO: Shrink the other values vector size to the self values vector size"""
+    return other
+  
+  def extend_cat(self, other):
+    """ TODO: Extend the other values vector size to the self values vector size"""
+    return other
+  
+  def shrink_cat(self, other):
+    """ TODO: Shrink the other values vector size to the self values vector size"""
+    return other
+
 
   def __sub__(self, other):
     if type(other)!=variableData:
       raise IOError(f'The variables data dunder subtraction from {self.name} expects a variable data object as an input but {type(other)} is invoked!')
     if self.dim > 1:
+      valo: list = copy.deepcopy(other.value)
+      val: list = copy.deepcopy(self.value)
+
       if other.dim == 1:
         raise IOError(f'The variables data dunder subtraction from {self.name} expects a vector of variables but a scalar is invoked!')
       if self.dim> other.dim:
         dif = self.dim-other.dim
-        other.value += [0]*dif
-        other.dim = self.dim
+        valo += [0]*dif
+        return np.subtract(val, valo)
       elif self.dim<other.dim:
         dif = other.dim-self.dim
-        val: list = copy.deepcopy(self.value)
         val += [0]*dif
-        return np.subtract(val, other.value)
-
+        return np.subtract(val, valo)
+      
+      return np.subtract(val, valo)
 
     return np.subtract(self.value, other.value)
 
@@ -184,8 +203,8 @@ class variableData:
         raise IOError(f'The feedback of {self.name} does not have the same size. That variable size is not conditional though!')
       if len(other) > l:
         dif = len(other)-l
-        for io in range(l, len(other)):
-          self.value.append(other[io])
+        # for io in range(l, len(other)):
+        self.value = copy.deepcopy(other)
         self.baseline += [self.baseline[l-1]]*dif
         self.lb += [self.lb[l-1]]*dif
         self.ub += [self.ub[l-1]]*dif
@@ -193,14 +212,14 @@ class variableData:
         self.type += [self.type[l-1]]*dif
       elif len(other) < l:
         dif = l - len(other)
-        self.value = self.value[:-dif]
+        self.value = copy.deepcopy(other)
         self.baseline = self.baseline[:-dif]
         self.lb = self.lb[:-dif]
         self.ub = self.ub[:-dif]
         self.scaling = self.scaling[:-dif]
         self.type = self.type[:-dif]
       else:
-        self.value = other
+        self.value = copy.deepcopy(other)
       self.dim = len(other)
     elif isinstance(other, int) or isinstance(other, float) or isinstance(other, str):
       self.value = other
@@ -633,7 +652,7 @@ class ADMM(ADMM_data):
         if dim > dt:
           l = len(vt)
           dif = dim - dt
-          vt = vt + [value[l+ii] for ii in range(dif)]
+          vt = copy.deepcopy(value)
           tt += [tt[l-1]]*dif
           lbt += [lbt[l-1]]*dif
           ubt += [ubt[l-1]]*dif
@@ -645,7 +664,7 @@ class ADMM(ADMM_data):
         elif dim < dt:
           l = len(value)
           dif = dt - dim
-          vt = vt[:len(vt)-dif]
+          vt = copy.deepcopy(value)
           tt = tt[:len(tt)-dif]
           lbt = lbt[:len(lbt)-dif]
           ubt = ubt[:len(ubt)-dif]
@@ -675,6 +694,16 @@ class ADMM(ADMM_data):
       else:
         if self.master_vars[self._linker[0, i]-1].coupling_type == COUPLING_TYPE.FEEDFORWARD:
           self.update_all_cond_linked(self._linker[0, i]-1)
+    for i in range(self._linker.shape[1]):
+      dim1: int = self.master_vars[self._linker[0, i]-1].dim
+      dim2: int = self.master_vars[self._linker[1, i]-1].dim
+
+      # Check whether linked variables have same dimension
+      if dim1 != dim2 and self.master_vars[self._linker[0, i]-1].cond_on is None:
+          raise Exception(IOError, f'The variable {self.master_vars[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} does not have the same dimension!')
+      else:
+        if self.master_vars[self._linker[1, i]-1].coupling_type == COUPLING_TYPE.FEEDFORWARD:
+          self.update_all_cond_linked(self._linker[1, i]-1)
 
   def calc_inconsistency(self):
     if self.save_q_in_out:
@@ -712,17 +741,17 @@ class ADMM(ADMM_data):
           if t1[0].lower() == "c":
             v1 = val1[ik] if isinstance(val1, list) else val1
             v2 = val2[ik] if isinstance(val2, list) else val2
-            if isinstance(val1, list) and isinstance(val2, list):
-              q_temp = np.append(q_temp, sum([not x for x in np.equal(val1,val2)]))
-            else:
-              q_temp = np.append(q_temp, 0 if val1 == val2 else 1)
+            # if isinstance(val1, list) and isinstance(val2, list):
+            #   q_temp = np.append(q_temp, sum([not x for x in np.equal(val1,val2)]))
+            # else:
+            q_temp = np.append(q_temp, 0 if v1 == v2 else 1)
             continue
           else:
             v1 = val1[ik] if isinstance(val1, list) else val1
             v2 = val2[ik] if isinstance(val2, list) else val2
           if t1[0].lower() == "d":
-            i1 = self.sets[sn1].index(v1)
-            i2 = self.sets[sn2].index(v2)
+            i1 = int(v1)#self.sets[sn1].index(v1)
+            i2 = int(v1)#self.sets[sn2].index(v2)
           if  (isinstance(self.scaling, list) and len(self.scaling) == len(self.master_vars)):
             qscale = np.multiply(np.add(self.scaling[self._linker[0, i]-1], self.scaling[self._linker[1, i]-1]), 0.5)
             if t1[0].lower() == "d":
@@ -838,11 +867,11 @@ class ADMM(ADMM_data):
       for i in range(len(vars)):
         self.master_vars[vars[i].index-1] = copy.deepcopy(vars[i])
         typ = vars[i].type[0].lower() if vars[i].dim == 1 else vars[i].type[0][0].lower()
-        self.master_vars[vars[i].index-1].value = vars[i].value #if (typ != "c" and typ != "d") else sets[vars[i].set].index(vars[i].value)
+        # self.master_vars[vars[i].index-1].value = vars[i].value #if (typ != "c" and typ != "d") else sets[vars[i].set].index(vars[i].value)
       for i in range(len(resps)):
         self.master_vars[resps[i].index-1] = copy.deepcopy(resps[i])
         typ = resps[i].type[0].lower() if resps[i].dim == 1 else resps[i].type[0][0].lower()
-        self.master_vars[resps[i].index-1].value = resps[i].value #if (typ != "c" and typ != "d") else sets[resps[i].set].index(resps[i].value)
+        # self.master_vars[resps[i].index-1].value = resps[i].value #if (typ != "c" and typ != "d") else sets[resps[i].set].index(resps[i].value)
     else:
       raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
 
@@ -1006,7 +1035,7 @@ class SubProblem(partitionedProblemData):
     self.MDA_process = analysis
     self.coord = coordination
     self.opt = opt
-    self.optimizer = OMADS.main
+    self.optimizer = OMADS.POLL.main
     self.fmin_nop = fmin_nop
     self.budget=budget
     self.display = display
@@ -1067,6 +1096,7 @@ class SubProblem(partitionedProblemData):
               self.vars[i].__update__(temp)
 
   def set_variables_value(self, vlist: List, clist: List=None):
+    # FIXME: scipy doesn't consider constants list, if defined the routine crashes
     kv = 0
     kc = 0
     for i in range(len(self.vars)):
@@ -1080,7 +1110,7 @@ class SubProblem(partitionedProblemData):
           self.vars[i].value = vlist[kv]
           self.vars[i].baseline = vlist[kv]
           kv += 1
-      elif self.vars[i].coupling_type == COUPLING_TYPE.CONSTANT:
+      elif self.vars[i].coupling_type == COUPLING_TYPE.CONSTANT and clist!= None:
         if self.vars[i].dim > 1:
           for ik in range(self.vars[i].dim):
             self.vars[i].value[ik] = clist[kc]
@@ -1215,6 +1245,11 @@ class SubProblem(partitionedProblemData):
     self.coord.calc_penalty(q_indices)
     # TODO: change the name of this routine
     self.coord.update_master_vector_val(self.vars, self.MDA_process.responses, self.sets)
+    mvs = self.coord.master_vars
+    for i in range(len(mvs)):
+      for j in range(len(self.vars)):
+        if mvs[i].index == self.vars[j].index:
+          self.vars[j] = copy.deepcopy(mvs[i])
 
     if self.realistic_objective:
       con.append(y-self.frealistic)
@@ -1254,7 +1289,7 @@ class SubProblem(partitionedProblemData):
         "display": self.display,
         "opportunistic": False,
         "check_cache": True,
-        "store_cache": True,
+        "store_cache": False,
         "collect_y": False,
         "rich_direction": False,
         "precision": "high",
@@ -1263,11 +1298,17 @@ class SubProblem(partitionedProblemData):
         "save_all_best": False,
         "parallel_mode": False
       }
-      data = {"evaluator": eval, "param": param, "options":options}
+      sampling = {
+                    "method": OMADS.SEARCH.explore.SAMPLING_METHOD.LH.value,
+                    "ns": 20,
+                    "visualize": False,
+                    "criterion": None
+                  }
+      data = {"evaluator": eval, "param": param, "options":options, "sampling": sampling}
 
       out = {}
       pinit = self.psize
-      out = self.optimizer(data)
+      out, _ = self.optimizer(data)
       if self.psize_init == PSIZE_UPDATE.DEFAULT:
         self.psize = 1.
       elif self.psize_init == PSIZE_UPDATE.SUCCESS:
@@ -1298,29 +1339,78 @@ class SubProblem(partitionedProblemData):
     return out
 
   def get_coupling_vars_diff(self, con):
+    # TODO: Add categorical coupling difference
     vc: List[variableData] = self.get_coupling_vars()
     for i in range(len(vc)):
+      if vc[i].type[0].lower() == "c":
+        s = vc[i].type[1]
       if isinstance(vc[i].value, list):
         for j in range(len(vc[i].value)):
-          con.append(float(vc[i].value[j]-vc[i].ub[j]))
+          if vc[i].type[j][0].lower() == "c":
+            con.append(float(self.sets[vc[i].set].index(vc[i].value[j])-vc[i].ub[j]))
+          else:
+            con.append(float(vc[i].value[j]-vc[i].ub[j]))
       else:
-        con.append(float(vc[i].value-vc[i].ub))
+        if vc[i].type[0].lower() == "c":
+          con.append(float(self.sets[vc[i].set].index(vc[i].value)-vc[i].ub))
+        else:
+          con.append(float(vc[i].value-vc[i].ub))
 
     for i in range(len(vc)):
       if isinstance(vc[i].value, list):
         for j in range(len(vc[i].value)):
-          con.append(float(vc[i].lb[j]-vc[i].value[j]))
+          if vc[i].type[j][0].lower() == "c":
+            con.append(float(vc[i].lb[j]-self.sets[vc[i].set].index(vc[i].value[j])))
+          else:
+            con.append(float(vc[i].lb[j]-vc[i].value[j]))
       else:
-        con.append(float(vc[i].lb-vc[i].value))
+        if vc[i].type[0].lower() == "c":
+          con.append(float(vc[i].lb-self.sets[vc[i].set].index(vc[i].value)))
+        else:
+          con.append(float(vc[i].lb-vc[i].value))
     return con
 
   def set_dependent_baseline(self, vars: List[variableData]):
-    for i in range(len(vars)):
-      if vars[i].sp_index == self.index:
-        if vars[i].coupling_type == COUPLING_TYPE.FEEDFORWARD or vars[i].coupling_type == COUPLING_TYPE.SHARED or vars[i].coupling_type == COUPLING_TYPE.CONSTANT:
-          for j in range(len(self.vars)):
-            if self.vars[j].name == vars[i].name:
-              self.vars[j].baseline = vars[i].value
+    for j in range(len(self.vars)):
+      if self.vars[j].coupling_type == COUPLING_TYPE.FEEDFORWARD or self.vars[j].coupling_type == COUPLING_TYPE.SHARED or self.vars[j].coupling_type == COUPLING_TYPE.CONSTANT:
+        for i in range(len(vars)):
+          if isinstance(self.vars[j].link , list):
+            found = False
+            for inx in self.vars[j].link:
+              if inx == vars[i].sp_index:
+                found = True
+          else:
+            found = self.vars[j].link == vars[i].sp_index
+          if self.vars[j].name == vars[i].name and found:
+            self.vars[j].baseline = vars[i].value
+            self.vars[j].value = vars[i].value
+    
+    # for j in range(len(self.resps)):
+    #   if self.resps[j].coupling_type == COUPLING_TYPE.FEEDFORWARD or self.resps[j].coupling_type == COUPLING_TYPE.SHARED or self.resps[j].coupling_type == COUPLING_TYPE.CONSTANT:
+    #     for i in range(len(vars)):
+    #       if isinstance(self.resps[j].link , list):
+    #         found = False
+    #         for inx in self.resps[j].link:
+    #           if inx == vars[i].sp_index:
+    #             found = True
+    #       else:
+    #         found = self.resps[j].link == vars[i].sp_index
+    #       if self.resps[j].name == vars[i].name and found:
+    #         self.resps[j].baseline = vars[i].value
+
+    # for i in range(len(vars)):
+    #   if vars[i].sp_index == self.index:
+    #     if vars[i].coupling_type == COUPLING_TYPE.FEEDFORWARD or vars[i].coupling_type == COUPLING_TYPE.SHARED or vars[i].coupling_type == COUPLING_TYPE.CONSTANT:
+    #       for j in range(len(self.vars)):
+    #         if isinstance(self.vars[j].link , list):
+    #           found = False
+    #           for inx in self.vars[j].link:
+    #             if inx == vars[i].sp_index:
+    #               found = True
+    #         else:
+    #           found = self.vars[j].link == vars[i].sp_index
+    #         if self.vars[j].name == vars[i].name and found:
+    #           self.vars[j].baseline = vars[i].value
 
   def get_list_vars(self, vars:List[variableData]):
     v = []
@@ -1405,11 +1495,11 @@ class SubProblem(partitionedProblemData):
     v = []
     for i in range(len(vars)):
       if vars[i].coupling_type == COUPLING_TYPE.CONSTANT:
-        if isinstance(vars[i].baseline, list):
-          for j in range(len(vars[i].baseline)):
-            v.append(vars[i].baseline[j] if (vars[i].type[j].lower() == 'r' or vars[i].type[j].lower() == 'i') else vars[i].baseline[j])
+        if isinstance(vars[i].value, list):
+          for j in range(len(vars[i].value)):
+            v.append(vars[i].value[j] if (vars[i].type[j].lower() == 'r' or vars[i].type[j].lower() == 'i') else vars[i].value[j])
         else:
-          v.append(vars[i].baseline if (vars[i].type[0].lower() == 'r' or vars[i].type[0].lower() == 'i') else vars[i].baseline)
+          v.append(vars[i].value if (vars[i].type[0].lower() == 'r' or vars[i].type[0].lower() == 'i') else vars[i].value)
     if isinstance(v, list) and len(v)>0:
       return v
     else:
@@ -1482,20 +1572,22 @@ class MDO(MDO_data):
         for k in range(mv_clone.dim):
           if mv_type == 'c' or mv_type == 'd':
             mv_clone.value[k] = self.sets[mv_clone.set].index(self.Coordinator.master_vars[i].value[k])
+        for k in range(mvold_clone.dim):
+          if mv_type == 'c' or mv_type == 'd':
             mvold_clone.value[k] = self.sets[mvold_clone.set].index(self.Coordinator.master_vars_old[i].value[k])
       else:
         if mv_type == 'c' or mv_type == 'd':
             mv_clone.value = self.sets[mv_clone.set].index(self.Coordinator.master_vars[i].value)
             mvold_clone.value = self.sets[mvold_clone.set].index(self.Coordinator.master_vars_old[i].value)
-      if mv_type =='c':
-        if mv_clone.value == mvold_clone.value:
-          dx.append(0)
-        else:
-          dx.append(1)
-      else:
-        dx.append(mv_clone - mvold_clone)
-      x.append(self.Coordinator.master_vars[i].value)
-      xold.append(self.Coordinator.master_vars_old[i].value)
+      # if mv_type =='c':
+      #   if mv_cloneuntil.value == mvold_clone.value:
+      #     dx.append(0)
+      #   else:
+      #     dx.append(1)
+      # else:
+      dx.append(mv_clone - mvold_clone)
+      # x.append(self.Coordinator.master_vars[i].value)
+      # xold.append(self.Coordinator.master_vars_old[i].value)
     DX: list = []
     for i in range(len(dx)):
       if isinstance(dx[i], list) or isinstance(dx[i], np.ndarray):
@@ -1728,6 +1820,9 @@ class problemSetup:
     else:
       MDO_ARCHITECTURE.IDF
   
+  def raiser(self, blerr): 
+    raise ImportError(blerr)
+  
   def variablesSetup(self):
     """ Setup the list of global variables struct """
     vin: Dict = self.data["variables"]
@@ -1749,26 +1844,29 @@ class problemSetup:
 
     scaling = np.subtract(ub,lb)
     self.Qscaling = []
+    # blError = raise IOError()
     for i in range(len(names)):
       cond_on = None
       if isinstance(dim[i], str):
-        conp = dim[i].split("_")[1]
+        conp = dim[i].split("_")[1:]
         for k in range(len(names)):
-          if spi[i] == spi[k] and names[k] == vin[conp][0]:
-            dim[i] = bl[k]
-            cond_on = vin[conp][0]
+          if spi[i] == spi[k] and names[k] == vin[conp[0]][0]:
+            if len(conp)>1:
+              dim[i] = int(bl[k] + float(conp[1]))
+            else:
+              dim[i] = bl[k]
+            cond_on = vin[conp[0]][0]
       if dim[i] > 1:
         v[f"var{i+1}"] = {"index": i+1,
         "sp_index": spi[i],
         f"name": names[i],
         "dim": dim[i],
-        "value": [bl[i]]*dim[i],
+        "value": [bl[i]]*dim[i] if not isinstance(bl[i], list) else bl[i] if len(bl[i]) == dim[i] else self.raiser(f'The baseline vector of {names[i]} has {len(bl[i])} elements which is different from the variable initial #dimensions which is {dim[i]}'),
         "coupling_type": coupling_t[i],
         "link": links[i],
-        "baseline": [bl[i]]*dim[i],
+        "baseline": [bl[i]]*dim[i] if not isinstance(bl[i], list) else bl[i] if len(bl[i]) == dim[i] else self.raiser(f'The baseline vector of {names[i]} has {len(bl[i])} elements which is different from the variable initial #dimensions which is {dim[i]}'),
         "scaling": [scaling[i]]*dim[i],
         "lb": [lb[i]]*dim[i],
-        "value": [bl[i]]*dim[i],
         "ub": [ub[i]]*dim[i],
         "type": [vtype[i]]*dim[i],
         "set": vsets[i],
