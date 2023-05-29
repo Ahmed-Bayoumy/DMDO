@@ -1012,6 +1012,7 @@ class partitionedProblemData:
   frealistic: float = 0.
   scaling: float = 10.
   Il_file: str = None
+  conf: Dict = None
   coord: ADMM
   opt: Callable
   fmin_nop: float
@@ -1026,7 +1027,7 @@ class partitionedProblemData:
 @dataclass
 class SubProblem(partitionedProblemData):
   # Constructor
-  def __init__(self, nv, index, vars, resps, is_main, analysis, coordination, opt, fmin_nop, budget, display, psize, pupdate, scipy=None, freal=None, tol=1E-12, solver='OMADS', sets=None):
+  def __init__(self, nv, index, vars, resps, is_main, analysis, coordination, opt, fmin_nop, budget, display, psize, pupdate, scipy=None, freal=None, tol=1E-12, solver='OMADS', sets=None, conf = None):
     self.nv = nv
     self.index = index
     self.vars = copy.deepcopy(vars)
@@ -1035,7 +1036,7 @@ class SubProblem(partitionedProblemData):
     self.MDA_process = analysis
     self.coord = coordination
     self.opt = opt
-    self.optimizer = OMADS.POLL.main
+    self.optimizer = OMADS.MADS.main 
     self.fmin_nop = fmin_nop
     self.budget=budget
     self.display = display
@@ -1046,13 +1047,18 @@ class SubProblem(partitionedProblemData):
     self.solver = solver
     if solver == 'OMADS':
       self.scipy = None
+      self.optimizer = OMADS.MADS.main
+    elif solver == 'POLL':
+      self.optimizer = OMADS.POLL.main
+    elif solver == 'SEARCH':
+      self.optimizer = OMADS.SEARCH.main
     elif solver == 'scipy':
       self.scipy = scipy
     else:
       warning(f'Inappropriate solver method definition for subproblem # {self.index}! OMADS will be used.')
       self.solver = 'OMADS'
     self.sets = sets
-    
+    self.conf = conf
 
     if (self.solver == 'scipy' and (scipy == None or "options" not in self.scipy or "method" not in self.scipy)):
       warning(f'Inappropriate definition of the scipy settings for subproblem # {self.index}! scipy default settings shall be used!')
@@ -1254,9 +1260,9 @@ class SubProblem(partitionedProblemData):
     if self.realistic_objective:
       con.append(y-self.frealistic)
     if self.solver == "OMADS":
-      return [fun[0]+self.coord.phi, con]
+      return [fun[0]+self.coord.phi if not self.is_main else fun[0], con]
     else:
-      return fun[0]+self.coord.phi+max(max(con),0)**2
+      return fun[0]+self.coord.phi+max(max(con),0)**2 if not self.is_main else fun[0]+max(max(con),0)**2
 
   def solve(self, v, w, file: str = None, iter: int = None):
     if file is not None:
@@ -1281,30 +1287,36 @@ class SubProblem(partitionedProblemData):
                   "constants": self.get_list_constant_updates(self.get_design_vars()),
                   "constants_name": self.get_list_const_names(self.get_design_vars())}
       pinit = min(max(self.tol, self.psize), 1)
-      options = {
-        "seed": 0,
-        "budget": 2*self.budget*len(self.vars),
-        "tol": max(pinit/1000, self.tol),
-        "psize_init": pinit,
-        "display": self.display,
-        "opportunistic": False,
-        "check_cache": True,
-        "store_cache": False,
-        "collect_y": False,
-        "rich_direction": False,
-        "precision": "high",
-        "save_results": False,
-        "save_coordinates": False,
-        "save_all_best": False,
-        "parallel_mode": False
-      }
-      sampling = {
-                    "method": OMADS.SEARCH.explore.SAMPLING_METHOD.LH.value,
-                    "ns": 20,
+      if self.conf is None:
+        options = {
+          "seed": 10000,
+          "budget": self.budget,
+          "tol": max(pinit/1000, self.tol),
+          "psize_init": pinit,
+          "display": self.display,
+          "opportunistic": False,
+          "check_cache": True,
+          "store_cache": True,
+          "collect_y": False,
+          "rich_direction": False,
+          "precision": "high",
+          "save_results": False,
+          "save_coordinates": False,
+          "save_all_best": False,
+          "parallel_mode": False
+        }
+        search = {
+                    "type": "sampling",
+                    "s_method": "LH",
+                    "ns": 5,
                     "visualize": False,
                     "criterion": None
                   }
-      data = {"evaluator": eval, "param": param, "options":options, "sampling": sampling}
+      else:
+        options = self.conf["options"]
+        search = self.conf["search"]
+      
+      data = {"evaluator": eval, "param": param, "options":options, "search": search}
 
       out = {}
       pinit = self.psize
@@ -2013,6 +2025,12 @@ class problemSetup:
   def SPSetup(self):
     """ Setup subproblems definition """
     SP = self.data["subproblem"]
+    is_conf =  "CONFIG" in self.data
+    if is_conf:
+      CONF = self.data["CONFIG"]
+    
+
+
     self.SPs = []
     for i in SP:
       self.SPs.append(SubProblem(
@@ -2032,7 +2050,9 @@ class problemSetup:
         freal=SP[i]["freal"] if "freal" in SP[i] else None,
         solver=SP[i]["solver"] if "solver" in SP[i] else "OMADS",
         scipy= SP[i]["scipy"] if "scipy" in SP[i] else None,
-        sets=self.Sets
+        sets=self.Sets,
+        conf= CONF[SP[i]["configurations"]] if ("configurations" in SP[i]) and is_conf and (SP[i]["configurations"] in CONF) else None
+
       ))
 
   def MDOSetup(self):
