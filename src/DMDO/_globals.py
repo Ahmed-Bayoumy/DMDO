@@ -24,7 +24,6 @@ from enum import Enum, auto
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, Callable, Optional
 import copy
-from genericpath import isfile
 import json
 from logging import warning
 import os
