@@ -7,3 +7,15 @@ docs/source
 MakeFile
 make.bat
 .vscode
+src/DMDO/DMDO1.py
+post
+tests/test_files/*
+!tests/test_files/Basic_MDO_BB.yaml
+!tests/test_files/Basic_MDO.yaml
+!tests/test_files/geometric_programming.yaml
+!tests/test_basic.py
+unknown*
+*SBJ.*
+dist/archive
+code_archive
+build
