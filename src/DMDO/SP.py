@@ -20,6 +20,7 @@
 #  https://github.com/Ahmed-Bayoumy/DMDO                                              #
 # ------------------------------------------------------------------------------------#
 
+import platform
 from ._globals import *
 from ._common import *
 from ._protocols import *
@@ -439,6 +440,8 @@ class SubProblem(partitionedProblemData):
           "save_all_best": False,
           "parallel_mode": False
         }
+      isWin = platform.platform().split('-')[0] == 'Windows'
+      options["precision"] = "high" if isWin else "medium"
       if self.conf is not None and "search" in self.conf and self.conf["search"] is not None:
         search = self.conf["search"]
       else:
