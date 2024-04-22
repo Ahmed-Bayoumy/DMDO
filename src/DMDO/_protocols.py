@@ -20,13 +20,56 @@
 #  https://github.com/Ahmed-Bayoumy/DMDO                                              #
 # ------------------------------------------------------------------------------------#
 
-from .DMDO import USER, MDO, main
+from typing import List, Dict, Any, Callable, Protocol, Optional
+from dataclasses import dataclass, field
+from .variables import *
 
-from ._globals import *
-from ._common import *
-from .SP import *
-from .MDA import *
-from .DA import *
-from .preprocess import *
+@dataclass
+class Process_data(Protocol):
+  term_critteria: List[Callable] = field(init=False)
+  term_type: List[int] = field(init=False)
+  term_status: List[bool] = field(init=False)
+  variables: List[variableData]
+  responses: List[variableData]
 
-__all__ = ['USER', 'double_precision', 'VAR_TYPE', 'VALIDATOR', 'BARRIER_TYPE', 'PSIZE_UPDATE', 'w_scheme', 'MODEL_TYPE', 'COUPLING_STRENGTH', 'COUPLING_TYPE', 'MDO_ARCHITECTURE', 'variableData', 'Process_data', 'coordinationData', 'coordinator', 'process', 'search', 'DA_Data', 'optimizationData', 'DA', 'MDA_data', 'MDA', 'ADMM', 'ADMM_data', 'partitionedProblemData', 'SubProblem', 'MDO_data', 'MDO', 'problemSetup', 'main']
+class coordinator(Protocol):
+
+  def clone_point(self):
+    ...
+
+  def create_linking_list(self):
+    ...
+
+  def calc_inconsistency(self):
+    ...
+
+  def calc_penalty(self):
+    ...
+
+  def update_multipliers(self):
+    ...
+
+class process(Process_data, Protocol):
+
+  def run(self):
+    ...
+
+  def validation(self):
+    ...
+
+  def setInputs(self):
+    ...
+
+  def getOutputs(self):
+    ...
+
+  def setup(self):
+    ...
+
+class search(Protocol):
+
+  def evaluateSamples(self):
+    ...
+
+  def run(self):
+    ...

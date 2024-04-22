@@ -20,13 +20,51 @@
 #  https://github.com/Ahmed-Bayoumy/DMDO                                              #
 # ------------------------------------------------------------------------------------#
 
-from .DMDO import USER, MDO, main
-
 from ._globals import *
 from ._common import *
-from .SP import *
-from .MDA import *
 from .DA import *
-from .preprocess import *
+from ._protocols import *
 
-__all__ = ['USER', 'double_precision', 'VAR_TYPE', 'VALIDATOR', 'BARRIER_TYPE', 'PSIZE_UPDATE', 'w_scheme', 'MODEL_TYPE', 'COUPLING_STRENGTH', 'COUPLING_TYPE', 'MDO_ARCHITECTURE', 'variableData', 'Process_data', 'coordinationData', 'coordinator', 'process', 'search', 'DA_Data', 'optimizationData', 'DA', 'MDA_data', 'MDA', 'ADMM', 'ADMM_data', 'partitionedProblemData', 'SubProblem', 'MDO_data', 'MDO', 'problemSetup', 'main']
+@dataclass
+class MDA_data(Process_data):
+  nAnalyses: int
+  analyses: List[DA]
+  index: int = None
+
+@dataclass
+class MDA(MDA_data):
+
+  def setup(self, input):
+    data: Dict = {}
+    if isfile(input):
+      data = json.load(input)
+
+    if isinstance(input, dict):
+      self(**data)
+
+  def run(self):
+    for i in range(self.nAnalyses):
+      for j in range(len(self.variables)):
+        for k in range(len(self.analyses[i].inputs)):
+          if self.analyses[i].inputs[k].index == self.variables[j].index:
+            self.analyses[i].inputs[k] = copy.deepcopy(self.variables[j])
+      self.analyses[i].run()
+
+  def validation(self, vType: int):
+    self.term_status = []
+    for i in range(len(self.term_critteria)):
+      if self.term_type[i] == vType:
+          self.term_status.append(self.term_critteria[i])
+
+  def setInputs(self, values: List[Any]):
+    self.variables = copy.deepcopy(values)
+
+  def getOutputs(self):
+    out = []
+    if self.responses is None:
+      return [None]
+    for i in range(len(self.responses)):
+      out.append(self.responses[i].value)
+    return out
+
+
