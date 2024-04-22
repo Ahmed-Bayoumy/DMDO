@@ -91,8 +91,8 @@ class variableData:
       return np.divide(self.value, other)
   
   def __update__(self, other):
-    if type(other)!=variableData:
-      raise IOError(f'The variables data dunder equality method of {self.name} expects a variable data object as an input or variable values with the same type of {self.name}!')
+    # if type(other)!=variableData and type(self.value) != type(other):
+    #   raise IOError(f'The variables data dunder equality method of {self.name} expects a variable data object as an input or variable values with the same type of {self.name}!')
     if isinstance(other, variableData):
       self =  copy.deepcopy(other)
     elif isinstance(other, list) or isinstance(other, np.ndarray):
