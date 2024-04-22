@@ -17,3 +17,5 @@ tests/test_files/*
 unknown*
 *SBJ.*
 dist/archive
+code_archive
+build
