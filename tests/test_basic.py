@@ -17,7 +17,7 @@ def A1(x):
   for i in range(len(x)):
     if x[i] == 0.:
       x[i] = 1e-12
-  return [np.log10(x[0]+LAMBDA) + np.log10.log(x[1]+LAMBDA) + np.log10.log(x[2]+LAMBDA)]
+  return [np.log10(x[0]+LAMBDA) + np.log10(x[1]+LAMBDA) + np.log10(x[2]+LAMBDA)]
 
 def A2(x):
   LAMBDA = 0.0
