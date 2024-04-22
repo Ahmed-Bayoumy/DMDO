@@ -1254,8 +1254,7 @@ def Sellar_scipy():
       fmin_main = fmin
       hmax_main = hmax
     hmin= MDAO.subProblems[j].opt([s.value for s in MDAO.subProblems[j].get_design_vars()] , MDAO.subProblems[j].MDA_process.getOutputs())[1]
-    if max(hmin) > hmax: 
-      hmax = max(hmin) 
+
   print(f'P_main: fmin= {fmin_main}, hmax= {hmax_main}')
   print(f'Final obj value of the main problem: \n {fmin_main}')
 
@@ -1489,8 +1488,7 @@ def Sellar_OMADS_POLL():
       fmin_main = fmin
       hmax_main = hmax
     hmin= MDAO.subProblems[j].opt([s.value for s in MDAO.subProblems[j].get_design_vars()] , MDAO.subProblems[j].MDA_process.getOutputs())[1]
-    if max(hmin) > hmax: 
-      hmax = max(hmin) 
+
   print(f'P_main: fmin= {fmin_main}, hmax= {hmax_main}')
   print(f'Final obj value of the main problem: \n {fmin_main}')
 
@@ -1723,8 +1721,7 @@ def Sellar_OMADS_MADS():
       fmin_main = fmin
       hmax_main = hmax
     hmin= MDAO.subProblems[j].opt([s.value for s in MDAO.subProblems[j].get_design_vars()] , MDAO.subProblems[j].MDA_process.getOutputs())[1]
-    if max(hmin) > hmax: 
-      hmax = max(hmin) 
+
   print(f'P_main: fmin= {fmin_main}, hmax= {hmax_main}')
   print(f'Final obj value of the main problem: \n {fmin_main}')
 
