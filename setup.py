@@ -13,8 +13,7 @@ if __name__ == "__main__":
       'NOBM',
       'numpy',
       'matplot',
-      'OMADS',
-      'enum'
+      'OMADS'
     ],
     extras_require={
         'interactive': ['matplotlib>=3.5.2', 'plotly>=5.14.1'],
