@@ -14,7 +14,6 @@ if __name__ == "__main__":
       'numpy',
       'matplot',
       'OMADS',
-      'math',
       'enum'
     ],
     extras_require={

@@ -1,6 +1,5 @@
 import os
 from DMDO import *
-import math
 import numpy as np
 from numpy import sqrt, inf
 import copy
@@ -18,7 +17,7 @@ def A1(x):
   for i in range(len(x)):
     if x[i] == 0.:
       x[i] = 1e-12
-  return [math.log(x[0]+LAMBDA) + math.log(x[1]+LAMBDA) + math.log(x[2]+LAMBDA)]
+  return [np.log10(x[0]+LAMBDA) + np.log10.log(x[1]+LAMBDA) + np.log10.log(x[2]+LAMBDA)]
 
 def A2(x):
   LAMBDA = 0.0
