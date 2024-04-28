@@ -41,17 +41,19 @@ class coordinationData:
 class ADMM_data(coordinationData):
   beta: float = 1.3
   gamma: float = 0.5
-  q: np.ndarray = np.zeros([0,0])
-  qold: np.ndarray = np.zeros([0,0])
+  q: np.ndarray = None
+  qold: np.ndarray = None
   phi: float = 1.0
-  v: np.ndarray = np.zeros([0,0])
-  w: np.ndarray = np.zeros([0,0])
+  v: np.ndarray = None
+  w: np.ndarray = None
   update_w: bool = False
   M_update_scheme: int = w_scheme.MEDIAN
   eps_qo: List = None
   save_q_in: bool = False
   save_q_in_out: bool = False
   eps_fo: List = None
+
+
 
 # COMPLETE: ADMM needs to be customized for this code
 @dataclass
@@ -75,6 +77,12 @@ class ADMM(ADMM_data):
     self.save_q_in_out = store_q_io
     self.eps_fo = []
     self.index = index
+
+    self.q = np.zeros([0,0])
+    self.qold = np.zeros([0,0])
+    self.phi: float = 1.0
+    self.v = np.zeros([0,0])
+    self.w = np.zeros([0,0])
 
   def clone_point(self, p: variableData):
     self.var_group.append(p)
