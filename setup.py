@@ -5,14 +5,14 @@ if __name__ == "__main__":
     name="DMDO",
     author="Ahmed H. Bayoumy",
     author_email="ahmed.bayoumy@mail.mcgill.ca",
-    version='2401',
+    version='2404',
     packages=find_packages(include=['DMDO', 'DMDO.*']),
     description="Distributed Multidisciplinary Design Optimization (DMDO)",
     install_requires=[
       'pandas>=1.5.2',
-      'NOBM>=1.0.1',
+      'NOBM==2404.1',
       'numpy==1.22.4',
-      'OMADS==2401',
+      'OMADS==2404.1',
       'pyyaml'
     ],
     extras_require={
