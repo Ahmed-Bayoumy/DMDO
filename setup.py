@@ -9,9 +9,9 @@ if __name__ == "__main__":
     packages=find_packages(include=['DMDO', 'DMDO.*']),
     description="Distributed Multidisciplinary Design Optimization (DMDO)",
     install_requires=[
-      'pandas>=1.5.2',
+      'pandas==2.2.2',
       'NOBM==2404.1',
-      'numpy==1.22.4',
+      'numpy==1.23.2',
       'OMADS==2404.1',
       'pyyaml'
     ],
