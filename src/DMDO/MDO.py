@@ -20,12 +20,23 @@
 #  https://github.com/Ahmed-Bayoumy/DMDO                                              #
 # ------------------------------------------------------------------------------------#
 
-from ._globals import *
-from ._protocols import *
-from .coordinator import *
-from .SP import *
-import pickle
 
+import copy
+import csv
+from dataclasses import dataclass
+import os
+import pickle
+import shutil
+import time
+from typing import Any, Dict, List
+
+import numpy as np
+
+from .SP import SubProblem
+from ._common import MSG_TYPE, logger
+from ._protocols import Process_data
+from .coordinator import ADMM
+from .variables import variableData
 
 @dataclass
 class MDO_data(Process_data):
@@ -48,11 +59,11 @@ class MDO_data(Process_data):
 
 @dataclass
 class MDO(MDO_data):
-  def setup(self, input):
-    data: Dict = {}
-    if isfile(input):
-      data = json.load(input)
+  """_summary_
 
+  :param MDO_data: _description_
+  :type MDO_data: _type_
+  """
   def get_list_of_var_values(self, x: List[variableData]):
     x_temp = []
     for i in range(len(x)):
@@ -61,8 +72,6 @@ class MDO(MDO_data):
 
   def get_master_vars_difference(self):
     dx = []
-    x =[]
-    xold =[]
     for i in range(len(self.Coordinator.master_vars)):
       mv_clone = copy.deepcopy(self.Coordinator.master_vars[i])
       mvold_clone = copy.deepcopy(self.Coordinator.master_vars_old[i])
@@ -109,7 +118,8 @@ class MDO(MDO_data):
 
     i = self.noprogress_stop
 
-    if iter > i + 2 and np.log(np.min(self.Coordinator.w) > 6.) and np.less_equal(self.tab_inc[iter-i], np.min(self.tab_inc[iter-i+1:iter])):
+    if iter > i + 2 and np.log(np.min(self.Coordinator.w) > 6.) \
+      and np.less_equal(self.tab_inc[iter-i], np.min(self.tab_inc[iter-i+1:iter])):
       msg = f'Stop: no progress after {i} iterations.'
       self.log.log_msg(msg=msg, msg_type=MSG_TYPE.INFO.value)
       print(msg)
@@ -137,7 +147,14 @@ class MDO(MDO_data):
     else:
       mode = 'w'
     with open(file, mode=mode) as csv_file:
-      keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', f'{"Max. inconsistency".rjust(30)}', f'{"Objective".rjust(30)}', f'{"Status".rjust(30)}', f'{"Variables change".rjust(30)}', f'{"Maximum penalty".rjust(30)}', f'{"Coupling_with_qmax".rjust(30)}'] + [f'{f"{x.name}_{x.sp_index}".rjust(30)}' for x in self.Coordinator.master_vars]
+      keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', \
+              f'{"Max. inconsistency".rjust(30)}', \
+                f'{"Objective".rjust(30)}', \
+                  f'{"Status".rjust(30)}', \
+                    f'{"Variables change".rjust(30)}', \
+                      f'{"Maximum penalty".rjust(30)}', \
+                        f'{"Coupling_with_qmax".rjust(30)}'] + \
+                          [f'{f"{x.name}_{x.sp_index}".rjust(30)}' for x in self.Coordinator.master_vars]
       writer = csv.DictWriter(csv_file, fieldnames=keys)
       writer.writeheader()    # add column names in the CSV file
   
@@ -146,10 +163,8 @@ class MDO(MDO_data):
       name = "unknown"
       pd = os.path.join(os.getcwd(), f'{name}_post')
     else:
-      res_dir = os.path.dirname(file)
       ht = os.path.split(file)
       name = file.split('.')[0]
-      ext = file.split('.')[1]
       pd = os.path.join(ht[0], f'{name}_post')
     
     
@@ -164,7 +179,14 @@ class MDO(MDO_data):
     
   def Add_OL_res_row(self, r: Dict):
     with open(self.Ol_file, mode='a') as csv_file:
-      keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', f'{"Max. inconsistency".rjust(30)}', f'{"Objective".rjust(30)}', f'{"Status".rjust(30)}', f'{"Variables change".rjust(30)}', f'{"Maximum penalty".rjust(30)}', f'{"Coupling_with_qmax".rjust(30)}'] + [f'{f"{x.name}_{x.sp_index}".rjust(30)}' for x in self.Coordinator.master_vars]
+      keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', \
+              f'{"Max. inconsistency".rjust(30)}', \
+                f'{"Objective".rjust(30)}', \
+                  f'{"Status".rjust(30)}', \
+                    f'{"Variables change".rjust(30)}', \
+                      f'{"Maximum penalty".rjust(30)}', \
+                        f'{"Coupling_with_qmax".rjust(30)}'] + \
+                          [f'{f"{x.name}_{x.sp_index}".rjust(30)}' for x in self.Coordinator.master_vars]
       writer = csv.DictWriter(csv_file, fieldnames=keys)
       writer.writerow(r)    # add column names in the CSV file
 
@@ -186,7 +208,7 @@ class MDO(MDO_data):
                 vindex = sp_vnames.index(v.name)
                 if v.link == self.subProblems[s].index:
                   self.subProblems[s].vars[vindex].baseline = ct[1][svIndex]
-              except:
+              except:  # noqa: E722
                 continue
             srIndex = -1
             for v in self.subProblems[nsp].resps:
@@ -195,20 +217,21 @@ class MDO(MDO_data):
                 vindex = sp_vnames.index(v.name)
                 if v.link == self.subProblems[s].index:
                   self.subProblems[s].vars[vindex].baseline = ct[2][srIndex]
-              except:
+              except:  # noqa: E722
                 continue
     
     return
 
 
-  def run(self, file=None, resume= False, mode="Serial"):
+  def run(self, file=None, resume= False, mode="Serial"):  # noqa: C901
     global eps_fio, eps_qio
-    if self.log == None:
+    if self.log is None:
       self.log: logger = logger()
       self.log.initialize("DMDO.log")
     if not resume:
       self.log.log_msg(msg="Running MDO ... ", msg_type=MSG_TYPE.INFO.value)
-      # Note: once you run MDAO, the data stored in eps_fio and eps_qio shall be deleted. It is recommended to store such data to a different variable before running another MDAO
+      # Note: once you run MDAO, the data stored in eps_fio and eps_qio shall be deleted. 
+      # It is recommended to store such data to a different variable before running another MDAO
       eps_fio = []
       eps_qio = []
       self.file = file
@@ -259,8 +282,11 @@ class MDO(MDO_data):
         """ Display convergence """
         dx = self.get_master_vars_difference()
         if self.display:
-          self.log.log_msg(msg=f'{iter} || qmax: {np.max(np.abs(self.Coordinator.q))} || Obj: {self.fmin} || dx: {dx} || max(w): {np.max(self.Coordinator.w)}', msg_type=MSG_TYPE.INFO.value)
-          print(f'{iter} || qmax: {np.max(np.abs(self.Coordinator.q))} || Obj: {self.fmin} || dx: {dx} || max(w): {np.max(self.Coordinator.w)}')
+          self.log.log_msg(msg=f'{iter} || qmax: {np.max(np.abs(self.Coordinator.q))}'
+                           ' || Obj: {self.fmin} || dx: {dx} || max(w): {np.max(self.Coordinator.w)}',\
+                              msg_type=MSG_TYPE.INFO.value)
+          print(f'{iter} || qmax: {np.max(np.abs(self.Coordinator.q))} '
+                '|| Obj: {self.fmin} || dx: {dx} || max(w): {np.max(self.Coordinator.w)}')
           qb = self.Coordinator.batch_q(self.Coordinator.q)
           ql: list = []
           for i in range(len(qb)):
@@ -270,7 +296,8 @@ class MDO(MDO_data):
               ql.append(abs(qb[i]))
 
           index = np.argmax(ql)
-          self.log.log_msg(msg=f'Highest inconsistency : {self.Coordinator.master_vars[self.Coordinator._linker[0,index]-1].name}_'
+          self.log.log_msg(
+            msg=f'Highest inconsistency : {self.Coordinator.master_vars[self.Coordinator._linker[0,index]-1].name}_'
           f'{self.Coordinator.master_vars[self.Coordinator._linker[0,index]-1].sp_index} to '
             f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].name}_'
           f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].link}', msg_type=MSG_TYPE.INFO.value)
@@ -279,12 +306,18 @@ class MDO(MDO_data):
             f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].name}_'
           f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].link}')
         """ Write OL results to the file"""
-      keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', f'{"Max. inconsistency".rjust(30)}', f'{"Objective".rjust(30)}', f'{"Status".rjust(30)}', f'{"Variables change".rjust(30)}', f'{"Maximum penalty".rjust(30)}', f'{"Coupling_with_qmax".rjust(30)}'] + [f'{f"{x.name}_{x.sp_index}".rjust(30)}' for x in self.Coordinator.master_vars]
+      keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', f'{"Max. inconsistency".rjust(30)}', \
+              f'{"Objective".rjust(30)}', f'{"Status".rjust(30)}', \
+              f'{"Variables change".rjust(30)}', f'{"Maximum penalty".rjust(30)}', f'{"Coupling_with_qmax".rjust(30)}'] + \
+                [f'{f"{x.name}_{x.sp_index}".rjust(30)}' for x in self.Coordinator.master_vars]
       curr_time = time.strftime("%H:%M:%S", time.localtime()) 
       hmin = max(self.hmin) if isinstance(self.hmin, list) and self.hmin is not None and len(self.hmin) > 0 else self.hmin
       hstatus = "Feasible" if hmin <= 0 else "Infeasible"
       status = copy.deepcopy(hstatus) if self.fmin != np.inf else "Error"
-      cmax = f'{self.Coordinator.master_vars[self.Coordinator.extended_linker[0,index]-1].name}_{self.Coordinator.master_vars[self.Coordinator.extended_linker[0,index]-1].link} to {self.Coordinator.master_vars[self.Coordinator.extended_linker[1,index]-1].name}_{self.Coordinator.master_vars[self.Coordinator.extended_linker[1,index]-1].link}'
+      cmax = f'{self.Coordinator.master_vars[self.Coordinator.extended_linker[0,index]-1].name}_'
+      f'{self.Coordinator.master_vars[self.Coordinator.extended_linker[0,index]-1].link} '
+      f'to {self.Coordinator.master_vars[self.Coordinator.extended_linker[1,index]-1].name}'
+      f'_{self.Coordinator.master_vars[self.Coordinator.extended_linker[1,index]-1].link}'
       row = {keys[0]: f'{f"{curr_time}"}', 
              keys[1]: f'{f"{iter}".rjust(30)}', 
              keys[2]: f'{f"{np.max(np.abs(self.Coordinator.q))}".rjust(30)}', 
@@ -316,9 +349,9 @@ class MDO(MDO_data):
     else:
       # TODO: Add parallel sunbproblems execution
       """ """
-    if self.display == True:
-      print(f'------Run_Summary------')
-      self.log.log_msg(msg=f'------Run_Summary------', msg_type=MSG_TYPE.INFO.value)
+    if self.display is True:
+      print('------Run_Summary------')
+      self.log.log_msg(msg='------Run_Summary------', msg_type=MSG_TYPE.INFO.value)
       print(self.stop)
       self.log.log_msg(msg=self.stop, msg_type=MSG_TYPE.INFO.value)
       print(f'q = {self.Coordinator.q}')
@@ -331,7 +364,9 @@ class MDO(MDO_data):
       hmax = np.inf
       for j in range(len(self.subProblems)):
         print(f'Study_ID_{self.subProblems[j].index}: fmin= {self.subProblems[j].fmin_nop}, hmin= {self.subProblems[j].hmin}')
-        self.log.log_msg(msg=f'Study_ID_{self.subProblems[j].index}: fmin= {self.subProblems[j].fmin_nop}, hmin= {self.subProblems[j].hmin}', msg_type=MSG_TYPE.INFO.value)
+        self.log.log_msg(msg=f'Study_ID_{self.subProblems[j].index}: '
+                         f'fmin= {self.subProblems[j].fmin_nop}, hmin= {self.subProblems[j].hmin}', \
+                         msg_type=MSG_TYPE.INFO.value)
         fmin += self.subProblems[j].fmin_nop
         hmin= self.subProblems[j].hmin
         if isinstance(hmin, list): 

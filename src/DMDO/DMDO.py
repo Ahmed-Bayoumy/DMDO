@@ -21,14 +21,18 @@
 # ------------------------------------------------------------------------------------#
 
 
+import copy
 from dataclasses import dataclass
 import os
+import pickle
 import sys
 from typing import Dict, Any
 import numpy as np
 import yaml
-from .preprocess import *
-from .MDO import *
+
+from .MDO import MDO
+from ._common import MSG_TYPE, logger
+from .preprocess import problemSetup
 
 @dataclass
 class ModelInadequacyData:
@@ -44,7 +48,7 @@ class ModelInadequacyData:
 
 
 # TODO: MDO setup will be simplified when the N2 chart UI is implemented
-def main(*args) -> Dict[str, Any]:
+def main(*args) -> Dict[str, Any]:  # noqa: C901
   # Default run options and initialization
   exec_mode = "Serial"
   isResumeFilePath = os.getcwd()
@@ -103,7 +107,7 @@ def main(*args) -> Dict[str, Any]:
     MDAO: MDO  
     if log is None:
       log = logger()
-    if log.log == None:
+    if log.log is None:
       log.initialize(os.path.join(os.getcwd(), "DMDO.log"))
     
     log.log_msg(msg="--------------------------------------------------\n",
@@ -116,7 +120,8 @@ def main(*args) -> Dict[str, Any]:
       return MDAO
 
   if not isResume and runMode.lower() == "run":
-    MDAO.run(file = os.path.join(data["OPTIONS"]["CSP1"]["WORK_DIR"], "coordination_summary.out"), resume= isResume, mode=exec_mode)
+    MDAO.run(file = os.path.join(data["OPTIONS"]["CSP1"]["WORK_DIR"], "coordination_summary.out"), \
+             resume= isResume, mode=exec_mode)
   elif runMode.lower() == "build":
     if "CSP1" in data["OPTIONS"] and "WORK_DIR" in data["OPTIONS"]["CSP1"]:
       MDAO.prepare_post(os.path.join(data["OPTIONS"]["CSP1"]["WORK_DIR"], "coordination_summary.out"))
@@ -148,7 +153,8 @@ def main(*args) -> Dict[str, Any]:
 if __name__ == "__main__":
   #COMPLETED: Feature: Add more realistic analytical test problems
   #TODO: Feature: Add realistic multi-physics MDO problems that require using open-source physics-based simulation tools
-  #COMPLETED: Feature: Move the MDO test functions and BM problems to the test folder and prepare the DMDO package to be published on PyPi
+  #COMPLETED: Feature: Move the MDO test functions and BM problems to 
+  #COMPLETED: the test folder and prepare the DMDO package to be published on PyPi
   #TODO: Feature: Develop a simple UI widget that facilitates simple MDO setup using the compact table or N2-chart
   #TODO: Feature: Import RAF and SML libraries once they are published on PYPI.com
   #COMPLETED: Bug: Add user and technical documentation 

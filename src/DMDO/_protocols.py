@@ -20,9 +20,9 @@
 #  https://github.com/Ahmed-Bayoumy/DMDO                                              #
 # ------------------------------------------------------------------------------------#
 
-from typing import List, Dict, Any, Callable, Protocol, Optional
+from typing import List, Callable, Protocol
 from dataclasses import dataclass, field
-from .variables import *
+from .variables import variableData
 
 @dataclass
 class Process_data(Protocol):

@@ -20,14 +20,26 @@
 #  https://github.com/Ahmed-Bayoumy/DMDO                                              #
 # ------------------------------------------------------------------------------------#
 
-from ._globals import *
-from ._common import *
-from ._protocols import *
-from .SP import *
-from .MDO import *
-from .MDA import *
-import platform
 
+import copy
+from dataclasses import dataclass
+import os
+import platform
+from typing import Any, Callable, Dict, List
+
+import numpy as np
+
+from .DA import DA
+from .MDA import MDA
+from .MDO import MDO
+from .SP import SubProblem
+from ._common import MSG_TYPE, logger
+from ._globals import COUPLING_TYPE, MDO_ARCHITECTURE, PSIZE_UPDATE, USER, w_scheme
+from .coordinator import ADMM
+
+from ._protocols import coordinator
+from ._protocols import process
+from .variables import variableData
 @dataclass
 class optimizationData:
   objectives: List[Callable]
@@ -146,7 +158,9 @@ class problemSetup:
     vtype: List = [vin[i][8]  if len(vin[i])>8 else "R" for i in vin]
     vsets: List = [(vin[i][8].split('_')[1:][0] if len(vin[i][8])>1 else None)  if len(vin[i])>8 else None for i in vin]
 
-    bl: List = [self.data["Sets"][vsets[list(vin.keys()).index(i)]].index(vin[i][5]) if (vtype[list(vin.keys()).index(i)] == 'c' or vtype[list(vin.keys()).index(i)] == 'i') else vin[i][5] for i in vin]
+    bl: List = [self.data["Sets"][vsets[list(vin.keys()).index(i)]].index(vin[i][5]) \
+                if (vtype[list(vin.keys()).index(i)] == 'c' \
+                    or vtype[list(vin.keys()).index(i)] == 'i') else vin[i][5] for i in vin]
 
     scaling = np.subtract(ub,lb)
     self.Qscaling = []
@@ -165,12 +179,17 @@ class problemSetup:
       if dim[i] > 1:
         v[f"var{i+1}"] = {"index": i+1,
         "sp_index": spi[i],
-        f"name": names[i],
+        "name": names[i],
         "dim": dim[i],
-        "value": [bl[i]]*dim[i] if not isinstance(bl[i], list) else bl[i] if len(bl[i]) == dim[i] else self.raiser(f'The baseline vector of {names[i]} has {len(bl[i])} elements which is different from the variable initial #dimensions which is {dim[i]}'),
+        "value": [bl[i]]*dim[i] if not isinstance(bl[i], list) else bl[i] if len(bl[i]) == dim[i] \
+          else self.raiser(f'The baseline vector of {names[i]} has {len(bl[i])} elements which is different from the variable'
+                           f' initial #dimensions which is {dim[i]}'),
         "coupling_type": coupling_t[i],
         "link": links[i],
-        "baseline": [bl[i]]*dim[i] if not isinstance(bl[i], list) else bl[i] if len(bl[i]) == dim[i] else self.raiser(f'The baseline vector of {names[i]} has {len(bl[i])} elements which is different from the variable initial #dimensions which is {dim[i]}'),
+        "baseline": [bl[i]]*dim[i] if not isinstance(bl[i], list) else bl[i] \
+          if len(bl[i]) == dim[i] else \
+            self.raiser(f'The baseline vector of {names[i]} has {len(bl[i])} elements which is different from the variable'
+                        f' initial #dimensions which is {dim[i]}'),
         "scaling": [scaling[i]]*dim[i],
         "lb": [lb[i]]*dim[i],
         "ub": [ub[i]]*dim[i],
@@ -181,9 +200,8 @@ class problemSetup:
       else:
         v[f"var{i+1}"] = {"index": i+1,
         "sp_index": spi[i],
-        f"name": names[i],
+        "name": names[i],
         "dim": 1,
-        "value": bl[i],
         "coupling_type": coupling_t[i],
         "link": links[i],
         "baseline": bl[i],
@@ -343,19 +361,27 @@ class problemSetup:
         vars= self.getVariables(SP[i]["vars"]),
         resps= self.getVariables(SP[i]["resps"]),
         is_main= SP[i]["is_main"],
-        analysis=self.getMDA(SP[i]["MDA"]) if self.getMDA(SP[i]["MDA"]) is not None else IOError(f'Could not find the MDA with index {SP[i]["MDA"]} assigned to the subproblem {SP[i]["index"]} MDA key.'),
-        coordination=self.getCoord(SP[i]["coordinator"]) if self.getMDA(SP[i]["coordinator"]) is not None else IOError(f'Could not find the coordinator with index {SP[i]["coordinator"]} assigned to the subproblem {SP[i]["index"]} coordinator key.'),
-        opt=self.setBlackboxes(SP[i]["opt"], bb_type=SP[i]["type"], copts = None) if "opt" in SP[i] else IOError(f'The optimization blackbox key could not be found for {SP[i]}.'),
-        fmin_nop=np.inf if not isinstance(SP[i]["fmin_nop"], float) and not isinstance(SP[i]["fmin_nop"], int) else SP[i]["fmin_nop"],
+        analysis=self.getMDA(SP[i]["MDA"]) if self.getMDA(SP[i]["MDA"]) is not None \
+          else IOError(f'Could not find the MDA with index {SP[i]["MDA"]} assigned to the subproblem {SP[i]["index"]} MDA key.'
+                       ),
+        coordination=self.getCoord(SP[i]["coordinator"]) if self.getMDA(SP[i]["coordinator"]) is not None \
+          else IOError(f'Could not find the coordinator with index {SP[i]["coordinator"]}'
+                       f' assigned to the subproblem {SP[i]["index"]} coordinator key.'),
+        opt=self.setBlackboxes(SP[i]["opt"], bb_type=SP[i]["type"], copts = None) 
+        if "opt" in SP[i] else IOError(f'The optimization blackbox key could not be found for {SP[i]}.'),
+        fmin_nop=np.inf if not isinstance(SP[i]["fmin_nop"], float) and not isinstance(SP[i]["fmin_nop"], int) \
+          else SP[i]["fmin_nop"],
         budget= SP[i]["budget"] if "budget" in SP[i] else IOError(f'The budget key could not be found for {SP[i]}.'),
         display=SP[i]["display"] if "display" in SP[i] else False,
         psize=SP[i]["psize"] if "psize" in SP[i] else 1.,
-        pupdate=self.getPollUpdate(SP[i]["pupdate"]) if "pupdate" in SP[i] and self.getPollUpdate(SP[i]["pupdate"]) is not None else PSIZE_UPDATE.LAST,
+        pupdate=self.getPollUpdate(SP[i]["pupdate"]) if "pupdate" in SP[i] \
+          and self.getPollUpdate(SP[i]["pupdate"]) is not None else PSIZE_UPDATE.LAST,
         freal=SP[i]["freal"] if "freal" in SP[i] else None,
         solver=SP[i]["solver"] if "solver" in SP[i] else "OMADS",
         scipy= SP[i]["scipy"] if "scipy" in SP[i] else None,
         sets=self.Sets,
-        conf= CONF[SP[i]["configurations"]] if ("configurations" in SP[i]) and is_conf and (SP[i]["configurations"] in CONF) else None
+        conf= CONF[SP[i]["configurations"]] if ("configurations" in SP[i]) and is_conf \
+          and (SP[i]["configurations"] in CONF) else None
 
       ))
     self.log.log_msg(msg="Completed subproblems setup.\n", msg_type=MSG_TYPE.INFO.value)
@@ -366,7 +392,8 @@ class problemSetup:
     MDAO = self.data["MDO"]
     self.MDAO = MDO(
       Architecture= self.getMDOArch(MDAO["architecture"]) if MDAO["architecture"] is not None else MDO_ARCHITECTURE.IDF,
-      Coordinator= self.getCoord(MDAO["coordinator"]) if self.getMDA(MDAO["coordinator"]) is not None else IOError(f'Could not find the coordinator with index {MDAO["coordinator"]} assigned to the MDO coordinator key.'),
+      Coordinator= self.getCoord(MDAO["coordinator"]) if self.getMDA(MDAO["coordinator"]) is not None \
+        else IOError(f'Could not find the coordinator with index {MDAO["coordinator"]} assigned to the MDO coordinator key.'),
       subProblems= self.getSPs(MDAO["subproblems"]),
       variables= self.V,
       responses= self.getVariables(MDAO["responses"]),
@@ -376,13 +403,14 @@ class problemSetup:
       inc_stop=MDAO["inc_stop"] if "inc_stop" in MDAO and isinstance(MDAO["inc_stop"], float) else 1E-9,
       stop=MDAO["stop"] if "stop" in MDAO and isinstance(MDAO["stop"], str) else "Iteration budget exhausted",
       tab_inc = MDAO["tab_inc"] if "tab_inc" in MDAO and isinstance(MDAO["tab_inc"], list) else [],
-      noprogress_stop= MDAO["noprogress_stop"] if "noprogress_stop" in MDAO and isinstance(MDAO["noprogress_stop"], int) else 100
+      noprogress_stop= MDAO["noprogress_stop"] if "noprogress_stop" in MDAO and isinstance(MDAO["noprogress_stop"], int) \
+        else 100
     )
     if "Sets" in self.data:
       self.MDAO.sets = self.data["Sets"]
     else:
       self.MDAO.sets = None
-    if self.MDAO.Coordinator == None:
+    if self.MDAO.Coordinator is None:
       msg = f'Could not find the coordinator with index {MDAO["coordinator"]} assigned to the MDO coordinator key.'
       self.log.log_msg(msg=msg, msg_type=MSG_TYPE.ERROR.value)
       raise IOError(msg)

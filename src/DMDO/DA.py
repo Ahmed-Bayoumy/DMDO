@@ -20,9 +20,15 @@
 #  https://github.com/Ahmed-Bayoumy/DMDO                                              #
 # ------------------------------------------------------------------------------------#
 
-from ._globals import *
+import copy
+from genericpath import isfile
+import json
+from typing import Any, List, Callable, Optional, Dict
+
+import numpy as np
+
 from .variables import variableData
-import subprocess
+from dataclasses import dataclass, field
 
 @dataclass
 class DA_Data:
@@ -58,7 +64,8 @@ class DA(DA_Data):
     if callable(self.blackbox):
       outs = self.blackbox(self.getInputsList())
     else:
-      raise IOError("Callables are the only evaluator type currently allowed. Enabling evaluating BB executables is still in progress!")
+      raise IOError("Callables are the only evaluator type currently allowed."
+                    " Enabling evaluating BB executables is still in progress!")
       # evalerr = False
       # try:
       #   p = subprocess.run(self.blackbox, shell=True, timeout=self.timeout)
@@ -89,7 +96,8 @@ class DA(DA_Data):
       for i in range(len(self.outputs)):
         self.outputs[i].__update__(values[o])
         o += 1
-    elif len(self.outputs) == 1 and self.outputs[0] is not None and (isinstance(values, list) or isinstance(values, np.ndarray)):
+    elif len(self.outputs) == 1 and self.outputs[0] is not None and (isinstance(values, list) \
+                                                                     or isinstance(values, np.ndarray)):
       if self.outputs[0].dim>1:
         if self.outputs[0].dim != len(values):
           raise IOError(f'The size of the analysis outputs does not match the subproblem #{self.index}!')
@@ -97,7 +105,9 @@ class DA(DA_Data):
       else:
         self.outputs[0].value = values[0]
     else:
-      raise RuntimeError(f'The number of expected response outputs of DA{self.index} associated with {self.blackbox} is {len(self.outputs)} however the analysis returned only a single value!')
+      raise RuntimeError(f'The number of expected response outputs of DA{self.index} '
+                         f'associated with {self.blackbox} is {len(self.outputs)} '
+                         'however the analysis returned only a single value!')
 
 
   def getInputsList(self):
