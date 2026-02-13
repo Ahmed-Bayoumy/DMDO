@@ -283,10 +283,10 @@ class MDO(MDO_data):
         dx = self.get_master_vars_difference()
         if self.display:
           self.log.log_msg(msg=f'{iter} || qmax: {np.max(np.abs(self.Coordinator.q))}'
-                           ' || Obj: {self.fmin} || dx: {dx} || max(w): {np.max(self.Coordinator.w)}',\
+                           f' || Obj: {self.fmin} || dx: {dx} || max(w): {np.max(self.Coordinator.w)}',\
                               msg_type=MSG_TYPE.INFO.value)
           print(f'{iter} || qmax: {np.max(np.abs(self.Coordinator.q))} '
-                '|| Obj: {self.fmin} || dx: {dx} || max(w): {np.max(self.Coordinator.w)}')
+                f'|| Obj: {self.fmin} || dx: {dx} || max(w): {np.max(self.Coordinator.w)}')
           qb = self.Coordinator.batch_q(self.Coordinator.q)
           ql: list = []
           for i in range(len(qb)):
