@@ -774,9 +774,10 @@ def speedReducerScipy():
   fmin = 0
   hmax = -inf
   for j in range(len(MDAO.subProblems)):
+    hmin = MDAO.subProblems[j].opt([s.value for s in MDAO.subProblems[j].get_design_vars()] , \
+                                   MDAO.subProblems[j].MDA_process.getOutputs())[1]
     print(f'SP_{MDAO.subProblems[j].index}: fmin= {MDAO.subProblems[j].MDA_process.getOutputs()}, '
-          f'hmin= {MDAO.subProblems[j].opt([s.value for s in MDAO.subProblems[j].get_design_vars()] , 
-                                           MDAO.subProblems[j].MDA_process.getOutputs())[1]}')
+          f'hmin= {hmin}')
     if MDAO.subProblems[j].is_main:
       fmin = sum(MDAO.subProblems[j].MDA_process.getOutputs())
     hmin= MDAO.subProblems[j].opt([s.value for s in MDAO.subProblems[j].get_design_vars()] , \
@@ -1065,9 +1066,9 @@ def geometric_programming():
   for j in range(len(MDAO.subProblems)):
     MDAO.subProblems[j].MDA_process.run()
     Y = copy.deepcopy(MDAO.subProblems[j].MDA_process.getOutputs())
-    print(f'SP_{MDAO.subProblems[j].index}: fmin= {MDAO.subProblems[j].opt(
-      [s.value for s in MDAO.subProblems[j].get_design_vars()] , Y)[0]}, '
-      f'hmin= {MDAO.subProblems[j].opt([s.value for s in MDAO.subProblems[j].get_design_vars()] , Y)[1]}')
+    fmin = MDAO.subProblems[j].opt([s.value for s in MDAO.subProblems[j].get_design_vars()] , Y)[0]
+    hmin = MDAO.subProblems[j].opt([s.value for s in MDAO.subProblems[j].get_design_vars()] , Y)[1]
+    print(f'SP_{MDAO.subProblems[j].index}: fmin= {fmin}, hmin= {hmin}')
     if MDAO.subProblems[j].is_main:
       fmin += MDAO.subProblems[j].opt([s.value for s in MDAO.subProblems[j].get_design_vars()] , Y)[0]
     hmin= MDAO.subProblems[j].opt([s.value for s in MDAO.subProblems[j].get_design_vars()] , Y)[1]
