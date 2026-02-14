@@ -1780,4 +1780,4 @@ def test_geometric_programming():
   
 
 if __name__ == "__main__":
-  test_Sellar()
+  freeze_support()
