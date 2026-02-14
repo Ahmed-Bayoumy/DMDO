@@ -601,7 +601,7 @@ class ADMM(ADMM_data):
       increase_w = self.q_stall
     elif self.M_update_scheme == w_scheme.RANK:
       temp = np.argsort(self.q)
-      rank = np.empty_like(temp).tolist()
+      rank = np.empty_like(temp)
       rank[temp] = np.arange(len(self.q))
       increase_w = np.multiply(np.multiply(2, self.q_stall), np.divide(rank, np.max(rank)))
     else:
