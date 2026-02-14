@@ -1,9 +1,10 @@
 [project]
 name = "DMDO"
-version = "2601"
+version = "2601.0"
 requires-python = ">=3.10"
 description = "Distributed Multidisciplinary Design Optimization (DMDO)"
 readme = "README.md"
+license = { text = "GPL-3.0-or-later" }
 
 authors = [
     { name = "Ahmed H. Bayoumy", email = "ahmed.bayoumy@mail.mcgill.ca" }
@@ -14,7 +15,7 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Intended Audience :: Developers",
     "Operating System :: OS Independent",
 ]
