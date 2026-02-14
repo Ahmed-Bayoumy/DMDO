@@ -20,15 +20,23 @@
 #  https://github.com/Ahmed-Bayoumy/DMDO                                              #
 # ------------------------------------------------------------------------------------#
 
+import copy
+import csv
+from dataclasses import dataclass
+from logging import warning
+import os
 import platform
-from ._globals import *
-from ._common import *
-from ._protocols import *
-from .coordinator import *
+import time
+from typing import Any, Callable, Dict, List
 import OMADS
+import numpy as np
 from scipy.optimize import minimize, Bounds, NonlinearConstraint, BFGS
-import pandas as pd
 
+from ._common import MSG_TYPE, logger
+from ._globals import COUPLING_TYPE, PSIZE_UPDATE, VAR_TYPE, eps_fio
+from ._protocols import process
+from .coordinator import ADMM
+from .variables import variableData
 
 class partitionedProblemData:
   nv: int
@@ -70,7 +78,9 @@ class partitionedProblemData:
 @dataclass
 class SubProblem(partitionedProblemData):
   # Constructor
-  def __init__(self, nv, index, vars, resps, is_main, analysis, coordination, opt, fmin_nop, budget, display, scipy=None, psize=1, pupdate=PSIZE_UPDATE.LAST, freal=None, tol=1E-12, solver='OMADS', sets=None, conf = None, realistic_objective=False, log: logger=None):
+  def __init__(self, nv, index, vars, resps, is_main, analysis, coordination, opt, fmin_nop, budget, display, scipy=None, \
+               psize=1, pupdate=PSIZE_UPDATE.LAST, freal=None, tol=1E-12, solver='OMADS', sets=None, conf = None, \
+                realistic_objective=False, log: logger=None):
     self.nv = nv
     self.index = index
     self.vars = copy.deepcopy(vars)
@@ -114,8 +124,9 @@ class SubProblem(partitionedProblemData):
     self.sets = sets
     self.conf = conf
 
-    if (self.solver == 'scipy' and (scipy == None or "options" not in self.scipy or "method" not in self.scipy)):
-      msg = f'Inappropriate definition of the scipy settings for subproblem # {self.index}! scipy default settings shall be used!'
+    if (self.solver == 'scipy' and (scipy is None or "options" not in self.scipy or "method" not in self.scipy)):
+      msg = f'Inappropriate definition of the scipy settings for subproblem # {self.index}! '
+      'scipy default settings shall be used!'
       if self.log is not None:
         self.log.log_msg(msg=msg, msg_type=MSG_TYPE.WARNING.value)
       warning(msg)
@@ -149,9 +160,9 @@ class SubProblem(partitionedProblemData):
   def modify_cond_vars(self, V: variableData):
      # TODO: Add a check to support conditionality on other variable properties
     for i in range(len(self.vars)):
-      if self.vars[i].cond_on != None:
+      if self.vars[i].cond_on is not None:
         for v in V:
-          if self.index == v.sp_index and v.name == self.vars[i].name and v.cond_on != None:
+          if self.index == v.sp_index and v.name == self.vars[i].name and v.cond_on is not None:
             if self.vars[i].dim > v.dim:
               temp = self.vars[i].value[:v.dim]
               self.vars[i].__update__(temp)
@@ -175,7 +186,7 @@ class SubProblem(partitionedProblemData):
           self.vars[i].value = vlist[kv]
           self.vars[i].baseline = vlist[kv]
           kv += 1
-      elif self.vars[i].coupling_type == COUPLING_TYPE.CONSTANT and clist!= None:
+      elif self.vars[i].coupling_type == COUPLING_TYPE.CONSTANT and clist is not None:
         if self.vars[i].dim > 1:
           for ik in range(self.vars[i].dim):
             self.vars[i].value[ik] = clist[kc]
@@ -199,7 +210,7 @@ class SubProblem(partitionedProblemData):
         else:
           self.vars[i].baseline = vlist[kv]
           kv += 1
-      elif self.vars[i].coupling_type == COUPLING_TYPE.CONSTANT and clist!= None:
+      elif self.vars[i].coupling_type == COUPLING_TYPE.CONSTANT and clist is not None:
         if self.vars[i].dim > 1:
           for ik in range(self.vars[i].dim):
             self.vars[i].baseline[ik] = clist[kc]
@@ -220,7 +231,9 @@ class SubProblem(partitionedProblemData):
         check = any(self.coord.master_vars[i].link >= np.ones(nl))
       elif self.coord.master_vars[i].link:
         check = self.coord.master_vars[i].link >= 1
-      if (self.index == self.coord.master_vars[i].sp_index or self.coord.master_vars[i].coupling_type != COUPLING_TYPE.UNCOUPLED)  and check and self.coord.master_vars[i].index not in indices2:
+      if (self.index == self.coord.master_vars[i].sp_index \
+          or self.coord.master_vars[i].coupling_type != COUPLING_TYPE.UNCOUPLED) \
+            and check and self.coord.master_vars[i].index not in indices2:
         sp_link.append(self.coord.master_vars[i].sp_index)
         linked_to = (self.coord.master_vars[i].link)
         if linked_to and isinstance(linked_to, list):
@@ -261,14 +274,16 @@ class SubProblem(partitionedProblemData):
     else:
       mode = 'w'
     with open(file, mode=mode) as csv_file:
-      keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', f'{"Max. inconsistency".rjust(30)}', f'{"Penalty".rjust(30)}', f'{"Objective".rjust(30)}', f'{"Coupling Status".rjust(30)}'] + [f'{f"{x.name}".rjust(30)}' for x in self.vars] + [f'{f"{y.name}".rjust(30)}' for y in self.resps] 
+      keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', f'{"Max. inconsistency".rjust(30)}', \
+              f'{"Penalty".rjust(30)}', f'{"Objective".rjust(30)}', f'{"Coupling Status".rjust(30)}'] + \
+                [f'{f"{x.name}".rjust(30)}' for x in self.vars] + \
+                  [f'{f"{y.name}".rjust(30)}' for y in self.resps] 
       writer = csv.DictWriter(csv_file, fieldnames=keys)
       writer.writeheader()    # add column names in the CSV file
   
   def prepare_post(self, file):
     ht = os.path.split(file)
     name = file.split('.')[0]
-    ext = file.split('.')[1]
     pd = os.path.join(ht[0], f'{name}_post')
     pdsb = os.path.join(pd, f'SP_{self.index}')
     pfo = os.path.join(pdsb, f'SB_{self.index}_{self.iter}.out')
@@ -280,20 +295,23 @@ class SubProblem(partitionedProblemData):
     
   def Add_IL_res_row(self, r: Dict):
     with open(self.Il_file, mode='a') as csv_file:
-      keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', f'{"Max. inconsistency".rjust(30)}', f'{"Penalty".rjust(30)}', f'{"Objective".rjust(30)}', f'{"Coupling Status".rjust(30)}'] + [f'{f"{x.name}".rjust(30)}' for x in self.vars] + [f'{f"{y.name}".rjust(30)}' for y in self.resps] 
+      keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', f'{"Max. inconsistency".rjust(30)}', \
+              f'{"Penalty".rjust(30)}', f'{"Objective".rjust(30)}', f'{"Coupling Status".rjust(30)}'] + \
+                [f'{f"{x.name}".rjust(30)}' for x in self.vars] + [f'{f"{y.name}".rjust(30)}' for y in self.resps] 
       writer = csv.DictWriter(csv_file, fieldnames=keys)
       writer.writerow(r)    # add column names in the CSV file
 
   def get_con(self, x):
     return self.evaluate(x, None, "con_only")
   
-  def evaluate(self, vlist: List[float]=None, clist: List[float]=None, *argv):
+  def evaluate(self, vlist: List[float]=None, clist: List[float]=None, *argv):  # noqa: C901
     is_conOnly = False
     if argv is not None and len(argv)>0 and argv[0] == "con_only":
       is_conOnly = True
     if self.coord.save_q_in_out:
       global eps_fio
-    # If no variables were provided use existing value of the variables of the current subproblem (might happen during initialization)
+    # If no variables were provided use existing value of the 
+    # variables of the current subproblem (might happen during initialization)
     if vlist is None:
       v: List = self.get_design_vars()
       vlist = self.get_list_vars(v)
@@ -320,8 +338,8 @@ class SubProblem(partitionedProblemData):
       con = self.get_coupling_vars_diff(con)
     con_coupling = self.get_coupling_vars_diff([0])
 
-    if self.is_main == True:
-      if self.frealistic != None and self.frealistic != 0.:
+    if self.is_main:
+      if self.frealistic is not None and self.frealistic != 0.:
         self.coord.eps_fo.append(abs(fun[0]-self.frealistic)/abs(self.frealistic))
         if self.coord.save_q_in_out:
           eps_fio.append(abs(fun[0]-self.frealistic)/abs(self.frealistic))
@@ -345,7 +363,11 @@ class SubProblem(partitionedProblemData):
       curr_time = time.strftime("%H:%M:%S", time.localtime()) 
       hstatus = "Feasible" if max(con_coupling) <= 0 else "Infeasible"
       status = copy.deepcopy(hstatus) if fun[0] != np.inf else "Error"
-      keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', f'{"Max. inconsistency".rjust(30)}', f'{"Penalty".rjust(30)}', f'{"Objective".rjust(30)}', f'{"Coupling Status".rjust(30)}'] + [f'{f"{x.name}".rjust(30)}' for x in self.vars] + [f'{f"{y.name}".rjust(30)}' for y in self.resps] 
+      keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', f'{"Max. inconsistency".rjust(30)}', \
+              f'{"Penalty".rjust(30)}', f'{"Objective".rjust(30)}', \
+                f'{"Coupling Status".rjust(30)}'] + \
+                  [f'{f"{x.name}".rjust(30)}' for x in self.vars] + \
+                    [f'{f"{y.name}".rjust(30)}' for y in self.resps] 
 
       row = {keys[0]: f'{f"{curr_time}"}', 
              keys[1]: f'{f"{self.iter}".rjust(30)}', 
@@ -392,7 +414,7 @@ class SubProblem(partitionedProblemData):
     else:
       return [fun[0]+self.coord.phi, con]
 
-  def solve(self, v, w, file: str = None, iter: int = None):
+  def solve(self, v, w, file: str = None, iter: int = None):  # noqa: C901
     if file is not None:
       self.iter = iter
       self.prepare_post(file + f'_{iter}')
@@ -418,7 +440,7 @@ class SubProblem(partitionedProblemData):
                   "post_dir": "./post",
                   "constants": self.get_list_constant_updates(self.get_design_vars()),
                   "constants_name": self.get_list_const_names(self.get_design_vars())}
-      pinit = min(max(self.tol, self.psize), 1)
+      pinit = min(max(self.tol, max(self.psize) if isinstance(self.psize, list) else self.psize), 1)
       if self.conf is not None and "options" in self.conf and self.conf["options"] is not None:
         options = self.conf["options"]
         options["seed"] = self.conf["options"]["seed"] + iter
@@ -481,26 +503,30 @@ class SubProblem(partitionedProblemData):
       elif self.psize_init == PSIZE_UPDATE.SUCCESS:
         self.psize = out["psuccess"]
       elif self.psize_init == PSIZE_UPDATE.MAX:
-        self.psize = out["pmax"]
+        maxpsize = max(out["psize"]) if isinstance(out["psize"],list) else out["psize"]
+        psuccess = max(out["psuccess"]) if isinstance(out["psuccess"],list) else out["psuccess"]
+        self.psize = max(maxpsize, psuccess)
       elif self.psize_init == PSIZE_UPDATE.LAST:
         self.psize = out["psize"]
       else:
         self.psize = 1.
       
-      # COMPLETE: Coordinator forgets q after calling the optimizer, possible remedy is to update the subproblem variables from the optimizer output and the master variables too
+      # COMPLETE: Coordinator forgets q after calling the optimizer, possible remedy is to 
+      # update the subproblem variables from the optimizer output and the master variables too
       # then at the end of each outer loop iteration we can calculate q of that subproblem before updating penalty parameters
 
       #  We need this extra evaluation step to update inconsistincies and the master_variables vector
 
       self.evaluate(out["xmin"], self.get_list_constant_updates(self.get_design_vars()))
     elif self.solver == 'scipy':
-      if self.scipy != None and isinstance(self.scipy, dict):
+      if self.scipy is not None and isinstance(self.scipy, dict):
         opts = self.scipy["options"]
         bnds = Bounds(lb=self.get_list_vars_lb(self.get_design_vars()), ub=self.get_list_vars_ub(self.get_design_vars()))
         
         if self.scipy["is_con"]:
           non_linear_constraints = NonlinearConstraint(self.get_con, -np.inf, 1, jac='2-point', hess=BFGS())
-          res = minimize(self.evaluate, method=self.scipy["method"], x0=bl, options=opts, tol=self.scipy["tol"], bounds=bnds, constraints=[non_linear_constraints])
+          res = minimize(self.evaluate, method=self.scipy["method"], x0=bl, options=opts, tol=self.scipy["tol"], bounds=bnds,\
+                          constraints=[non_linear_constraints])
           self.fmin = res.fun
           self.hmin = 0 if (max(self.get_con(x=res.x)) <= 0.) else np.inf
         else:
@@ -511,7 +537,7 @@ class SubProblem(partitionedProblemData):
         self.evaluate(out)
         
       else:
-        msg = f'Scipy solver is selected but its dictionary settings is inappropriately defined!'
+        msg = 'Scipy solver is selected but its dictionary settings is inappropriately defined!'
         self.log.log_msg(msg=msg, msg_type=MSG_TYPE.ERROR.value)
         raise IOError(msg)
       out = copy.deepcopy(res.x)
@@ -528,8 +554,6 @@ class SubProblem(partitionedProblemData):
     # TODO: Add categorical coupling difference
     vc: List[variableData] = self.get_coupling_vars()
     for i in range(len(vc)):
-      if vc[i].type[0].lower() == "c":
-        s = vc[i].type[1]
       if isinstance(vc[i].value, list):
         for j in range(len(vc[i].value)):
           if vc[i].type[j][0].lower() == "c":
@@ -558,7 +582,8 @@ class SubProblem(partitionedProblemData):
 
   def set_dependent_baseline(self, vars: List[variableData]):
     for j in range(len(self.vars)):
-      if self.vars[j].coupling_type == COUPLING_TYPE.FEEDBACK or self.vars[j].coupling_type == COUPLING_TYPE.SHARED or self.vars[j].coupling_type == COUPLING_TYPE.UNCOUPLED or self.vars[j].coupling_type == COUPLING_TYPE.CONSTANT:
+      if self.vars[j].coupling_type == COUPLING_TYPE.FEEDBACK or self.vars[j].coupling_type == COUPLING_TYPE.SHARED \
+        or self.vars[j].coupling_type == COUPLING_TYPE.UNCOUPLED or self.vars[j].coupling_type == COUPLING_TYPE.CONSTANT:
         for i in range(len(vars)):
           if isinstance(self.vars[j].link , list):
             found = False
@@ -572,7 +597,8 @@ class SubProblem(partitionedProblemData):
             self.vars[j].value = vars[i].value
     
     # for j in range(len(self.resps)):
-    #   if self.resps[j].coupling_type == COUPLING_TYPE.FEEDFORWARD or self.resps[j].coupling_type == COUPLING_TYPE.SHARED or self.resps[j].coupling_type == COUPLING_TYPE.CONSTANT:
+    #   if self.resps[j].coupling_type == COUPLING_TYPE.FEEDFORWARD 
+    # or self.resps[j].coupling_type == COUPLING_TYPE.SHARED or self.resps[j].coupling_type == COUPLING_TYPE.CONSTANT:
     #     for i in range(len(vars)):
     #       if isinstance(self.resps[j].link , list):
     #         found = False
@@ -586,7 +612,8 @@ class SubProblem(partitionedProblemData):
 
     # for i in range(len(vars)):
     #   if vars[i].sp_index == self.index:
-    #     if vars[i].coupling_type == COUPLING_TYPE.FEEDFORWARD or vars[i].coupling_type == COUPLING_TYPE.SHARED or vars[i].coupling_type == COUPLING_TYPE.CONSTANT:
+    #     if vars[i].coupling_type == COUPLING_TYPE.FEEDFORWARD 
+    # or vars[i].coupling_type == COUPLING_TYPE.SHARED or vars[i].coupling_type == COUPLING_TYPE.CONSTANT:
     #       for j in range(len(self.vars)):
     #         if isinstance(self.vars[j].link , list):
     #           found = False
@@ -683,7 +710,8 @@ class SubProblem(partitionedProblemData):
       if vars[i].coupling_type == COUPLING_TYPE.CONSTANT:
         if isinstance(vars[i].value, list):
           for j in range(len(vars[i].value)):
-            v.append(vars[i].value[j] if (vars[i].type[j].lower() == 'r' or vars[i].type[j].lower() == 'i') else vars[i].value[j])
+            v.append(vars[i].value[j] if (vars[i].type[j].lower() == 'r' \
+                                          or vars[i].type[j].lower() == 'i') else vars[i].value[j])
         else:
           v.append(vars[i].value if (vars[i].type[0].lower() == 'r' or vars[i].type[0].lower() == 'i') else vars[i].value)
     if isinstance(v, list) and len(v)>0:

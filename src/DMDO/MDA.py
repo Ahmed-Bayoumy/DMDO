@@ -20,10 +20,17 @@
 #  https://github.com/Ahmed-Bayoumy/DMDO                                              #
 # ------------------------------------------------------------------------------------#
 
-from ._globals import *
-from ._common import *
-from .DA import *
-from ._protocols import *
+
+
+import copy
+from dataclasses import dataclass
+from genericpath import isfile
+import json
+from typing import Any, Dict, List
+
+from .DA import DA
+from .MDO import Process_data
+
 
 @dataclass
 class MDA_data(Process_data):

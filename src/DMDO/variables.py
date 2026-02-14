@@ -20,7 +20,15 @@
 #  https://github.com/Ahmed-Bayoumy/DMDO                                              #
 # ------------------------------------------------------------------------------------#
 
-from ._globals import *
+
+import copy
+from dataclasses import dataclass
+from logging import warning
+
+import numpy as np
+
+from ._globals import VAR_TYPE
+
 
 @dataclass
 class variableData:
@@ -57,14 +65,16 @@ class variableData:
 
 
   def __sub__(self, other):
-    if type(other)!=variableData:
-      raise IOError(f'The variables data dunder subtraction from {self.name} expects a variable data object as an input but {type(other)} is invoked!')
+    if type(other) is not variableData:
+      raise IOError(f'The variables data dunder subtraction from '
+                    f'{self.name} expects a variable data object as an input but {type(other)} is invoked!')
     if self.dim > 1:
       valo: list = copy.deepcopy(other.value)
       val: list = copy.deepcopy(self.value)
 
       if other.dim == 1:
-        raise IOError(f'The variables data dunder subtraction from {self.name} expects a vector of variables but a scalar is invoked!')
+        raise IOError(f'The variables data dunder subtraction from {self.name} '
+                      'expects a vector of variables but a scalar is invoked!')
       if self.dim> other.dim:
         dif = self.dim-other.dim
         valo += [0]*dif
@@ -91,14 +101,16 @@ class variableData:
       return np.divide(self.value, other)
   
   def __update__(self, other):
-    if type(other)!=variableData and type(self.value) != type(other):
-      warning(f'The variables data dunder equality method of {self.name} expects a variable data object as an input or variable values with the same type of {self.name}!')
+    if type(other) is not variableData and type(self.value) is not type(other):
+      warning(f'The variables data dunder equality method of {self.name} expects a variable data '
+              f'object as an input or variable values with the same type of {self.name}!')
     if isinstance(other, variableData):
       self =  copy.deepcopy(other)
     elif isinstance(other, list) or isinstance(other, np.ndarray):
-      l = self.dim
+      l = self.dim  # noqa: E741
       if len(other) != l and self.cond_on is None:
-        raise IOError(f'The feedback of {self.name} does not have the same size. That variable size is not conditional though!')
+        raise IOError(f'The feedback of {self.name} does not have the same size. '
+                      'That variable size is not conditional though!')
       if len(other) > l:
         dif = len(other)-l
         # for io in range(l, len(other)):
@@ -122,5 +134,6 @@ class variableData:
     elif isinstance(other, int) or isinstance(other, float) or isinstance(other, str):
       self.value = other
     else:
-      raise IOError(f'The variables data dunder equality method expects an object with the same type a list of values or a scalar numerical/textual value!')
+      raise IOError('The variables data dunder equality method expects an object with'
+                    ' the same type a list of values or a scalar numerical/textual value!')
 

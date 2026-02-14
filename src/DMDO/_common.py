@@ -20,11 +20,12 @@
 #  https://github.com/Ahmed-Bayoumy/DMDO                                              #
 # ------------------------------------------------------------------------------------#
 
-from ._globals import *
+from ._globals import MSG_TYPE, VERSION_NUMBER
 import logging 
 import time
 import shutil
 import os
+from dataclasses import dataclass
 
 @dataclass
 class logger:
@@ -42,8 +43,9 @@ class logger:
     #Now we are going to Set the threshold of logger to DEBUG 
     self.log.setLevel(logging.INFO) 
     cur_time = time.strftime("%H:%M:%S", time.localtime())
-    self.log_msg(msg=f"###################################################### \n", msg_type=MSG_TYPE.INFO.value)
-    self.log_msg(msg=f"####################### DMDO ######################### \n", msg_type=MSG_TYPE.INFO.value)
+    self.log_msg(msg="###################################################### \n", msg_type=MSG_TYPE.INFO.value)
+    self.log_msg(msg=f"####################### DMDO {VERSION_NUMBER} ######################### \n", \
+                 msg_type=MSG_TYPE.INFO.value)
     self.log_msg(msg=f"###################### {cur_time} ###################### \n", msg_type=MSG_TYPE.INFO.value)
 
     # Remove all handlers associated with the root logger object.

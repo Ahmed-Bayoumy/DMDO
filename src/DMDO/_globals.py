@@ -21,15 +21,8 @@
 # ------------------------------------------------------------------------------------#
 
 from enum import Enum, auto
-from dataclasses import dataclass, field
-from typing import List, Dict, Any, Callable, Optional
-import copy
-import json
-from logging import warning
-import os
+from dataclasses import dataclass
 import numpy as np
-import csv
-import yaml
 
 class USER:
   """ Custom class """
@@ -109,7 +102,7 @@ eps_qio = []
 eps_fio = []
 
 user = USER
-
+VERSION_NUMBER = "2601"
 def check_space(string: str) -> int:
   if string.isspace():
     return string.count(" ")

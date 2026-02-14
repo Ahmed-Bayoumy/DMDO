@@ -21,8 +21,15 @@
 #  https://github.com/Ahmed-Bayoumy/DMDO                                              #
 # ------------------------------------------------------------------------------------#
 
-from ._globals import *
-from .variables import *
+import copy
+from logging import warning
+from typing import Any, List
+
+import numpy as np
+
+from ._globals import COUPLING_TYPE, w_scheme, eps_qio
+from .variables import variableData
+from dataclasses import dataclass, field
 
 @dataclass
 class coordinationData:
@@ -60,7 +67,8 @@ class ADMM_data(coordinationData):
 class ADMM(ADMM_data):
   " Alternating directions method of multipliers "
   # Constructor
-  def __init__(self, nsp, beta, budget, index_of_master_SP, display, scaling, mode, M_update_scheme, store_q_o=False, store_q_io=False, index = None):
+  def __init__(self, nsp, beta, budget, index_of_master_SP, display, scaling, \
+                mode, M_update_scheme, store_q_o=False, store_q_io=False, index = None):
     global eps_fio, eps_qio
     """ Initialize the multiplier vectors """
     self.nsp = nsp
@@ -167,7 +175,8 @@ class ADMM(ADMM_data):
     self.are_master_dims_consistent()
     nlinks = self._linker.shape[1]
     if nlinks != len(qin):
-      raise IOError("The size of the introduced batched variables inconsistency vector doesn't match the total number of links available!")
+      raise IOError("The size of the introduced batched variables "
+                    "inconsistency vector doesn't match the total number of links available!")
     qout = []
     for i in range(nlinks):
       dim: int = self.master_vars[self._linker[0, i]-1].dim
@@ -252,7 +261,7 @@ class ADMM(ADMM_data):
         st = self.master_vars[i].scaling
         sett = self.master_vars[i].set 
         if dim > dt:
-          l = len(vt)
+          l = len(vt)  # noqa: E741
           dif = dim - dt
           vt = copy.deepcopy(value)
           tt += [tt[l-1]]*dif
@@ -264,7 +273,7 @@ class ADMM(ADMM_data):
           if isinstance(sett, list):
             sett += [sett[l-1]]*dif
         elif dim < dt:
-          l = len(value)
+          l = len(value)  # noqa: E741
           dif = dt - dim
           vt = copy.deepcopy(value)
           tt = tt[:len(tt)-dif]
@@ -292,7 +301,10 @@ class ADMM(ADMM_data):
 
       # Check whether linked variables have same dimension
       if dim1 != dim2 and self.master_vars[self._linker[0, i]-1].cond_on is None:
-          raise Exception(IOError, f'The variable {self.master_vars[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} does not have the same dimension!')
+          raise Exception(IOError, 
+                          f'The variable {self.master_vars[self._linker[0, i]-1].name} '
+                          f'linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]}'
+                          ' does not have the same dimension!')
       else:
         if self.master_vars[self._linker[0, i]-1].coupling_type == COUPLING_TYPE.FEEDFORWARD:
           self.update_all_cond_linked(self._linker[0, i]-1)
@@ -302,12 +314,14 @@ class ADMM(ADMM_data):
 
       # Check whether linked variables have same dimension
       if dim1 != dim2 and self.master_vars[self._linker[0, i]-1].cond_on is None:
-          raise Exception(IOError, f'The variable {self.master_vars[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} does not have the same dimension!')
+          raise Exception(IOError, f'The variable {self.master_vars[self._linker[0, i]-1].name} '
+                          f'linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} '
+                          'does not have the same dimension!')
       else:
         if self.master_vars[self._linker[1, i]-1].coupling_type == COUPLING_TYPE.FEEDFORWARD:
           self.update_all_cond_linked(self._linker[1, i]-1)
 
-  def calc_inconsistency(self):
+  def calc_inconsistency(self):  # noqa: C901
     if self.save_q_in_out:
       global eps_qio
     q_temp : np.ndarray = np.zeros([0,0])
@@ -316,30 +330,29 @@ class ADMM(ADMM_data):
     self.update_conditional_vars()
     for i in range(self._linker.shape[1]):
       if self.master_vars:
-        # TODO: Add a sanity check early on to ensure that linked parameters has the same type and linked to the same set if they were of discrete type and may be add a dunder methed to handle all the necessary equality checks
-        #  Check if linked parameters have same type
+        # TODO: Add a sanity check early on to ensure that linked parameters has the same type and linked to the same set
+        # TODO: if they were of discrete type and may be add a dunder methed to handle all the necessary equality checks
+        # TODO: Check if linked parameters have same type
         type1: Any = self.master_vars[self._linker[0, i]-1].type
         type2: Any = self.master_vars[self._linker[1, i]-1].type
         val1: Any = self.master_vars[self._linker[0, i]-1].value
         val2: Any = self.master_vars[self._linker[1, i]-1].value
         dim1: int = self.master_vars[self._linker[0, i]-1].dim
-        dim2: int = self.master_vars[self._linker[1, i]-1].dim
-        set1_name: Any = self.master_vars[self._linker[1, i]-1].set
-        set2_name: Any = self.master_vars[self._linker[1, i]-1].set
 
         #COMPLETED: The variables coupling relationships and their size dependencies need a review
-        qtest: List = []
         for ik in range(dim1):
           t1 = type1[ik] if isinstance(type1, list) else type1
           t2 = type2[ik] if isinstance(type2, list) else type2
-          sn1 = set1_name[ik] if isinstance(set1_name, list) else set1_name
-          sn2 = set2_name[ik] if isinstance(set2_name, list) else set2_name
           tl0.append(self._linker[0, i])
           tl1.append(self._linker[1, i])
           if t1[0] != t2[0]:
-            raise Exception(IOError, f'The variable {self.master_vars[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} does not have the same type(s)!')
+            raise Exception(IOError, f'The variable {self.master_vars[self._linker[0, i]-1].name}'
+                            f' linked between subproblems index #{self._linker[0, i]} '
+                            f'and #{self._linker[1, i]} does not have the same type(s)!')
           if t1[0].lower() != "r" and t1[0].lower() != "i" and t1[0].lower() != "d" and t1[0].lower() != "c":
-            raise Exception(IOError, f'The variable {self.master_vars[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} has unknown type(s)!')
+            raise Exception(IOError, f'The variable {self.master_vars[self._linker[0, i]-1].name} '
+                            f'linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]}'
+                            ' has unknown type(s)!')
           if t1[0].lower() == "c":
             v1 = val1[ik] if isinstance(val1, list) else val1
             v2 = val2[ik] if isinstance(val2, list) else val2
@@ -370,7 +383,9 @@ class ADMM(ADMM_data):
               q_temp = np.append(q_temp, np.multiply(np.subtract(i1, i2), min(self.scaling)))
             else:
               q_temp = np.append(q_temp, np.multiply(np.subtract(v1, v2), min(self.scaling)))
-            warning("The inconsistency scaling factors are defined in a list which has a different size from the master variables vector! The minimum value of the provided scaling list will be used to scale the inconsistency vector.")
+            warning("The inconsistency scaling factors are defined in a list which has a different "
+                    "size from the master variables vector! The minimum value of the provided scaling "
+                    "list will be used to scale the inconsistency vector.")
         
           # if  (isinstance(self.scaling, list) and len(self.scaling) == len(self.master_vars)):
           #   qscale = np.multiply(np.add(self.scaling[self._linker[0, i]-1], self.scaling[self._linker[1, i]-1]), 0.5)
@@ -382,7 +397,9 @@ class ADMM(ADMM_data):
           # else:
           #   q_temp = np.append(q_temp, np.multiply(subtract(((self.master_vars[self._linker[0, i]-1].value)),
           #           ((self.master_vars[self._linker[1, i]-1].value))), min(self.scaling)))
-          #   warning("The inconsistency scaling factors are defined in a list which has a different size from the master variables vector! The minimum value of the provided scaling list will be used to scale the inconsistency vector.")
+          #   warning("The inconsistency scaling factors are defined in a list which has a different size 
+          # from the master variables vector! The minimum value of the provided 
+          # scaling list will be used to scale the inconsistency vector.")
       else:
         raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
     # qb: list = self.batch_q(q_temp)
@@ -403,21 +420,21 @@ class ADMM(ADMM_data):
     tl1: List = []
     for i in range(self._linker.shape[1]):
       if self.master_vars_old:
-        # TODO: Add a sanity check early on to ensure that linked parameters has the same type and linked to the same set if they were of discrete type and may be add a dunder methed to handle all the necessary equality checks
-        #  Check if linked parameters have same type
+        # TODO: Add a sanity check early on to ensure that linked parameters has the same 
+        # TODO: type and linked to the same set if they were of discrete type and may be add 
+        # TODO: a dunder methed to handle all the necessary equality checks
+        #  TODO: Check if linked parameters have same type
         type1: Any = self.master_vars_old[self._linker[0, i]-1].type
         type2: Any = self.master_vars_old[self._linker[1, i]-1].type
         val1: Any = self.master_vars_old[self._linker[0, i]-1].value
         val2: Any = self.master_vars_old[self._linker[1, i]-1].value
         dim1: int = self.master_vars_old[self._linker[0, i]-1].dim
-        dim2: int = self.master_vars_old[self._linker[1, i]-1].dim
         set1_name: Any = self.master_vars_old[self._linker[1, i]-1].set
         set2_name: Any = self.master_vars_old[self._linker[1, i]-1].set
 
 
         
         # Check whether linked variables have same dimension
-        qtest: List = []
         for ik in range(dim1):
           t1 = type1[ik] if isinstance(type1, list) else type1
           t2 = type2[ik] if isinstance(type2, list) else type2
@@ -426,9 +443,12 @@ class ADMM(ADMM_data):
           tl0.append(self._linker[0, i])
           tl1.append(self._linker[1, i])
           if t1 != t2:
-            raise Exception(IOError, f'The variable {self.master_vars_old[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} does not have the same type(s)!')
+            raise Exception(IOError, f'The variable {self.master_vars_old[self._linker[0, i]-1].name} linked '
+                            f'between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} '
+                            'does not have the same type(s)!')
           if t1[0].lower() != "r" and t1[0].lower() != "i" and t1[0].lower() != "d" and t1[0].lower() != "c":
-            raise Exception(IOError, f'The variable {self.master_vars_old[self._linker[0, i]-1].name} linked between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} has unknown type(s)!')
+            raise Exception(IOError, f'The variable {self.master_vars_old[self._linker[0, i]-1].name} linked '
+                            f'between subproblems index #{self._linker[0, i]} and #{self._linker[1, i]} has unknown type(s)!')
           if t1[0].lower() == "c":
             v1 = val1[ik] if isinstance(val1, list) else val1
             v2 = val2[ik] if isinstance(val2, list) else val2
@@ -459,7 +479,9 @@ class ADMM(ADMM_data):
               q_temp = np.append(q_temp, np.multiply(np.subtract(i1, i2), min(self.scaling)))
             else:
               q_temp = np.append(q_temp, np.multiply(np.subtract(v1, v2), min(self.scaling)))
-            warning("The inconsistency scaling factors are defined in a list which has a different size from the master variables vector! The minimum value of the provided scaling list will be used to scale the inconsistency vector.")
+            warning("The inconsistency scaling factors are defined in a list which has a different'" \
+            "' size from the master variables vector! The minimum value of the provided scaling list will be used to "
+            "scale the inconsistency vector.")
       else:
         raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
     self.qold = copy.deepcopy(q_temp)
@@ -468,13 +490,13 @@ class ADMM(ADMM_data):
     if self.master_vars:
       for i in range(len(vars)):
         self.master_vars[vars[i].index-1] = copy.deepcopy(vars[i])
-        typ = vars[i].type[0].lower() if vars[i].dim == 1 else vars[i].type[0][0].lower()
-        # self.master_vars[vars[i].index-1].value = vars[i].value #if (typ != "c" and typ != "d") else sets[vars[i].set].index(vars[i].value)
+        # self.master_vars[vars[i].index-1].value = vars[i].value 
+        # #if (typ != "c" and typ != "d") else sets[vars[i].set].index(vars[i].value)
       if resps is not None:
         for i in range(len(resps)):
           self.master_vars[resps[i].index-1] = copy.deepcopy(resps[i])
-          typ = resps[i].type[0].lower() if resps[i].dim == 1 else resps[i].type[0][0].lower()
-          # self.master_vars[resps[i].index-1].value = resps[i].value #if (typ != "c" and typ != "d") else sets[resps[i].set].index(resps[i].value)
+          # self.master_vars[resps[i].index-1].value = resps[i].value 
+          # #if (typ != "c" and typ != "d") else sets[resps[i].set].index(resps[i].value)
     else:
       raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
 
@@ -495,7 +517,6 @@ class ADMM(ADMM_data):
     if len(self.q) != len(self.w):
       raise RuntimeError("The variables inconsistency vector has different size from the multipliers vectoe w and v!")
     phi = np.add(np.multiply(self.v, self.q), np.multiply(np.multiply(self.w, self.w), np.multiply(self.q, self.q)))
-    phib = self.batch_q(phi)
     #COMPLETE: Sum relevant components of q to accelerate the convergence of variables consistency
     s = 0
     for i in q_indices:
@@ -580,7 +601,7 @@ class ADMM(ADMM_data):
       increase_w = self.q_stall
     elif self.M_update_scheme == w_scheme.RANK:
       temp = np.argsort(self.q)
-      rank = np.empty_like(temp).tolist()
+      rank = np.empty_like(temp)
       rank[temp] = np.arange(len(self.q))
       increase_w = np.multiply(np.multiply(2, self.q_stall), np.divide(rank, np.max(rank)))
     else:
