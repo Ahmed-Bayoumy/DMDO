@@ -1,4 +1,5 @@
 import os
+import platform
 from DMDO import (
     ADMM, COUPLING_TYPE, DA, MDA, MDO,
     MDO_ARCHITECTURE, PSIZE_UPDATE, SubProblem, USER, main, process, variableData, w_scheme
@@ -1749,11 +1750,14 @@ def test_Sellar():
     raise IOError(f"Sellar_scipy failed the checking criteria f_diff= {abs(f-3.18339395045)/3.18339395045},"
     f" hmax= {h}, qmax= {qmax}")
   # TODO: This test is only failing on MAC with the 'POLL' local solver because of
-  # TODO: recent updates in the numpy package version used. That issue has been fixed in an OMADS version that will be released in 2026
-  # f, h, qmax = Sellar_OMADS_POLL()
-  # if abs(f-3.18339395045)/3.18339395045 > 0.22 or max(h)>0.001 or qmax > 1E-4:
-  #   raise IOError(f"Sellar_POLL failed the checking criteria f_diff= {abs(f-3.18339395045)/3.18339395045},"
-  #   f" hmax= {h}, qmax= {qmax}")
+  # TODO: recent updates in the numpy package version used. 
+  # TODO: This issue has been fixed in an OMADS version that will be released in 2026
+  isMac = platform.platform().split('-')[0] != 'macOS'
+  if (isMac):
+    f, h, qmax = Sellar_OMADS_POLL()
+    if abs(f-3.18339395045)/3.18339395045 > 0.22 or max(h)>0.001 or qmax > 1E-4:
+      raise IOError(f"Sellar_POLL failed the checking criteria f_diff= {abs(f-3.18339395045)/3.18339395045},"
+      f" hmax= {h}, qmax= {qmax}")
   f, h, qmax = Sellar_OMADS_MADS()
   if abs(f-3.18339395045)/3.18339395045 > 0.13 or max(h)>0.001 or qmax > 1E-3:
     raise IOError(f"Sellar_MADS failed the checking criteria f_diff= {abs(f-3.18339395045)/3.18339395045},"
@@ -1776,4 +1780,4 @@ def test_geometric_programming():
   
 
 if __name__ == "__main__":
-  freeze_support()
+  test_Sellar()
