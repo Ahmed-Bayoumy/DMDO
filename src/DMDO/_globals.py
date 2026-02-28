@@ -55,7 +55,7 @@ class MSG_TYPE(Enum):
   CRITICAL = auto()
 
 class VAR_TYPE(Enum):
-  CONTINUOUS = auto()
+  REAL = auto()
   INTEGER = auto()
   BINARY = auto()
   CATEGORICAL = auto()

@@ -727,7 +727,7 @@ class SubProblem(partitionedProblemData):
       if vars[i].coupling_type != COUPLING_TYPE.CONSTANT:
         if isinstance(vars[i].type, list):
           for j in range(len(vars[i].type)):
-            if vars[i].type[j] == VAR_TYPE.CONTINUOUS:
+            if vars[i].type[j] == VAR_TYPE.REAL:
               v.append("R")
             elif vars[i].type[j] == VAR_TYPE.INTEGER:
               v.append("I")
@@ -736,7 +736,7 @@ class SubProblem(partitionedProblemData):
             else:
               v.append(vars[i].type[j])
         else:
-          if vars[i].type == VAR_TYPE.CONTINUOUS:
+          if vars[i].type == VAR_TYPE.REAL:
             v.append("R")
           elif vars[i].type == VAR_TYPE.INTEGER:
             v.append("I")
