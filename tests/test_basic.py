@@ -215,7 +215,7 @@ def test_basic_MDO():
   )
 
   # Run the MDO problem
-  p_file: str = os.path.abspath("./tests/test_files/Basic_MDO.out")
+  p_file: str = os.path.abspath("./_post/Basic_MDO.out")
   MDAO.run(p_file)
 
   print('------Run_Summary------')
@@ -481,7 +481,7 @@ def speedReducerOMADS():
   noprogress_stop = 100
   )
 
-  p_file: str = os.path.abspath("./tests/test_files/SR_Scipy.out")
+  p_file: str = os.path.abspath("./_post/SR_Scipy.out")
 # Run the MDO problem
   MDAO.run(p_file)
 
@@ -764,7 +764,7 @@ def speedReducerScipy():
 
 
 # Run the MDO problem
-  p_file: str = os.path.abspath("./tests/test_files/SR_OMADS.out")
+  p_file: str = os.path.abspath("./_post/SR_OMADS.out")
   MDAO.run(p_file)
 
   print('------Run_Summary------')
@@ -1053,7 +1053,7 @@ def geometric_programming():
   )
 
 # Run the MDO problem
-  p_file: str = os.path.abspath("./tests/test_files/GP.out")
+  p_file: str = os.path.abspath("./_post/GP.out")
   MDAO.run(p_file)
   print('------Run_Summary------')
   print(MDAO.stop)
@@ -1240,7 +1240,7 @@ def Sellar_scipy():
   noprogress_stop = 100)
 
   # Run the MDO problem
-  p_file: str = os.path.abspath("./tests/test_files/Sellar_Scipy.out")
+  p_file: str = os.path.abspath("./_post/Sellar_Scipy.out")
   MDAO.run(p_file)
 
   # Print summary output
@@ -1474,7 +1474,7 @@ def Sellar_OMADS_POLL():
   noprogress_stop = 100)
 
   # Run the MDO problem
-  p_file: str = os.path.abspath("./tests/test_files/Sellar_OMADS.out")
+  p_file: str = os.path.abspath("./_post/Sellar_OMADS.out")
   MDAO.run(p_file)
 
   # Print summary output
@@ -1707,7 +1707,7 @@ def Sellar_OMADS_MADS():
   noprogress_stop = 100)
 
   # Run the MDO problem
-  p_file: str = os.path.abspath("./tests/test_files/Sellar_OMADS_MADS.out")
+  p_file: str = os.path.abspath("./_post/Sellar_OMADS_MADS.out")
   MDAO.run(p_file)
 
   # Print summary output
@@ -1736,7 +1736,7 @@ def Sellar_OMADS_MADS():
   return fmin_main, hmax_main, max(MDAO.Coordinator.q)
 
 def test_auto_build():
-  p_file: str = os.path.abspath("./tests/test_files/Basic_MDO.yaml")
+  p_file: str = os.path.abspath("./_post/Basic_MDO.yaml")
   MDAO: MDO = main({'setup_file': p_file, 'run_mode': 'build', 'mdo_name': 'Basic_auto', 'working_dir': './tests/test_files'})
   for i in range(len(MDAO.subProblems)):
     temp :MDA = MDAO.subProblems[i].MDA_process
