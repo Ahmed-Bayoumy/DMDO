@@ -32,6 +32,7 @@ import time
 from typing import Any, Callable, Dict, List
 import OMADS
 import numpy as np
+# import pandas as pd
 from scipy.optimize import minimize, Bounds, NonlinearConstraint, BFGS
 
 from ._common import MSG_TYPE, logger
@@ -73,8 +74,10 @@ class partitionedProblemData:
   cache: List
   hmin: float
   log: logger = None
-  RANDOM_SEED: float = 0.1234
+  RANDOM_SEED: float = 1234
   update_bl: bool = True
+  job: Any = None
+  allConf: Dict = None 
   bl: List[float] = None
 
 @dataclass
@@ -104,6 +107,7 @@ class SubProblem(partitionedProblemData):
     self.fmin = np.inf
     self.hmin = np.inf
     self.cache = []
+    self.eval_ID = 0
     if log is not None:
       self.log = log
     if solver == 'MADS':
@@ -137,6 +141,21 @@ class SubProblem(partitionedProblemData):
       self.scipy["method"] = 'SLSQP'
       self.scipy["is_con"] = False
       self.scipy["tol"] = 1E-4
+
+  def __getstate__(self):
+    # Remove or replace non-picklable attributes
+    state = self.__dict__.copy()
+    # Example: remove or replace RLock
+    if '_lock' in state:
+        del state['_lock']
+    # Or replace with a placeholder
+    # state['_lock'] = None
+    return state
+
+  def __setstate__(self, state):
+      self.__dict__.update(state)
+      # Reconstruct non-picklable objects if needed
+      # self._lock = threading.RLock()
         
 
   def get_minimizer(self):
@@ -276,7 +295,7 @@ class SubProblem(partitionedProblemData):
     else:
       mode = 'w'
     with open(file, mode=mode) as csv_file:
-      keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', f'{"Max. inconsistency".rjust(30)}', \
+      keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', f'{"Evaluation #".rjust(30)}', f'{"Max. inconsistency".rjust(30)}', \
               f'{"Penalty".rjust(30)}', f'{"Objective".rjust(30)}', f'{"Coupling Status".rjust(30)}'] + \
                 [f'{f"{x.name}".rjust(30)}' for x in self.vars] + \
                   [f'{f"{y.name}".rjust(30)}' for y in self.resps] 
@@ -288,7 +307,9 @@ class SubProblem(partitionedProblemData):
     name = file.split('.')[0]
     pd = os.path.join(ht[0], f'{name}_post')
     pdsb = os.path.join(pd, f'SP_{self.index}')
-    pfo = os.path.join(pdsb, f'SB_{self.index}_{self.iter}.out')
+    pfo = os.path.join(pdsb, f'SP_{self.index}_{self.iter}.out')
+    if not os.path.exists(pd):
+      os.mkdir(pd)
     if not os.path.exists(pdsb):
       os.mkdir(pdsb)
     self.postDir = pdsb
@@ -297,9 +318,10 @@ class SubProblem(partitionedProblemData):
     
   def Add_IL_res_row(self, r: Dict):
     with open(self.Il_file, mode='a') as csv_file:
-      keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', f'{"Max. inconsistency".rjust(30)}', \
+      keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', f'{"Evaluation #".rjust(30)}', f'{"Max. inconsistency".rjust(30)}', \
               f'{"Penalty".rjust(30)}', f'{"Objective".rjust(30)}', f'{"Coupling Status".rjust(30)}'] + \
-                [f'{f"{x.name}".rjust(30)}' for x in self.vars] + [f'{f"{y.name}".rjust(30)}' for y in self.resps] 
+                [f'{f"{x.name}".rjust(30)}' for x in self.vars] + [f'{f"{y.name}".rjust(30)}' 
+                                                                   for y in self.MDA_process.responses] 
       writer = csv.DictWriter(csv_file, fieldnames=keys)
       writer.writerow(r)    # add column names in the CSV file
 
@@ -312,6 +334,7 @@ class SubProblem(partitionedProblemData):
       is_conOnly = True
     if self.coord.save_q_in_out:
       global eps_fio
+    self.eval_ID += 1
     # If no variables were provided use existing value of the 
     # variables of the current subproblem (might happen during initialization)
     if vlist is None:
@@ -365,18 +388,19 @@ class SubProblem(partitionedProblemData):
       curr_time = time.strftime("%H:%M:%S", time.localtime()) 
       hstatus = "Feasible" if max(con_coupling) <= 0 else "Infeasible"
       status = copy.deepcopy(hstatus) if fun[0] != np.inf else "Error"
-      keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', f'{"Max. inconsistency".rjust(30)}', \
+      keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', f'{"Evaluation #".rjust(30)}', f'{"Max. inconsistency".rjust(30)}', \
               f'{"Penalty".rjust(30)}', f'{"Objective".rjust(30)}', \
                 f'{"Coupling Status".rjust(30)}'] + \
                   [f'{f"{x.name}".rjust(30)}' for x in self.vars] + \
-                    [f'{f"{y.name}".rjust(30)}' for y in self.resps] 
+                    [f'{f"{y.name}".rjust(30)}' for y in self.MDA_process.responses] 
 
       row = {keys[0]: f'{f"{curr_time}"}', 
              keys[1]: f'{f"{self.iter}".rjust(30)}', 
-             keys[2]: f'{f"{max(np.abs(self.coord.q))}".rjust(30)}', 
-             keys[3]: f'{f"{self.coord.phi}".rjust(30)}', 
-             keys[4]: f'{f"{fun[0]}".rjust(30)}', 
-             keys[5]: f'{f"{status}".rjust(30)}'}
+             keys[2]: f'{f"{self.eval_ID}".rjust(30)}', 
+             keys[3]: f'{f"{max(np.abs(self.coord.q))}".rjust(30)}', 
+             keys[4]: f'{f"{self.coord.phi}".rjust(30)}', 
+             keys[5]: f'{f"{fun[0]}".rjust(30)}', 
+             keys[6]: f'{f"{status}".rjust(30)}'}
       cv = 0
       lr = len(row)
       for v in vlist:
@@ -391,6 +415,7 @@ class SubProblem(partitionedProblemData):
     
     # TODO: Fix the local indices to select from a batched q list
     q_indices: List = self.getLocalIndices()
+    self.coord.calc_inconsistency()
     self.coord.calc_penalty(q_indices)
     # TODO: change the name of this routine
     self.coord.update_master_vector_val(self.vars, self.MDA_process.responses, self.sets)
@@ -439,9 +464,14 @@ class SubProblem(partitionedProblemData):
                   "var_type": self.get_vars_types(self.get_design_vars()),
                   "var_sets": self.sets,
                   "scaling": self.get_design_vars_scaling(self.get_design_vars()),
-                  "post_dir": "./post",
+                  # "post_dir": "./post",
                   "constants": self.get_list_constant_updates(self.get_design_vars()),
-                  "constants_name": self.get_list_const_names(self.get_design_vars())}
+                  "constants_name": self.get_list_const_names(self.get_design_vars()),
+                  "name": f"SP_{self.index}",
+                  "post_dir": self.postDir,
+                  "constraints_type": ["PB"]*100,
+                  "RHO": 0.001,
+                  "LAMBDA": 1000}
       pinit = min(max(self.tol, max(self.psize) if isinstance(self.psize, list) else self.psize), 1)
       if self.conf is not None and "options" in self.conf and self.conf["options"] is not None:
         options = self.conf["options"]
@@ -450,7 +480,7 @@ class SubProblem(partitionedProblemData):
         options = {
           "seed": 10000,
           "budget": self.budget,
-          "tol": max(pinit/1000, self.tol),
+          "tol": self.tol,
           "psize_init": pinit,
           "display": self.display,
           "opportunistic": False,
@@ -463,6 +493,7 @@ class SubProblem(partitionedProblemData):
           "save_coordinates": False,
           "save_all_best": False,
           "parallel_mode": False
+
         }
       isWin = platform.platform().split('-')[0] == 'Windows'
       options["precision"] = "high" if isWin else "medium"
@@ -470,9 +501,9 @@ class SubProblem(partitionedProblemData):
         search = self.conf["search"]
       else:
         search = {
-                    "type": "sampling",
+                    "type": "VNS",
                     "s_method": "LH",
-                    "ns": 5,
+                    "ns": 10,
                     "visualize": False,
                     "criterion": None
                   }
@@ -491,7 +522,11 @@ class SubProblem(partitionedProblemData):
 
       out = {}
       pinit = self.psize
+      log_copy = self.log
+      # self.log.switch_handler(f"SP{self.index}")
       out, _ = self.optimizer(data)
+      self.log = log_copy
+      # self.log.switch_handler("DMDO")
       self.fmin = out["fmin"]
       self.hmin = out["hmin"]
       if self.conf is not None and "constraintsHandling" in self.conf:
@@ -727,20 +762,20 @@ class SubProblem(partitionedProblemData):
       if vars[i].coupling_type != COUPLING_TYPE.CONSTANT:
         if isinstance(vars[i].type, list):
           for j in range(len(vars[i].type)):
-            if vars[i].type[j] == VAR_TYPE.REAL:
+            if vars[i].type[j] == VAR_TYPE.REAL.name:
               v.append("R")
-            elif vars[i].type[j] == VAR_TYPE.INTEGER:
+            elif vars[i].type[j] == VAR_TYPE.INTEGER.name:
               v.append("I")
-            elif vars[i].type[j] == VAR_TYPE.CATEGORICAL:
+            elif vars[i].type[j] == VAR_TYPE.CATEGORICAL.name:
               v.append("C")
             else:
               v.append(vars[i].type[j])
         else:
-          if vars[i].type == VAR_TYPE.REAL:
+          if vars[i].type == VAR_TYPE.REAL.name:
             v.append("R")
-          elif vars[i].type == VAR_TYPE.INTEGER:
+          elif vars[i].type == VAR_TYPE.INTEGER.name:
             v.append("I")
-          elif vars[i].type == VAR_TYPE.CATEGORICAL:
+          elif vars[i].type == VAR_TYPE.CATEGORICAL.name:
             v.append("C")
           else:
             v.append(vars[i].type)

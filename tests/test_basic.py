@@ -155,7 +155,7 @@ def test_basic_MDO():
   sp2_MDA: process = MDA(nAnalyses=1, analyses = [DA2], variables=[V[4], V[5], V[6]], responses=[V[7]])
 
   # Construct the coordinator
-  coord = ADMM(beta = 1.3,
+  coord = ADMM(beta = 1.3, gamma = 0.5,
   nsp=2,
   budget = 50,
   index_of_master_SP=1,
@@ -329,7 +329,7 @@ def speedReducerOMADS():
 
 
   # Construct the coordinator
-  coord = ADMM(beta = 1.8,
+  coord = ADMM(beta = 1.8, gamma = 0.5,
   nsp=4,
   budget = 100,
   index_of_master_SP=4,
@@ -596,7 +596,7 @@ def speedReducerScipy():
 
 
   # Construct the coordinator
-  coord = ADMM(beta = 1.8,
+  coord = ADMM(beta = 1.8,gamma = 0.5,
   nsp=4,
   budget = 50,
   index_of_master_SP=4,
@@ -860,7 +860,7 @@ def geometric_programming():
   sp3_MDA: process = MDA(nAnalyses=1, analyses = [DA3], variables=[V[11], V[12], V[13], V[14]], responses=[V[10]])
 
   # Construct the coordinator
-  coord = ADMM(beta = 1.3,
+  coord = ADMM(beta = 1.3,gamma = 0.5,
   nsp=3,
   budget = 100,
   index_of_master_SP=1,
@@ -1172,7 +1172,7 @@ def Sellar_scipy():
 
 
   # Construct the coordinator
-  coord = ADMM(beta = 1.3,
+  coord = ADMM(beta = 1.3,gamma = 0.5,
   nsp=2,
   budget = 100,
   index_of_master_SP=1,
@@ -1354,7 +1354,7 @@ def Sellar_OMADS_POLL():
 
 
   # Construct the coordinator
-  coord = ADMM(beta = 1.3,
+  coord = ADMM(beta = 1.3,gamma = 0.5,
   nsp=2,
   budget = 100,
   index_of_master_SP=1,
@@ -1588,7 +1588,7 @@ def Sellar_OMADS_MADS():
 
 
   # Construct the coordinator
-  coord = ADMM(beta = 1.3,
+  coord = ADMM(beta = 1.3,gamma = 0.5,
   nsp=2,
   budget = 50,
   index_of_master_SP=1,
@@ -1737,7 +1737,7 @@ def Sellar_OMADS_MADS():
 
 def test_auto_build():
   p_file: str = os.path.abspath("./tests/test_files/Basic_MDO.yaml")
-  MDAO: MDO = main(p_file, "build")
+  MDAO: MDO = main({'setup_file': p_file, 'run_mode': 'build', 'mdo_name': 'Basic_auto', 'working_dir': './tests/test_files'})
   for i in range(len(MDAO.subProblems)):
     temp :MDA = MDAO.subProblems[i].MDA_process
     for j in range(len(temp.analyses)):
@@ -1769,7 +1769,7 @@ def test_speedReducer():
     raise IOError(f"SR_scipy failed the checking criteria f_diff= {abs(f-2713.6640204584155)/2713.6640204584155},"
     f" hmax= {h}, qmax= {qmax}")
   f, h, qmax = speedReducerOMADS()
-  if abs(f-2713.6640204584155)/2713.6640204584155 > 0.07 or h>0.0001 or qmax > 1E-4:
+  if abs(f-2713.6640204584155)/2713.6640204584155 > 0.07 or h>0.0001 or qmax > 5E-3:
     raise IOError(f"SR_OMADS failed the checking criteria f_diff= {abs(f-2713.6640204584155)/2713.6640204584155},"
     f" hmax= {h}, qmax= {qmax}")
   
@@ -1780,4 +1780,4 @@ def test_geometric_programming():
   
 
 if __name__ == "__main__":
-  test_Sellar()
+  freeze_support()

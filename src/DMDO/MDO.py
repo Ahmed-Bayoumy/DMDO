@@ -28,7 +28,6 @@ import csv
 from dataclasses import dataclass
 import os
 import pickle
-import shutil
 import time
 from typing import Any, Dict, List
 
@@ -39,6 +38,7 @@ from ._common import MSG_TYPE, logger
 from ._protocols import Process_data
 from .coordinator import ADMM
 from .variables import variableData
+import concurrent.futures
 
 @dataclass
 class MDO_data(Process_data):
@@ -57,6 +57,10 @@ class MDO_data(Process_data):
   log: logger = None
   iter: int = 0
   file: str = None
+  initialized: bool = False
+  working_dir: str = "."
+  post_dir: str = "./_post"
+  mdo_name: str = "undefined"
 
 
 @dataclass
@@ -66,6 +70,28 @@ class MDO(MDO_data):
   :param MDO_data: _description_
   :type MDO_data: _type_
   """
+  def __getstate__(self):
+    # Remove or replace non-picklable attributes
+    state = self.__dict__.copy()
+    # Example: remove or replace RLock
+    if '_lock' in state:
+        del state['_lock']
+    # Or replace with a placeholder
+    # state['_lock'] = None
+    return state
+  
+  def is_pickleable(self, obj):
+    try:
+        pickle.dumps(obj)
+        return True
+    except Exception as e:
+        print(f"Object is not pickleable: {e}")
+        return False
+
+  def __setstate__(self, state):
+      self.__dict__.update(state)
+      # Reconstruct non-picklable objects if needed
+      # self._lock = threading.RLock()
   def get_list_of_var_values(self, x: List[variableData]):
     x_temp = []
     for i in range(len(x)):
@@ -160,23 +186,15 @@ class MDO(MDO_data):
       writer = csv.DictWriter(csv_file, fieldnames=keys)
       writer.writeheader()    # add column names in the CSV file
   
-  def prepare_post(self, file=None):
-    if file is None:
-      name = "unknown"
-      pd = os.path.join(os.getcwd(), f'{name}_post')
-    else:
-      ht = os.path.split(file)
-      name = file.split('.')[0]
-      pd = os.path.join(ht[0], f'{name}_post')
-    
-    
+  def prepare_post(self):
+    pd = self.post_dir
     pfo = os.path.join(pd, 'Coordination_history.out')
-    if os.path.exists(pd):
-      shutil.rmtree(pd)
-    os.mkdir(pd)
+    if not os.path.exists(pd):
+      # shutil.rmtree(pd)
+      os.mkdir(pd)
     self.postDir = pd
     self.Ol_file = pfo
-    self.log.relocate_logger(source_file="DMDO.log", Dest_file=pd)
+    # self.log.relocate_logger(source_file=self.log.log.handlers[0].baseFilename, Dest_file=pd)
     self.initialize_OL_res_file(pfo)
     
   def Add_OL_res_row(self, r: Dict):
@@ -224,12 +242,64 @@ class MDO(MDO_data):
     
     return
 
+  def solve_subproblem(self, s: int):
+    self.prepare_SP_jobs(s=s)
+    # if iter > 1:
+    #   self.propose_best_candidates(s)
+    out_sp = self.subProblems[s].solve(self.Coordinator.v, self.Coordinator.w, file=self.file, iter=self.iter)
+    
+    self.Coordinator = copy.deepcopy(self.subProblems[s].coord)
+    
+    return out_sp, self.subProblems[s]
+
+  def prepare_SP_jobs(self, s: int):
+    if self.iter == 0:
+      self.subProblems[s].set_pair()
+      self.Coordinator.v = [0.] * len(self.subProblems[s].coord._linker[0])
+      self.Coordinator.w = [1.] * len(self.subProblems[s].coord._linker[0])
+      self.subProblems[s].coord = copy.deepcopy(self.Coordinator)
+      
+          
+      self.subProblems[s].log = self.log
+      self.subProblems[s].postDir = self.post_dir 
+      
+    else:
+      self.subProblems[s].coord.master_vars = copy.deepcopy(self.Coordinator.master_vars)
+    self.subProblems[s].modify_cond_vars(self.Coordinator.master_vars)
+    if self.mode == "parallel":
+      # self.Coordinator._linker = self.subProblems[s].coord._linker
+      for v in self.Coordinator.master_vars:
+        self.subProblems[s].coord.calculate_and_set_average_target_values(v.name, sp_index=s)
+      self.Coordinator = copy.deepcopy(self.subProblems[s].coord)
+  
+  def format_log_message(self, iter, qmax, obj, dx, wmax):
+    """Format log message with dynamic spacing for vertical alignment"""
+    # Use consistent width for each field
+    # Field widths are set based on typical value ranges
+    iter_width = 4  # 4 digits for iteration number
+    qmax_width = 16  # Enough for scientific notation
+    obj_width = 16  # Enough for large objective values
+    dx_width = 16  # Enough for large dx values
+    wmax_width = 16  # Enough for large wmax values
+
+    # Format each field with consistent width
+    iter_str = f'{iter}'.rjust(iter_width)
+    qmax_str = f'qmax: {qmax:.8f}'.rjust(qmax_width)
+    obj_str = f'Obj: {obj:.8f}'.rjust(obj_width)
+    dx_str = f'dx: {dx:.8f}'.rjust(dx_width)
+    wmax_str = f'max(w): {wmax:.8f}'.rjust(wmax_width)
+
+    # Combine with || separators
+    return f'{iter_str} || {qmax_str} || {obj_str} || {dx_str} || {wmax_str}'
+
+
+ 
 
   def run(self, file=None, resume= False, mode="Serial"):  # noqa: C901
     global eps_fio, eps_qio
     if self.log is None:
       self.log: logger = logger()
-      self.log.initialize("DMDO.log")
+      self.log.initialize(os.path.join(self.post_dir, "DMDO.log"), handler_name="DMDO")
     if not resume:
       self.log.log_msg(msg="Running MDO ... ", msg_type=MSG_TYPE.INFO.value)
       # Note: once you run MDAO, the data stored in eps_fio and eps_qio shall be deleted. 
@@ -245,69 +315,94 @@ class MDO(MDO_data):
     """ Run the MDO process """
     #  COMPLETE: fix the setup of the local (associated with SP) and global (associated with MDO) coordinators
     self.fmin = np.inf
+    self.mode = mode
+    
+    self.Coordinator.mode = mode
     for iter in range(self.Coordinator.budget):
+      self.iter = iter
       if iter > 0:
-        coord_inst = self
-        pickle.dump(coord_inst, open(self.postDir + '/coord_chk.pkl', "wb"))
+        # log = self.log
+        # self.log = None
+        # sp_logs = [sp.log for sp in self.subProblems]
+        # for i in range(len(self.subProblems)):
+        #   self.subProblems[i].log = None
+        pickle.dump(self, open(self.post_dir + '/coord_chk.pkl', "wb"))
+        # self.log = log
+        # for i in range(len(self.subProblems)):
+        #   self.subProblems[i].log = sp_logs[i]
         self.Coordinator.master_vars_old = copy.deepcopy(self.Coordinator.master_vars)
       else:
         self.Coordinator.master_vars_old = copy.deepcopy(self.variables)
         self.Coordinator.master_vars = copy.deepcopy(self.variables)
+        self.prepare_post()
 
       """ ADMM inner loop """
+
+        
+      self.is_pickleable(self.subProblems[0])
+      self.is_pickleable(self)
       if mode == "Serial" or mode == "serial":
         for s in range(len(self.subProblems)):
-          if iter == 0:
-            self.subProblems[s].coord = copy.deepcopy(self.Coordinator)
-            self.subProblems[s].set_pair()
-            self.xavg = self.subProblems[s].coord._linker
-            self.Coordinator.v = [0.] * self.get_weights_size(s)
-            self.Coordinator.w = [1.] * self.get_weights_size(s)
-            if s == 0:
-              self.prepare_post(file)
-            self.subProblems[s].log = self.log
+          # self.prepare_post()
+          self.solve_subproblem(s)
+      else:
+        # Parallel sunbproblems execution
+        """ """
+        out_sp: dict = {}
+        with concurrent.futures.ProcessPoolExecutor(max_workers=len(self.subProblems)) as executor:
+          future_to_index = {
+              executor.submit(self.solve_subproblem, i): (i)
+              for i in range(len(self.subProblems))}
+          for future in concurrent.futures.as_completed(future_to_index):
+            s = future_to_index[future]
+            out_sp, sp = future.result()
+            self.subProblems[s] = copy.deepcopy(sp)
+            if self.subProblems[s].index == self.Coordinator.index_of_master_SP:
+              self.fmin = self.subProblems[s].fmin
+              if self.subProblems[s].solver == "OMADS":
+                self.hmin = out_sp["hmin"]
+              else:
+                self.hmin = [0.]
+            self.subProblems[s].coord.calc_inconsistency()
+            self.subProblems[s].coord.update_multipliers(self.iter)
+            self.Coordinator = copy.deepcopy(self.subProblems[s].coord)
+            if self.subProblems[s].index == self.Coordinator.index_of_master_SP:
+              self.fmin = self.subProblems[s].fmin_nop
+              if self.subProblems[s].solver == "OMADS":
+                self.hmin = out_sp["hmin"]
+              else:
+                self.hmin = [0.]
+      """ Display convergence """
+      dx = self.get_master_vars_difference()
+      if self.display:
+        formatted_msg = self.format_log_message(
+            iter, 
+            np.max(np.abs(self.Coordinator.q)), 
+            self.fmin, 
+            dx, 
+            np.max(self.Coordinator.w)
+        )
+        self.log.log_msg(msg=formatted_msg, msg_type=MSG_TYPE.INFO.value)
+        print(formatted_msg)
+        qb = self.Coordinator.batch_q(self.Coordinator.q)
+        ql: list = []
+        for i in range(len(qb)):
+          if isinstance(qb[i], list):
+            ql.append(max(np.abs(qb[i])))
           else:
-            self.subProblems[s].coord.master_vars = copy.deepcopy(self.Coordinator.master_vars)
-            
-          self.subProblems[s].modify_cond_vars(self.Coordinator.master_vars)
-          # if iter > 1:
-          #   self.propose_best_candidates(s)
-          out_sp = self.subProblems[s].solve(self.Coordinator.v, self.Coordinator.w, file=file, iter=iter)
-          self.Coordinator = copy.deepcopy(self.subProblems[s].coord)
-          if self.subProblems[s].index == self.Coordinator.index_of_master_SP:
-            self.fmin = self.subProblems[s].fmin_nop
-            if self.subProblems[s].solver == "OMADS":
-              self.hmin = out_sp["hmin"]
-            else:
-              self.hmin = [0.]
+            ql.append(abs(qb[i]))
 
-        """ Display convergence """
-        dx = self.get_master_vars_difference()
-        if self.display:
-          self.log.log_msg(msg=f'{iter} || qmax: {np.max(np.abs(self.Coordinator.q))}'
-                           f' || Obj: {self.fmin} || dx: {dx} || max(w): {np.max(self.Coordinator.w)}',\
-                              msg_type=MSG_TYPE.INFO.value)
-          print(f'{iter} || qmax: {np.max(np.abs(self.Coordinator.q))} '
-                f'|| Obj: {self.fmin} || dx: {dx} || max(w): {np.max(self.Coordinator.w)}')
-          qb = self.Coordinator.batch_q(self.Coordinator.q)
-          ql: list = []
-          for i in range(len(qb)):
-            if isinstance(qb[i], list):
-              ql.append(max(np.abs(qb[i])))
-            else:
-              ql.append(abs(qb[i]))
-
-          index = np.argmax(ql)
-          self.log.log_msg(
-            msg=f'Highest inconsistency : {self.Coordinator.master_vars[self.Coordinator._linker[0,index]-1].name}_'
-          f'{self.Coordinator.master_vars[self.Coordinator._linker[0,index]-1].sp_index} to '
-            f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].name}_'
-          f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].link}', msg_type=MSG_TYPE.INFO.value)
-        print(f'Highest inconsistency : {self.Coordinator.master_vars[self.Coordinator._linker[0,index]-1].name}_'
-          f'{self.Coordinator.master_vars[self.Coordinator._linker[0,index]-1].link} to '
-            f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].name}_'
-          f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].link}')
-        """ Write OL results to the file"""
+        index = np.argmax(ql)
+        self.log.log_msg(
+          msg=f'Highest inconsistency : {self.Coordinator.master_vars[self.Coordinator._linker[0,index]-1].name}_'
+        f'{self.Coordinator.master_vars[self.Coordinator._linker[0,index]-1].sp_index} to '
+          f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].name}_'
+        f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].link}', msg_type=MSG_TYPE.INFO.value)
+      print(f'Highest inconsistency : {self.Coordinator.master_vars[self.Coordinator._linker[0,index]-1].name}_'
+        f'{self.Coordinator.master_vars[self.Coordinator._linker[0,index]-1].link} to '
+          f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].name}_'
+        f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].link}')
+      """ Write OL results to the file"""
       keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', f'{"Max. inconsistency".rjust(30)}', \
               f'{"Objective".rjust(30)}', f'{"Status".rjust(30)}', \
               f'{"Variables change".rjust(30)}', f'{"Maximum penalty".rjust(30)}', f'{"Coupling_with_qmax".rjust(30)}'] + \
@@ -316,25 +411,25 @@ class MDO(MDO_data):
       hmin = max(self.hmin) if isinstance(self.hmin, list) and self.hmin is not None and len(self.hmin) > 0 else self.hmin
       hstatus = "Feasible" if hmin <= 0 else "Infeasible"
       status = copy.deepcopy(hstatus) if self.fmin != np.inf else "Error"
-      cmax = f'{self.Coordinator.master_vars[self.Coordinator.extended_linker[0,index]-1].name}_'
-      f'{self.Coordinator.master_vars[self.Coordinator.extended_linker[0,index]-1].link} '
-      f'to {self.Coordinator.master_vars[self.Coordinator.extended_linker[1,index]-1].name}'
+      cmax = f'{self.Coordinator.master_vars[self.Coordinator.extended_linker[0,index]-1].name}_'+\
+      f'{self.Coordinator.master_vars[self.Coordinator.extended_linker[0,index]-1].link} '+\
+      f'to {self.Coordinator.master_vars[self.Coordinator.extended_linker[1,index]-1].name}'+\
       f'_{self.Coordinator.master_vars[self.Coordinator.extended_linker[1,index]-1].link}'
       row = {keys[0]: f'{f"{curr_time}"}', 
-             keys[1]: f'{f"{iter}".rjust(30)}', 
-             keys[2]: f'{f"{np.max(np.abs(self.Coordinator.q))}".rjust(30)}', 
-             keys[3]: f'{f"{self.fmin}".rjust(30)}', 
-             keys[4]: f'{f"{status}".rjust(30)}',
-             keys[5]: f'{f"{dx}".rjust(30)}',
-             keys[6]: f'{f"{np.max(self.Coordinator.w)}".rjust(30)}',
-             keys[7]: f'{f"{cmax}".rjust(30)}'}
+              keys[1]: f'{f"{iter}".rjust(30)}', 
+              keys[2]: f'{f"{np.max(np.abs(self.Coordinator.q))}".rjust(30)}', 
+              keys[3]: f'{f"{self.fmin}".rjust(30)}', 
+              keys[4]: f'{f"{status}".rjust(30)}',
+              keys[5]: f'{f"{dx}".rjust(30)}',
+              keys[6]: f'{f"{np.max(self.Coordinator.w)}".rjust(30)}',
+              keys[7]: f'{f"{cmax}".rjust(30)}'}
       
       cv = 0
       lr = len(row)
       for v in self.Coordinator.master_vars:
         row[keys[lr+cv]] = f'{f"{v.value}".rjust(30)}'
         cv += 1
-      
+        
       self.Add_OL_res_row(row)
       """ Update LM and PM """
       self.Coordinator.update_multipliers(iter)
@@ -348,39 +443,8 @@ class MDO(MDO_data):
         break
       self.eps_qio = copy.deepcopy(eps_qio)
       self.eps_fio = copy.deepcopy(eps_fio)
-    else:
-      # TODO: Add parallel sunbproblems execution
-      """ """
-    if self.display is True:
-      print('------Run_Summary------')
-      self.log.log_msg(msg='------Run_Summary------', msg_type=MSG_TYPE.INFO.value)
-      print(self.stop)
-      self.log.log_msg(msg=self.stop, msg_type=MSG_TYPE.INFO.value)
-      print(f'q = {self.Coordinator.q}')
-      self.log.log_msg(msg=f'q = {self.Coordinator.q}', msg_type=MSG_TYPE.INFO.value)
-      for i in self.Coordinator.master_vars:
-        print(f'{i.name}_{i.sp_index} = {i.value}')
-        self.log.log_msg(msg=f'{i.name}_{i.sp_index} = {i.value}', msg_type=MSG_TYPE.INFO.value)
-
-      fmin = 0
-      hmax = np.inf
-      for j in range(len(self.subProblems)):
-        print(f'Study_ID_{self.subProblems[j].index}: fmin= {self.subProblems[j].fmin_nop}, hmin= {self.subProblems[j].hmin}')
-        self.log.log_msg(msg=f'Study_ID_{self.subProblems[j].index}: '
-                         f'fmin= {self.subProblems[j].fmin_nop}, hmin= {self.subProblems[j].hmin}', \
-                         msg_type=MSG_TYPE.INFO.value)
-        fmin += self.subProblems[j].fmin_nop
-        hmin= self.subProblems[j].hmin
-        if isinstance(hmin, list): 
-          hmax = max(hmin) 
-        else:
-          hmax = hmin
-      print(f'P_main: fmin= {fmin}, hmin= {hmax}')
-      self.log.log_msg(msg=f'P_main: fmin= {fmin}, hmin= {hmax}', msg_type=MSG_TYPE.INFO.value)
-      print(f'Final obj value of the main problem: \n {fmin}')
-      self.log.log_msg(msg=f'Final obj value of the main problem: \n {fmin}', msg_type=MSG_TYPE.INFO.value)
-    self.log.log_msg(msg="MDO run has been successfully completed.", msg_type=MSG_TYPE.INFO.value)
-    return self.Coordinator.q
+        
+        
 
   def validation(self, vType: int):
     self.term_status = []

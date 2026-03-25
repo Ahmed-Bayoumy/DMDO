@@ -44,7 +44,7 @@ class variableData:
   scaling: float
   lb: float = None
   ub: float = None
-  type: int = VAR_TYPE.REAL
+  type: str = VAR_TYPE.REAL.name
   index: int = None
   set: str = None
   cond_on: str = None

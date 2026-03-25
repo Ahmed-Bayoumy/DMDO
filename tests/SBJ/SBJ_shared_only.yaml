@@ -1,0 +1,313 @@
+# The SBJ MDO problem
+
+variables:
+# vs:  [name,     sp_index, link, coupling, lb,      bl,        ub,        dim, var_type]
+  v0:  ["SFC",     1,        null,    u,       1.0,     2.5,       4.0,       1,   "R"]
+  v1:  ["We",      1,        null,    u,       100.0,   15050.0,   30000.0,   1,   "R"]
+  v2:  ["Wt",      1,        3,    ff,       5000.0,  52500.0,   100000.0,  1,   "R"]
+  v3:  ["LD",      1,        null,    u,       0.1,     5.05,      10.0,      1,   "R"]
+  v4:  ["Ws",      1,        null,    u,       5000.0,  52500.0,   100000.0,  1,   "R"]
+  v5:  ["Wf",      1,        null,    u,       5000.0,  52500.0,   100000.0,  1,   "R"]
+  v6:  ["SFC",     2,        1,    ff,       1.0,     2.5,       4.0,       1,   "R"]
+  v7:  ["We",      2,        1,    ff,       100.0,   15050.0,   30000.0,   1,   "R"]
+  v8:  ["D",       2,        null,    u,       1000.0,  35500.0,   70000.0,   1,   "R"]
+  v9:  ["ESF",     2,        3,    ff,       0.5,     1.0,       1.5,       1,   "R"]
+  v10: ["T",       2,        null, u,        0.1,     0.55,      1.0,       1,   "R"]
+  v11: ["D",       3,        2,    ff,       1000.0,  35500.0,   70000.0,   1,   "R"]
+  v12: ["ESF",     3,        null,    u,       0.5,     1.0,       1.5,       1,   "R"]
+  v13: ["Wt",      3,        null,    u,       5000.0,  52500.0,   100000.0,  1,   "R"]
+  v14: ["LD",      3,        1,    ff,       0.1,     5.05,      10.0,      1,   "R"]
+  v15: ["theta",   3,        null,    u,       0.2,     25.1,      50.0,      1,   "R"]
+  v16: ["L",       3,        4,    ff,       5000.0,  52500.0,   100000.0,  1,   "R"]
+  v17: ["tc",      3,        4,    s,        0.01,    0.055,     0.1,       1,   "R"]
+  v18: ["ARw",     3,        4,    s,        2.5,     5.25,      8.0,       1,   "R"]
+  v19: ["LAMBDAw", 3,        4,    s,        40.0,    55.0,      70.0,      1,   "R"]
+  v20: ["Sref",    3,        4,    s,        200.0,   500.0,     800.0,     1,   "R"]
+  v21: ["Sht",     3,        4,    s,        50.0,    99.45,     148.9,     1,   "R"]
+  v22: ["ARht",    3,        4,    s,        2.5,     5.5,       8.5,       1,   "R"]
+  v23: ["LAMBDAht",3,        null, u,        40.0,    55.0,      70.0,      1,   "R"]
+  v24: ["Lw",      3,        null, u,        0.01,    0.105,     0.2,       1,   "R"]
+  v25: ["Lht",     3,        null, u,        1.0,     2.25,      3.5,       1,   "R"]
+  v26: ["theta",   4,        3,    ff,       0.2,     25.1,      50.0,      1,   "R"]
+  v27: ["L",       4,        null,    u,       5000.0,  52500.0,   100000.0,  1,   "R"]
+  v28: ["Ws",      4,        1,    ff,       5000.0,  52500.0,   100000.0,  1,   "R"]
+  v29: ["Wf",      4,        1,    ff,       5000.0,  52500.0,   100000.0,  1,   "R"]
+  v30: ["tc",      4,        3,    s,        0.01,    0.055,     0.1,       1,   "R"]
+  v31: ["ARw",     4,        3,    s,        2.5,     5.25,      8.0,       1,   "R"]
+  v32: ["LAMBDAw", 4,        3,    s,        40.0,    55.0,      70.0,      1,   "R"]
+  v33: ["Sref",    4,        3,    s,        200.0,   500.0,     800.0,     1,   "R"]
+  v34: ["Sht",     4,        3,    s,        50.0,    99.45,     148.9,     1,   "R"]
+  v35: ["ARht",    4,        3,    s,        2.5,     5.5,       8.5,       1,   "R"]
+  v36: ["lambda",  4,        null, u,        0.1,     0.25,      0.4,       1,   "R"]
+  v37: ["t",       4,        null, u,        0.1,     2.05,      4.0,       1,   "R"]
+  v38: ["t",       4,        null, u,        0.1,     2.05,      4.0,       1,   "R"]
+  v39: ["t",       4,        null, u,        0.1,     2.05,      4.0,       1,   "R"]
+  v40: ["t",       4,        null, u,        0.1,     2.05,      4.0,       1,   "R"]
+  v41: ["t",       4,        null, u,        0.1,     2.05,      4.0,       1,   "R"]
+  v42: ["t",       4,        null, u,        0.1,     2.05,      4.0,       1,   "R"]
+  v43: ["t",       4,        null, u,        0.1,     2.05,      4.0,       1,   "R"]
+  v44: ["t",       4,        null, u,        0.1,     2.05,      4.0,       1,   "R"]
+  v45: ["t",       4,        null, u,        0.1,     2.05,      4.0,       1,   "R"]
+  v46: ["ts",      4,        null, u,        0.1,     4.55,      9.0,       1,   "R"]
+  v47: ["ts",      4,        null, u,        0.1,     4.55,      9.0,       1,   "R"]
+  v48: ["ts",      4,        null, u,        0.1,     4.55,      9.0,       1,   "R"]
+  v49: ["ts",      4,        null, u,        0.1,     4.55,      9.0,       1,   "R"]
+  v50: ["ts",      4,        null, u,        0.1,     4.55,      9.0,       1,   "R"]
+  v51: ["ts",      4,        null, u,        0.1,     4.55,      9.0,       1,   "R"]
+  v52: ["ts",      4,        null, u,        0.1,     4.55,      9.0,       1,   "R"]
+  v53: ["ts",      4,        null, u,        0.1,     4.55,      9.0,       1,   "R"]
+  v54: ["ts",      4,        null, u,        0.1,     4.55,      9.0,       1,   "R"]
+  v55: ["range",   1,        null, dummy,    0.0,     0.0,       0.0,       1,   "R"]
+  v56: ["Temp_E",  2,        null, dummy,    0.0,     0.0,       0.0,       1,   "R"]
+  v57: ["Throttle_uA",2,     null, dummy,    0.0,     0.0,       0.0,       1,   "R"]
+  v58: ["Pg",      3,        null, dummy,    0.0,     0.0,       0.0,       1,   "R"]
+  v59: ["CLo1",    3,        null, dummy,    0.0,     0.0,       0.0,       1,   "R"]
+  v60: ["CLo2",    3,        null, dummy,    0.0,     0.0,       0.0,       1,   "R"]
+
+# DA1:
+  #   index: 1
+
+  #   blackbox: SBJ_A1
+  #   type: callable
+  #   links: [2,3,4]
+  #   coupling_type: ff
+
+  # DA2:
+  #   index: 2
+
+  #   blackbox: SBJ_A2
+  #   type: callable
+  #   links: [1,3]
+  #   coupling_type: [ff, ff, ff]
+
+DA:
+  DA1:
+    index: 1
+#   inputs: ["SFC","We","LD","Ws","Wf"]
+    inputs: [v0, v1, v3, v4, v5]
+#   outputs: ["Wt","range"]
+    outputs: [v2, v55]
+    blackbox: SBJ_aircraft_analysis
+    type: callable
+    links: [2,3,4]
+    coupling_type: ff
+
+  DA2:
+    index: 2
+#   inputs: ["D","T"]
+    inputs: [v8, v10]
+#   outputs: ["SFC","We","ESF","Temp_E","Throttle_uA"]
+    outputs: [v6,v7,v9, v56, v57]
+    blackbox: SBJ_propulsion_analysis
+    type: callable
+    links: [1,3]
+    coupling_type: ff
+
+  DA3:
+    index: 3
+    # inputs: ["Wt","ESF","theta","tc","ARw","LAMBDAw","Sref","Sht","ARht","LAMBDAht","Lw","Lht"]
+    inputs:   [v13,   v12,    v15, v17,  v18,      v19,   v20, v21,    v22,       v23, v24, v25 ]
+    # outputs: ["L","D","LD","Pg","CLo1","CLo2"]
+    outputs: [v16,v11,v14, v58, v59,v60]
+    blackbox: SBJ_aerodynamics_analysis
+    type: callable
+    links: [1,2,4]
+    coupling_type: ff
+
+  DA4:
+    index: 4
+    # inputs: ["L","tc","ARw","LAMBDAw","Sref","Sht","ARht","lambda","t","ts"]
+    inputs: [v27,v30,v31, v32, v33, v34, v35, v36, v37,v38,v39,v40,v41,v42,v43,v44,v45, v46, v45, v47,v48, v49, v50,v51,v52,v53,v54]
+    # outputs: ["Ws","Wf","theta"]
+    outputs: [v28,v29, v26]
+    blackbox: SBJ_structure_analysis
+    type: callable
+    links: [1,3]
+    coupling_type: ff
+
+MDA:
+  MDA1:
+    index: 1
+    nAnalyses: 1
+    analyses: [1]
+    variables: [v0, v1, v3, v4, v5]
+    responses:  [v2, v55]
+
+  MDA2:
+    index: 2
+    nAnalyses: 1
+    analyses: [2]
+    variables:  [v8, v10]
+    responses: [v6,v7,v9, v56, v57]
+
+  MDA3:
+    index: 3
+    nAnalyses: 1
+    analyses: [3]
+    variables: [v13,   v12,    v15, v17,  v18,      v19,   v20, v21,    v22,       v23, v24, v25 ]
+    responses:  [v16,v11,v14, v58, v59,v60]
+
+  MDA4:
+    index: 4
+    nAnalyses: 1
+    analyses: [4]
+    variables: [v27,v30,v31, v32, v33, v34, v35, v36, v37,v38,v39,v40,v41,v42,v43,v44,v45, v46, v45, v47,v48, v49, v50,v51,v52,v53,v54]
+    responses: [v28,v29, v26]
+
+
+coord:
+  c1:
+    index: 1
+    type: ADMM
+    beta: 1.8
+    gamma: 0.1
+    nsp: 4
+    budget: 500
+    index_of_master_SP: 1
+    display: True
+    scaling: null
+    mode: serial
+    M_update_scheme: rank
+    store_q_io: True
+
+# coord:
+#   c1:
+#     index: 1
+#     type: ADMM
+#     beta: 1.1
+#     gamma: 0.8
+#     nsp: 4
+#     budget: 500
+#     index_of_master_SP: 1
+#     display: True
+#     scaling: null
+#     mode: serial
+#     M_update_scheme: max
+#     store_q_io: True
+
+subproblem:
+  sp1:
+    nv: 5
+    index: 1
+    vars: [v0, v1, v3, v4, v5]
+    resps: [v2, v55]
+    is_main: True
+    MDA: 1
+    coordinator: 1
+    opt: SBJ_aircraft_opt
+    type: callable
+    fmin_nop: inf
+    budget: 50
+    display: False
+    psize: 1.
+    pupdate: Last
+    freal: 30000
+    solver: SEARCH
+    save_results: True
+    configurations: CSP
+
+  sp2:
+    nv: 2
+    index: 2
+    vars: [v8, v10]
+    resps:  [v6,v7,v9, v56, v57]
+    is_main: False
+    MDA: 2
+    coordinator: 1
+    opt: SBJ_propulsion_opt
+    type: callable
+    fmin_nop: inf
+    budget: 50
+    display: False
+    psize: 1.
+    pupdate: Last
+    solver: SEARCH
+    save_results: True
+    configurations: CSP
+
+  sp3:
+    nv: 12
+    index: 3
+    vars: [v13,   v12,    v15, v17,  v18,      v19,   v20, v21,    v22,       v23, v24, v25 ]
+    resps: [v16,v11,v14, v58, v59,v60]
+    is_main: False
+    MDA: 3
+    coordinator: 1
+    opt: SBJ_aerodynamics_opt
+    type: callable
+    fmin_nop: inf
+    budget: 50
+    display: False
+    psize: 1.
+    pupdate: Last
+    solver: SEARCH
+    save_results: True
+    save_all_best: False
+    configurations: CSP
+
+  
+  sp4:
+    nv: 27
+    index: 4
+    vars: [v27,v30,v31, v32, v33, v34, v35, v36, v37,v38,v39,v40,v41,v42,v43,v44,v45, v46, v45, v47,v48, v49, v50,v51,v52,v53,v54]
+    resps: [v28,v29, v26]
+    is_main: False
+    MDA: 4
+    coordinator: 1
+    opt: SBJ_structure_opt
+    type: callable
+    fmin_nop: inf
+    budget: 50
+    display: False
+    psize: 1.
+    pupdate: Last
+    solver: SEARCH
+    save_results: True
+    save_all_best: False
+    configurations: CSP
+
+USER:
+  h: 55000
+  M: 1.4
+
+MDO:
+  architecture: IDF
+  coordinator: 1
+  subproblems: [1, 2, 3, 4]
+  responses: [v2, v6,v7,v9, v16,v11,v14, v28,v29, v26]
+  fmin: inf
+  hmin: inf
+  display: True
+  inc_stop: 0.0000000001
+  stop: "Iteration budget exhausted"
+  tab_inc: []
+  noprogress_stop: 500
+
+
+CONFIG:
+  CSP:
+    constraintsHandling:
+      Barriers:
+        [PB, PB, PB, PB, PB, PB]
+    options:
+        "seed": 10000
+        "budget": 50
+        "tol": 0.0000000000001
+        "psize_init": 1
+        "display": False
+        "opportunistic": False
+        "check_cache": True
+        "store_cache": True
+        "collect_y": False
+        "rich_direction": True
+        "precision": "low"
+        "save_results": False
+        "save_coordinates": False
+        "save_all_best": False
+        "parallel_mode": False
+
+    search:
+        "type": "sampling"
+        "s_method": "LH"
+        "ns": 10
+        "visualize": False
