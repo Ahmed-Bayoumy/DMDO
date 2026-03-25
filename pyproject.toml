@@ -27,6 +27,7 @@ dependencies = [
     "pandas>=2.3.3",
     "pyyaml>=6.0.3",
     "scipy>=1.15.3",
+    "dash>=4.1.0",
 ]
 
 [project.optional-dependencies]
