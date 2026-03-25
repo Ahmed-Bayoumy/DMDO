@@ -1,6 +1,6 @@
 import numpy as np
 import copy
-from dataclasses import dataclass, field
+# from dataclasses import dataclass, field
 
 class WingDesignAnalyzer:
     """
@@ -192,7 +192,7 @@ class WingDesignAnalyzer:
         TE_sweep = (np.arctan((x[7] - x[1]) / y[7])) * 180 / np.pi
         Sweep_40 = (np.arctan(((x[7] - 0.6 * (x[7] - x[6])) - 0.4 * x[1]) / y[7])) * 180 / np.pi
 
-        l = np.multiply([c[i] for i in range(3)], 0.4 * np.cos(Z[4] * np.pi / 180))
+        l = np.multiply([c[i] for i in range(3)], 0.4 * np.cos(Z[4] * np.pi / 180))  # noqa: E741
         k = np.multiply([c[i] for i in range(3)], 0.6 * np.sin((90 - TE_sweep) * np.pi / 180) / 
                        np.sin((90 + TE_sweep - Z[4]) * np.pi / 180))
         c_box = np.add(l, k)
@@ -211,7 +211,7 @@ class WingDesignAnalyzer:
         x1 = np.linspace(h, b / 2, n)
 
         # Calculate wing loading
-        l = np.linspace(0, (b / 2) - (b / 2) / NP, NP)
+        l = np.linspace(0, (b / 2) - (b / 2) / NP, NP)  # noqa: E741
         c1mc4 = c[0] - c[3]
         f_all = np.multiply((3 * b / 10), np.sqrt(np.subtract(1, np.power(x, 2) / 
                             np.power(np.divide(b, 2), 2))))
@@ -249,7 +249,7 @@ class WingDesignAnalyzer:
         Mz = [Mb[int(i)] for i in np.arange(0, NP - 1, int(NP / 3))]
 
         # Calculate wing twist due to bending
-        I = np.zeros((NP))
+        I = np.zeros((NP))  # noqa: E741
         chord = c[3] + (np.divide(2 * (b / 2 - l), b)) * c1mc4
         y = np.zeros((2, 9))
         y[0, :] = (l - 0.4 * chord * tanCos2Sweep) * cosInvSweep

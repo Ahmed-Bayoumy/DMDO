@@ -178,7 +178,7 @@ class SSBJAerodynamics:
         # Solve for CLo
         try:
             CLo = np.linalg.solve(A, B)
-        except:
+        except:  # noqa: E722
             CLo = np.array([-np.inf, np.inf])
 
         # Calculate delta_L
@@ -193,13 +193,15 @@ class SSBJAerodynamics:
         # Solve for DCL
         try:
             self.DCL = np.linalg.solve(A, D)
-        except:
+        except:  # noqa: E722
             self.DCL = np.array([np.nan, np.nan])
 
         # Calculate induced drag factors
         if self.Z[2] >= 1:
-            kw = self.Z[3] * (self.Z[2]**2 - 1) * np.cos(self.Z[4] * np.pi / 180) / (4 * self.Z[3] * np.sqrt(self.Z[2]**2 - 1) - 2)
-            kht = ARht * (self.Z[2]**2 - 1) * np.cos(self.LAMBDAht * np.pi / 180) / (4 * ARht * np.sqrt(self.Z[2]**2 - 1) - 2)
+            kw = self.Z[3] * (self.Z[2]**2 - 1) * np.cos(self.Z[4] * np.pi / 180) / \
+            (4 * self.Z[3] * np.sqrt(self.Z[2]**2 - 1) - 2)
+            kht = ARht * (self.Z[2]**2 - 1) * np.cos(self.LAMBDAht * np.pi / 180) / \
+            (4 * ARht * np.sqrt(self.Z[2]**2 - 1) - 2)
         else:
             kw = 1 / (np.pi * 0.8 * self.Z[3])
             kht = 1 / (np.pi * 0.8 * ARht)
