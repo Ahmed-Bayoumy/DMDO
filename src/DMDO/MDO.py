@@ -344,7 +344,23 @@ class MDO(MDO_data):
       if mode == "Serial" or mode == "serial":
         for s in range(len(self.subProblems)):
           # self.prepare_post()
-          self.solve_subproblem(s)
+          out_sp, sp = self.solve_subproblem(s)
+          self.subProblems[s] = copy.deepcopy(sp)
+          if self.subProblems[s].index == self.Coordinator.index_of_master_SP:
+            self.fmin = self.subProblems[s].fmin
+            if self.subProblems[s].solver == "OMADS":
+              self.hmin = out_sp["hmin"]
+            else:
+              self.hmin = [0.]
+          self.subProblems[s].coord.calc_inconsistency()
+          self.subProblems[s].coord.update_multipliers(self.iter)
+          self.Coordinator = copy.deepcopy(self.subProblems[s].coord)
+          if self.subProblems[s].index == self.Coordinator.index_of_master_SP:
+            self.fmin = self.subProblems[s].fmin_nop
+            if self.subProblems[s].solver == "OMADS":
+              self.hmin = out_sp["hmin"]
+            else:
+              self.hmin = [0.]
       else:
         # Parallel sunbproblems execution
         """ """
@@ -378,7 +394,7 @@ class MDO(MDO_data):
         formatted_msg = self.format_log_message(
             iter, 
             np.max(np.abs(self.Coordinator.q)), 
-            self.fmin, 
+            self.fmin[0] if isinstance(self.fmin, list) else self.fmin, 
             dx, 
             np.max(self.Coordinator.w)
         )

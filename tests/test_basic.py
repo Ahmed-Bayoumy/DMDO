@@ -162,7 +162,7 @@ def test_basic_MDO():
   display = True,
   scaling = Qscaling,
   mode = "serial",
-  M_update_scheme= w_scheme.MEDIAN,
+  M_update_scheme= w_scheme.NORMAL,
   store_q_io=True)
 
   
@@ -181,7 +181,8 @@ def test_basic_MDO():
   display=False,
   psize = 1.,
   pupdate=PSIZE_UPDATE.LAST,
-  freal=2.625)
+  freal=2.625,
+  solver="POLL")
 
   sp2 = SubProblem(nv = 3,
   index = 2,
@@ -195,7 +196,8 @@ def test_basic_MDO():
   budget=20,
   display=False,
   psize = 1.,
-  pupdate=PSIZE_UPDATE.LAST
+  pupdate=PSIZE_UPDATE.LAST,
+  solver="POLL"
   )
 
   # Construct MDO workflow
@@ -215,8 +217,8 @@ def test_basic_MDO():
   )
 
   # Run the MDO problem
-  p_file: str = os.path.abspath("./_post/Basic_MDO.out")
-  MDAO.run(p_file)
+  p_file: str = os.path.abspath("./tests/test_files/Basic_MDO.out")
+  MDAO.run(mode="serial")
 
   print('------Run_Summary------')
   print(MDAO.stop)
@@ -228,13 +230,13 @@ def test_basic_MDO():
   hmax = -inf
   
   for j in range(len(MDAO.subProblems)):
-    hmin = MDAO.subProblems[j].opt([s.value for s in MDAO.subProblems[j].get_design_vars()] \
-      , MDAO.subProblems[j].MDA_process.getOutputs())[1]
+    sp_fmin, hmin = MDAO.subProblems[j].opt([s.value for s in MDAO.subProblems[j].get_design_vars()] \
+      , MDAO.subProblems[j].MDA_process.getOutputs())
     print(f'SP_{MDAO.subProblems[j].index}:'
-    f' fmin= {MDAO.subProblems[j].MDA_process.getOutputs()}, '
+    f' fmin= {fmin}, '
     f'hmin= {hmin}'
     )
-    fmin += sum(MDAO.subProblems[j].MDA_process.getOutputs())
+    fmin += sp_fmin
     if max(hmin) > hmax: 
       hmax = max(hmin) 
   print(f'P_main: fmin= {fmin}, hmax= {hmax}')
@@ -481,7 +483,7 @@ def speedReducerOMADS():
   noprogress_stop = 100
   )
 
-  p_file: str = os.path.abspath("./_post/SR_Scipy.out")
+  p_file: str = os.path.abspath("./tests/test_files/SR_Scipy.out")
 # Run the MDO problem
   MDAO.run(p_file)
 
@@ -554,7 +556,7 @@ def speedReducerScipy():
     "value": bl[i],
     "ub": ub[i],
     "type": "R"}
-    Qscaling.append(10./scaling[i] if 10./scaling[i] != np.inf and 10./scaling[i] != np.nan else 1.)
+    Qscaling.append(1./scaling[i] if 1./scaling[i] != np.inf and 1./scaling[i] != np.nan else 1.)
 
   for i in range(20):
     V.append(variableData(**v[f"var{i+1}"]))
@@ -596,7 +598,7 @@ def speedReducerScipy():
 
 
   # Construct the coordinator
-  coord = ADMM(beta = 1.8,gamma = 0.5,
+  coord = ADMM(beta = 1.3,gamma = 0.5,
   nsp=4,
   budget = 50,
   index_of_master_SP=4,
@@ -670,7 +672,7 @@ def speedReducerScipy():
   coordination=coord,
   opt=SR_opt1,
   fmin_nop=np.inf,
-  budget=200,
+  budget=50,
   display=False,
   psize = 1.,
   pupdate=PSIZE_UPDATE.LAST,
@@ -692,7 +694,7 @@ def speedReducerScipy():
   coordination=coord,
   opt=SR_opt2,
   fmin_nop=np.inf,
-  budget=500,
+  budget=50,
   display=False,
   psize = 10.,
   pupdate=PSIZE_UPDATE.MAX,
@@ -713,7 +715,7 @@ def speedReducerScipy():
   coordination=coord,
   opt=SR_opt3,
   fmin_nop=np.inf,
-  budget=200,
+  budget=50,
   display=False,
   psize = 1.,
   pupdate=PSIZE_UPDATE.SUCCESS,
@@ -734,7 +736,7 @@ def speedReducerScipy():
   coordination=coord,
   opt=SR_opt4,
   fmin_nop=np.inf,
-  budget=200,
+  budget=50,
   display=False,
   psize = 1.,
   pupdate=PSIZE_UPDATE.LAST,
@@ -764,7 +766,7 @@ def speedReducerScipy():
 
 
 # Run the MDO problem
-  p_file: str = os.path.abspath("./_post/SR_OMADS.out")
+  p_file: str = os.path.abspath("./tests/test_files/SR_OMADS.out")
   MDAO.run(p_file)
 
   print('------Run_Summary------')
@@ -1053,7 +1055,7 @@ def geometric_programming():
   )
 
 # Run the MDO problem
-  p_file: str = os.path.abspath("./_post/GP.out")
+  p_file: str = os.path.abspath("./tests/test_files/GP.out")
   MDAO.run(p_file)
   print('------Run_Summary------')
   print(MDAO.stop)
@@ -1145,7 +1147,7 @@ def Sellar_scipy():
     "value": x0[i],
     "ub": ub[i],
     "type": "R"}
-    Qscaling.append(10./scaling[i] if 10./scaling[i] != np.inf and 10./scaling[i] != np.nan else 1.)
+    Qscaling.append(1./scaling[i] if 1./scaling[i] != np.inf and 1./scaling[i] != np.nan else 1.)
 
   # Instantiate the variableData class for each variable using its according dictionary
   for i in range(nx):
@@ -1172,14 +1174,14 @@ def Sellar_scipy():
 
 
   # Construct the coordinator
-  coord = ADMM(beta = 1.3,gamma = 0.5,
+  coord = ADMM(beta = 2.0,gamma = 0.5,
   nsp=2,
   budget = 100,
   index_of_master_SP=1,
   display = True,
   scaling = Qscaling,
   mode = "serial",
-  M_update_scheme= w_scheme.MAX,
+  M_update_scheme= w_scheme.MEDIAN,
   store_q_io=True
   )
 
@@ -1193,7 +1195,7 @@ def Sellar_scipy():
   coordination=coord,
   opt=Sellar_opt1,
   fmin_nop=np.inf,
-  budget=50,
+  budget=150,
   display=False,
   psize = 1.,
   pupdate=PSIZE_UPDATE.LAST,
@@ -1214,7 +1216,7 @@ def Sellar_scipy():
   coordination=coord,
   opt=Sellar_opt2,
   fmin_nop=np.inf,
-  budget=50,
+  budget=150,
   display=False,
   psize = 1.,
   pupdate=PSIZE_UPDATE.LAST,
@@ -1240,7 +1242,7 @@ def Sellar_scipy():
   noprogress_stop = 100)
 
   # Run the MDO problem
-  p_file: str = os.path.abspath("./_post/Sellar_Scipy.out")
+  p_file: str = os.path.abspath("./tests/test_files/Sellar_Scipy.out")
   MDAO.run(p_file)
 
   # Print summary output
@@ -1327,7 +1329,7 @@ def Sellar_OMADS_POLL():
     "value": x0[i],
     "ub": ub[i],
     "type": "R"}
-    Qscaling.append(10./scaling[i] if 10./scaling[i] != np.inf and 10./scaling[i] != np.nan else 1.)
+    Qscaling.append(1./scaling[i] if 1./scaling[i] != np.inf and 1./scaling[i] != np.nan else 1.)
 
   # Instantiate the variableData class for each variable using its according dictionary
   for i in range(nx):
@@ -1354,13 +1356,13 @@ def Sellar_OMADS_POLL():
 
 
   # Construct the coordinator
-  coord = ADMM(beta = 1.3,gamma = 0.5,
+  coord = ADMM(beta = 1.0,gamma = 0.5,
   nsp=2,
   budget = 100,
   index_of_master_SP=1,
   display = True,
   scaling = Qscaling,
-  mode = "serial",
+  mode = "parallel",
   M_update_scheme= w_scheme.MEDIAN,
   store_q_io=True
   )
@@ -1435,7 +1437,7 @@ def Sellar_OMADS_POLL():
   coordination=coord,
   opt=Sellar_opt1,
   fmin_nop=np.inf,
-  budget=10,
+  budget=150,
   display=False,
   psize = 1.,
   pupdate=PSIZE_UPDATE.LAST,
@@ -1452,7 +1454,7 @@ def Sellar_OMADS_POLL():
   coordination=coord,
   opt=Sellar_opt2,
   fmin_nop=np.inf,
-  budget=10,
+  budget=150,
   display=False,
   psize = 1.,
   pupdate=PSIZE_UPDATE.LAST,
@@ -1474,7 +1476,7 @@ def Sellar_OMADS_POLL():
   noprogress_stop = 100)
 
   # Run the MDO problem
-  p_file: str = os.path.abspath("./_post/Sellar_OMADS.out")
+  p_file: str = os.path.abspath("./tests/test_files/Sellar_OMADS.out")
   MDAO.run(p_file)
 
   # Print summary output
@@ -1707,7 +1709,7 @@ def Sellar_OMADS_MADS():
   noprogress_stop = 100)
 
   # Run the MDO problem
-  p_file: str = os.path.abspath("./_post/Sellar_OMADS_MADS.out")
+  p_file: str = os.path.abspath("./tests/test_files/Sellar_OMADS_MADS.out")
   MDAO.run(p_file)
 
   # Print summary output
@@ -1736,14 +1738,14 @@ def Sellar_OMADS_MADS():
   return fmin_main, hmax_main, max(MDAO.Coordinator.q)
 
 def test_auto_build():
-  p_file: str = os.path.abspath("./_post/Basic_MDO.yaml")
-  MDAO: MDO = main({'setup_file': p_file, 'run_mode': 'build', 'mdo_name': 'Basic_auto', 'working_dir': './tests/test_files'})
+  p_file: str = os.path.abspath("./tests/test_files/Basic_MDO.yaml")
+  MDAO: MDO = main({'setup_file': p_file, 'run_mode': 'build', 'mdo_name': 'Basic_auto', 'working_dir': '.'})
   for i in range(len(MDAO.subProblems)):
     temp :MDA = MDAO.subProblems[i].MDA_process
     for j in range(len(temp.analyses)):
       MDAO.subProblems[i].MDA_process.analyses[j].blackbox = globals()[MDAO.subProblems[i].MDA_process.analyses[j].blackbox]
     MDAO.subProblems[i].opt = globals()[MDAO.subProblems[i].opt]
-
+     
 def test_Sellar():
   f, h, qmax = Sellar_scipy()
   if abs(f-3.18339395045)/3.18339395045 > 0.22 or max(h)>0.001 or qmax > 1E-4:
