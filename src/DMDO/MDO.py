@@ -337,13 +337,15 @@ class MDO(MDO_data):
         self.prepare_post()
 
       """ ADMM inner loop """
-
+  
         
       self.is_pickleable(self.subProblems[0])
       self.is_pickleable(self)
       if mode == "Serial" or mode == "serial":
         for s in range(len(self.subProblems)):
           # self.prepare_post()
+          if self.iter > 0:
+            self.subProblems[s].coord = self.Coordinator
           out_sp, sp = self.solve_subproblem(s)
           self.subProblems[s] = copy.deepcopy(sp)
           if self.subProblems[s].index == self.Coordinator.index_of_master_SP:
@@ -352,8 +354,8 @@ class MDO(MDO_data):
               self.hmin = out_sp["hmin"]
             else:
               self.hmin = [0.]
-          self.subProblems[s].coord.calc_inconsistency()
-          self.subProblems[s].coord.update_multipliers(self.iter)
+          # self.subProblems[s].coord.calc_inconsistency()
+          
           self.Coordinator = copy.deepcopy(self.subProblems[s].coord)
           if self.subProblems[s].index == self.Coordinator.index_of_master_SP:
             self.fmin = self.subProblems[s].fmin_nop
@@ -361,6 +363,8 @@ class MDO(MDO_data):
               self.hmin = out_sp["hmin"]
             else:
               self.hmin = [0.]
+        self.Coordinator.calc_inconsistency()
+        self.Coordinator.update_multipliers(self.iter)
       else:
         # Parallel sunbproblems execution
         """ """
@@ -389,6 +393,7 @@ class MDO(MDO_data):
               else:
                 self.hmin = [0.]
       """ Display convergence """
+      
       dx = self.get_master_vars_difference()
       if self.display:
         formatted_msg = self.format_log_message(

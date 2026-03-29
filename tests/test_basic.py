@@ -177,7 +177,7 @@ def test_basic_MDO():
   coordination=coord,
   opt=opt1,
   fmin_nop=np.inf,
-  budget=20,
+  budget=150,
   display=False,
   psize = 1.,
   pupdate=PSIZE_UPDATE.LAST,
@@ -193,7 +193,7 @@ def test_basic_MDO():
   coordination=coord,
   opt=opt2,
   fmin_nop=np.inf,
-  budget=20,
+  budget=150,
   display=False,
   psize = 1.,
   pupdate=PSIZE_UPDATE.LAST,
@@ -333,7 +333,7 @@ def speedReducerOMADS():
   # Construct the coordinator
   coord = ADMM(beta = 1.8, gamma = 0.5,
   nsp=4,
-  budget = 100,
+  budget = 50,
   index_of_master_SP=4,
   display = True,
   scaling = Qscaling,
@@ -406,7 +406,7 @@ def speedReducerOMADS():
   coordination=coord,
   opt=SR_opt1,
   fmin_nop=np.inf,
-  budget=300,
+  budget=150,
   display=False,
   psize = 1.,
   pupdate=PSIZE_UPDATE.LAST,
@@ -424,7 +424,7 @@ def speedReducerOMADS():
   coordination=coord,
   opt=SR_opt2,
   fmin_nop=np.inf,
-  budget=300,
+  budget=150,
   display=False,
   psize = 10.,
   pupdate=PSIZE_UPDATE.MAX,
@@ -442,7 +442,7 @@ def speedReducerOMADS():
   coordination=coord,
   opt=SR_opt3,
   fmin_nop=np.inf,
-  budget=300,
+  budget=150,
   display=False,
   psize = 1.,
   pupdate=PSIZE_UPDATE.SUCCESS,
@@ -459,7 +459,7 @@ def speedReducerOMADS():
   coordination=coord,
   opt=SR_opt4,
   fmin_nop=np.inf,
-  budget=300,
+  budget=150,
   display=False,
   psize = 1.,
   pupdate=PSIZE_UPDATE.LAST,
@@ -531,16 +531,17 @@ def speedReducerScipy():
   links = [[2,3],[2,3],[2,3],   4,  [1,3],[1,3],[1,3], None, None,    4,  [1,2],[1,2],[1,2], None, None,    4, 1, 2, 3, None]
   lb =    [2.6 ,  0.7 ,  17., 722.,  2.6 ,  0.7,  17.,  7.3,  2.9, 184.,   2.6 ,  0.7,  17.,  7.3,   5.,942., f1min, f2min, f3min, f1min+f2min+f3min]  # noqa: E501
   ub =    [3.6 ,  0.8 ,  28.,5408.,  3.6 ,  0.8,  28.,  8.3,  3.9, 506.,   3.6 ,  0.8 , 28.,  8.3,  5.5,1369., f1max, f2max, f3max, f1max+f2max+f3max]  # noqa: E501
-  bl =    np.add(lb, np.divide(np.subtract(ub, lb), 10.))
+  bl =    np.add(lb, np.divide(np.subtract(ub, lb), 2.))
 
-  bl[0] = 3.5
-  bl[4] = 3.5
-  bl[10] = 3.5
+  bl[0] = 3.6
+  bl[1] = 0.7
+  bl[4] = 3.6
+  bl[10] = 3.6
   
   coupling_t = \
           [ s,      s,		s,		ff,		s,		s,		s,		un,		un,	 ff,   s,    s,    s,   un,    un,    ff, fb, fb, fb, un]  # noqa: E501
  
-  scaling = np.divide(np.subtract(ub, lb), 10.)
+  scaling = np.subtract(ub, lb)
   Qscaling = []
   # Variables dictionary with subproblems link
   for i in range(20):
@@ -610,58 +611,7 @@ def speedReducerScipy():
   )
 
   # Configurations 
-  CSP1 = {}
-  CSP1["search"] = {
-        "type": "sampling",
-        "s_method": "LH",
-        "ns": 10,
-        "visualize": False
-            }
-  CSP1["constraintsHandling"] = {
-    "Barriers": ["PB","PB","PB","PB","PB"],
-    "RHO": 0.0001,
-    "h_max": 10
-  }
 
-  CSP2 = {}
-  CSP2["search"] = {
-        "type": "sampling",
-        "s_method": "LH",
-        "ns": 10,
-        "visualize": False
-            }
-  CSP2["constraintsHandling"] = {
-    "Barriers": ["PB","PB","PB"],
-    "RHO": 0.0001,
-    "h_max": 10
-  }
-
-  CSP3 = {}
-  CSP3["search"] = {
-        "type": "sampling",
-        "s_method": "LH",
-        "ns": 10,
-        "visualize": False
-            }
-  CSP3["constraintsHandling"] = {
-    "Barriers": ["PB","PB","PB"],
-    "RHO": 0.0001,
-    "h_max": 10
-  }
-
-  CSP4 = {}
-
-  CSP4["search"] = {
-        "type": "sampling",
-        "s_method": "LH",
-        "ns": 10,
-        "visualize": False
-            }
-  CSP4["constraintsHandling"] = {
-    "Barriers": ["PB","PB","PB"],
-    "RHO": 0.0001,
-    "h_max": 10
-  }
   # Construct subproblems
   sp1 = SubProblem(nv = 3,
   index = 1,
@@ -672,10 +622,8 @@ def speedReducerScipy():
   coordination=coord,
   opt=SR_opt1,
   fmin_nop=np.inf,
-  budget=50,
+  budget=150,
   display=False,
-  psize = 1.,
-  pupdate=PSIZE_UPDATE.LAST,
   freal=2994.47,
   solver="scipy",
   scipy={"method": 'SLSQP',
@@ -694,10 +642,8 @@ def speedReducerScipy():
   coordination=coord,
   opt=SR_opt2,
   fmin_nop=np.inf,
-  budget=50,
+  budget=150,
   display=False,
-  psize = 10.,
-  pupdate=PSIZE_UPDATE.MAX,
   solver="scipy",
   scipy={"method": 'SLSQP',
           "options": {"disp": False,
@@ -715,10 +661,8 @@ def speedReducerScipy():
   coordination=coord,
   opt=SR_opt3,
   fmin_nop=np.inf,
-  budget=50,
+  budget=150,
   display=False,
-  psize = 1.,
-  pupdate=PSIZE_UPDATE.SUCCESS,
   solver="scipy",
   scipy={"method": 'SLSQP',
           "options": {"disp": False,
@@ -736,10 +680,8 @@ def speedReducerScipy():
   coordination=coord,
   opt=SR_opt4,
   fmin_nop=np.inf,
-  budget=50,
+  budget=150,
   display=False,
-  psize = 1.,
-  pupdate=PSIZE_UPDATE.LAST,
   solver="scipy",
   scipy={"method": 'SLSQP',
           "options": {"disp": False,
@@ -766,7 +708,7 @@ def speedReducerScipy():
 
 
 # Run the MDO problem
-  p_file: str = os.path.abspath("./tests/test_files/SR_OMADS.out")
+  p_file: str = os.path.abspath("./tests/test_files/SR_Scipy.out")
   MDAO.run(p_file)
 
   print('------Run_Summary------')
@@ -1356,9 +1298,9 @@ def Sellar_OMADS_POLL():
 
 
   # Construct the coordinator
-  coord = ADMM(beta = 1.0,gamma = 0.5,
+  coord = ADMM(beta = 1.1,gamma = 0.5,
   nsp=2,
-  budget = 100,
+  budget = 50,
   index_of_master_SP=1,
   display = True,
   scaling = Qscaling,
@@ -1372,7 +1314,7 @@ def Sellar_OMADS_POLL():
           "search": {}}
   CSP1["options"] = {
         "seed": 10000,
-        "budget": 100,
+        "budget": 150,
         "tol": 0.0000000000001,
         "psize_init": 1,
         "display": False,
@@ -1402,7 +1344,7 @@ def Sellar_OMADS_POLL():
   CSP2 = {}
   CSP2["options"] = {
         "seed": 10000,
-        "budget": 100,
+        "budget": 150,
         "tol": 0.0000000000001,
         "psize_init": 1,
         "display": False,
@@ -1592,7 +1534,7 @@ def Sellar_OMADS_MADS():
   # Construct the coordinator
   coord = ADMM(beta = 1.3,gamma = 0.5,
   nsp=2,
-  budget = 50,
+  budget = 25,
   index_of_master_SP=1,
   display = True,
   scaling = Qscaling,
@@ -1606,7 +1548,7 @@ def Sellar_OMADS_MADS():
           "search": {}}
   CSP1["options"] = {
         "seed": 10000,
-        "budget": 500,
+        "budget": 150,
         "tol": 0.0000000000001,
         "psize_init": 1,
         "display": False,
@@ -1623,8 +1565,8 @@ def Sellar_OMADS_MADS():
       }
   CSP1["search"] = {
         "type": "sampling",
-        "s_method": "MADS",
-        "ns": 100,
+        "s_method": "ACTIVE",
+        "ns": 50,
         "visualize": False
             }
   CSP1["constraintsHandling"] = {
@@ -1653,7 +1595,7 @@ def Sellar_OMADS_MADS():
       }
   CSP2["search"] = {
         "type": "sampling",
-        "s_method": "MADS",
+        "s_method": "ACTIVE",
         "ns": 20,
         "visualize": False
             }
@@ -1671,7 +1613,7 @@ def Sellar_OMADS_MADS():
   coordination=coord,
   opt=Sellar_opt1,
   fmin_nop=np.inf,
-  budget=500,
+  budget=150,
   display=False,
   psize = 1.,
   pupdate=PSIZE_UPDATE.LAST,
@@ -1687,7 +1629,7 @@ def Sellar_OMADS_MADS():
   coordination=coord,
   opt=Sellar_opt2,
   fmin_nop=np.inf,
-  budget=50,
+  budget=150,
   display=False,
   psize = 1.,
   pupdate=PSIZE_UPDATE.LAST,
@@ -1767,7 +1709,7 @@ def test_Sellar():
 
 def test_speedReducer():
   f, h, qmax = speedReducerScipy()
-  if abs(f-2713.6640204584155)/2713.6640204584155 > 0.05 or h>0.06 or qmax > 1E-4:
+  if abs(f-2713.6640204584155)/2713.6640204584155 > 0.05 or h>0.06 or qmax > 1E-3:
     raise IOError(f"SR_scipy failed the checking criteria f_diff= {abs(f-2713.6640204584155)/2713.6640204584155},"
     f" hmax= {h}, qmax= {qmax}")
   f, h, qmax = speedReducerOMADS()

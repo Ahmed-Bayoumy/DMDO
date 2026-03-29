@@ -561,11 +561,12 @@ class SubProblem(partitionedProblemData):
         bnds = Bounds(lb=self.get_list_vars_lb(self.get_design_vars()), ub=self.get_list_vars_ub(self.get_design_vars()))
         
         if self.scipy["is_con"]:
-          non_linear_constraints = NonlinearConstraint(self.get_con, -np.inf, 1, jac='2-point', hess=BFGS())
+          non_linear_constraints = NonlinearConstraint(fun=self.get_con, lb=-np.inf, \
+            ub= 0.0, keep_feasible=False, jac='2-point', hess=BFGS())
           res = minimize(self.evaluate, method=self.scipy["method"], x0=bl, options=opts, tol=self.scipy["tol"], bounds=bnds,\
                           constraints=[non_linear_constraints])
           self.fmin = res.fun
-          self.hmin = 0 if (max(self.get_con(x=res.x)) <= 0.) else np.inf
+          self.hmin = 0 if (max(self.get_con(x=res.x)) <= 0.) else max(self.get_con(x=res.x))
         else:
           res = minimize(self.evaluate, method=self.scipy["method"], x0=bl, options=opts, tol=self.scipy["tol"], bounds=bnds)
           self.fmin = res.fun
