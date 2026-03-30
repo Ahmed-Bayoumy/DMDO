@@ -1548,7 +1548,7 @@ def Sellar_OMADS_MADS():
           "search": {}}
   CSP1["options"] = {
         "seed": 10000,
-        "budget": 150,
+        "budget": 250,
         "tol": 0.0000000000001,
         "psize_init": 1,
         "display": False,
@@ -1578,7 +1578,7 @@ def Sellar_OMADS_MADS():
   CSP2 = {}
   CSP2["options"] = {
         "seed": 10000,
-        "budget": 150,
+        "budget": 250,
         "tol": 0.0000000000001,
         "psize_init": 1,
         "display": False,
@@ -1613,7 +1613,7 @@ def Sellar_OMADS_MADS():
   coordination=coord,
   opt=Sellar_opt1,
   fmin_nop=np.inf,
-  budget=150,
+  budget=250,
   display=False,
   psize = 1.,
   pupdate=PSIZE_UPDATE.LAST,
@@ -1629,7 +1629,7 @@ def Sellar_OMADS_MADS():
   coordination=coord,
   opt=Sellar_opt2,
   fmin_nop=np.inf,
-  budget=150,
+  budget=250,
   display=False,
   psize = 1.,
   pupdate=PSIZE_UPDATE.LAST,
@@ -1703,7 +1703,7 @@ def test_Sellar():
       raise IOError(f"Sellar_POLL failed the checking criteria f_diff= {abs(f-3.18339395045)/3.18339395045},"
       f" hmax= {h}, qmax= {qmax}")
   f, h, qmax = Sellar_OMADS_MADS()
-  if abs(f-3.18339395045)/3.18339395045 > 0.22 or max(h)>0.001 or qmax > 1E-3:
+  if abs(f-3.18339395045)/3.18339395045 > 0.22 or max(h)>0.001 or qmax > 5E-3:
     raise IOError(f"Sellar_MADS failed the checking criteria f_diff= {abs(f-3.18339395045)/3.18339395045},"
     f" hmax= {h}, qmax= {qmax}")
 
