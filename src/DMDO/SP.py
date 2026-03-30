@@ -94,7 +94,7 @@ class SubProblem(partitionedProblemData):
     self.MDA_process = analysis
     self.coord = coordination
     self.opt = opt
-    self.optimizer = OMADS.MADS.main 
+    self.optimizer = OMADS.mads.main 
     self.fmin_nop = fmin_nop
     self.budget=budget
     self.display = display
@@ -112,13 +112,13 @@ class SubProblem(partitionedProblemData):
       self.log = log
     if solver == 'mads':
       self.scipy = None
-      self.optimizer = OMADS.MADS.main
+      self.optimizer = OMADS.mads.main
     elif solver == 'poll':
       self.scipy = None
-      self.optimizer = OMADS.POLL.main
+      self.optimizer = OMADS.poll.main
     elif solver == 'search':
       self.scipy = None
-      self.optimizer = OMADS.SEARCH.main
+      self.optimizer = OMADS.search.main
     elif solver == 'scipy':
       self.scipy = scipy
     else:
