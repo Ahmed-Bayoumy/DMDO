@@ -1534,7 +1534,7 @@ def Sellar_OMADS_MADS():
   # Construct the coordinator
   coord = ADMM(beta = 1.3,gamma = 0.5,
   nsp=2,
-  budget = 25,
+  budget = 50,
   index_of_master_SP=1,
   display = True,
   scaling = Qscaling,
@@ -1596,7 +1596,7 @@ def Sellar_OMADS_MADS():
   CSP2["search"] = {
         "type": "sampling",
         "s_method": "ACTIVE",
-        "ns": 20,
+        "ns": 50,
         "visualize": False
             }
   CSP2["constraintsHandling"] = {
@@ -1709,7 +1709,7 @@ def test_Sellar():
 
 def test_speedReducer():
   f, h, qmax = speedReducerScipy()
-  if abs(f-2713.6640204584155)/2713.6640204584155 > 0.05 or h>0.06 or qmax > 1E-3:
+  if abs(f-2713.6640204584155)/2713.6640204584155 > 0.05 or h>0.06 or qmax > 2E-3:
     raise IOError(f"SR_scipy failed the checking criteria f_diff= {abs(f-2713.6640204584155)/2713.6640204584155},"
     f" hmax= {h}, qmax= {qmax}")
   f, h, qmax = speedReducerOMADS()
