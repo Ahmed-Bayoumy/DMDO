@@ -515,7 +515,8 @@ class SubProblem(partitionedProblemData):
           param["rho"] = self.conf["constraintsHandling"]["rho"]
         if "h_max" in self.conf["constraintsHandling"] and self.conf["constraintsHandling"]["h_max"] is not None:
           param["h_max"] = self.conf["constraintsHandling"]["h_max"]
-        if "lambda_multipliers" in self.conf["constraintsHandling"] and self.conf["constraintsHandling"]["lambda_multipliers"] is not None:
+        if "lambda_multipliers" in self.conf["constraintsHandling"] and \
+          self.conf["constraintsHandling"]["lambda_multipliers"] is not None:
           param["lambda_multipliers"] = self.conf["constraintsHandling"]["lambda_multipliers"]
       
       data = {"evaluator": eval, "param": param, "options":options, "search": search}
