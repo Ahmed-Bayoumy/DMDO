@@ -110,13 +110,13 @@ class SubProblem(partitionedProblemData):
     self.eval_ID = 0
     if log is not None:
       self.log = log
-    if solver == 'MADS':
+    if solver == 'mads':
       self.scipy = None
       self.optimizer = OMADS.MADS.main
-    elif solver == 'POLL':
+    elif solver == 'poll':
       self.scipy = None
       self.optimizer = OMADS.POLL.main
-    elif solver == 'SEARCH':
+    elif solver == 'search':
       self.scipy = None
       self.optimizer = OMADS.SEARCH.main
     elif solver == 'scipy':
