@@ -352,7 +352,7 @@ def speedReducerOMADS():
             }
   CSP1["constraintsHandling"] = {
     "Barriers": ["PB","PB","PB","PB","PB"],
-    "RHO": 0.0001,
+    "rho": 0.0001,
     "h_max": 0.01
   }
 
@@ -365,7 +365,7 @@ def speedReducerOMADS():
             }
   CSP2["constraintsHandling"] = {
     "Barriers": ["PB","PB","PB"],
-    "RHO": 0.0001,
+    "rho": 0.0001,
     "h_max": 0.01
   }
 
@@ -378,7 +378,7 @@ def speedReducerOMADS():
             }
   CSP3["constraintsHandling"] = {
     "Barriers": ["PB","PB","PB"],
-    "RHO": 0.0001,
+    "rho": 0.0001,
     "h_max": 0.01
   }
 
@@ -392,7 +392,7 @@ def speedReducerOMADS():
             }
   CSP4["constraintsHandling"] = {
     "Barriers": ["EB","EB","EB"],
-    "RHO": 0.0001,
+    "rho": 0.0001,
     "h_max": 0.01
   }
   # Construct subproblems
@@ -842,8 +842,8 @@ def geometric_programming():
             }
   CSP1["constraintsHandling"] = {
     "Barriers": ["EB","EB"],
-    "LAMBDA": [1E5, 1E5],
-    "RHO": 1,
+    "lambda_multipliers": [1E5, 1E5],
+    "rho": 1,
     "h_max": 0
   }
 
@@ -873,8 +873,8 @@ def geometric_programming():
             }
   CSP2["constraintsHandling"] = {
     "Barriers": ["EB","EB"],
-    "LAMBDA": [1E5, 1E5],
-    "RHO": 1,
+    "lambda_multipliers": [1E5, 1E5],
+    "rho": 1,
     "h_max": 0
   }
 
@@ -904,8 +904,8 @@ def geometric_programming():
             }
   CSP3["constraintsHandling"] = {
     "Barriers": ["EB","EB"],
-    "LAMBDA": [1E5, 1E5],
-    "RHO": 1,
+    "lambda_multipliers": [1E5, 1E5],
+    "rho": 1,
     "h_max": 0
   }
 
@@ -1337,7 +1337,7 @@ def Sellar_OMADS_POLL():
             }
   CSP1["constraintsHandling"] = {
     "Barriers": ["PB"],
-    "RHO": 0.0001,
+    "rho": 0.0001,
     "h_max": 10
   }
 
@@ -1367,7 +1367,7 @@ def Sellar_OMADS_POLL():
             }
   CSP2["constraintsHandling"] = {
     "Barriers": ["PB"],
-    "RHO": 0.0001,
+    "rho": 0.0001,
     "h_max": 10
   }
   sp1 = SubProblem(nv = 4,
@@ -1571,7 +1571,7 @@ def Sellar_OMADS_MADS():
             }
   CSP1["constraintsHandling"] = {
     "Barriers": ["PB"],
-    "RHO": 0.0001,
+    "rho": 0.0001,
     "h_max": 10
   }
 
@@ -1601,7 +1601,7 @@ def Sellar_OMADS_MADS():
             }
   CSP2["constraintsHandling"] = {
     "Barriers": ["PB"],
-    "RHO": 0.0001,
+    "rho": 0.0001,
     "h_max": 10
   }
   sp1 = SubProblem(nv = 4,

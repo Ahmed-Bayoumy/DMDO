@@ -455,8 +455,8 @@ class SubProblem(partitionedProblemData):
     self.log.log_msg(msg=f"Coordination iteration # {iter}: running subproblem {self.index}", msg_type=MSG_TYPE.INFO.value)
     if self.solver == 'OMADS' or self.solver != 'scipy':
       eval = {"blackbox": self.evaluate}
-      if self.sets is None:
-        self.sets = {}
+      # if self.sets is None:
+      #   self.sets = {}
       param = {"baseline": bl,
                   "lb": self.get_list_vars_lb(self.get_design_vars()),
                   "ub": self.get_list_vars_ub(self.get_design_vars()),
@@ -470,8 +470,8 @@ class SubProblem(partitionedProblemData):
                   "name": f"SP_{self.index}",
                   "post_dir": self.postDir,
                   "constraints_type": ["PB"]*100,
-                  "RHO": 0.001,
-                  "LAMBDA": 1000}
+                  "rho": 0.001,
+                  "lambda_multipliers": 1000}
       pinit = min(max(self.tol, max(self.psize) if isinstance(self.psize, list) else self.psize), 1)
       if self.conf is not None and "options" in self.conf and self.conf["options"] is not None:
         options = self.conf["options"]
@@ -511,12 +511,12 @@ class SubProblem(partitionedProblemData):
       if self.conf is not None and "constraintsHandling" in self.conf and self.conf["constraintsHandling"] is not None:
         if "Barriers" in self.conf["constraintsHandling"] and self.conf["constraintsHandling"]["Barriers"] is not None:
           param["constraints_type"] = copy.deepcopy(self.conf["constraintsHandling"]["Barriers"])
-        if "RHO" in self.conf["constraintsHandling"] and self.conf["constraintsHandling"]["RHO"] is not None:
-          param["RHO"] = self.conf["constraintsHandling"]["RHO"]
+        if "rho" in self.conf["constraintsHandling"] and self.conf["constraintsHandling"]["rho"] is not None:
+          param["rho"] = self.conf["constraintsHandling"]["rho"]
         if "h_max" in self.conf["constraintsHandling"] and self.conf["constraintsHandling"]["h_max"] is not None:
           param["h_max"] = self.conf["constraintsHandling"]["h_max"]
-        if "LAMBDA" in self.conf["constraintsHandling"] and self.conf["constraintsHandling"]["LAMBDA"] is not None:
-          param["LAMBDA"] = self.conf["constraintsHandling"]["LAMBDA"]
+        if "lambda_multipliers" in self.conf["constraintsHandling"] and self.conf["constraintsHandling"]["lambda_multipliers"] is not None:
+          param["lambda_multipliers"] = self.conf["constraintsHandling"]["lambda_multipliers"]
       
       data = {"evaluator": eval, "param": param, "options":options, "search": search}
 
@@ -524,7 +524,10 @@ class SubProblem(partitionedProblemData):
       pinit = self.psize
       log_copy = self.log
       # self.log.switch_handler(f"SP{self.index}")
-      out, _ = self.optimizer(data)
+      if self.solver == 'OMADS' or self.solver == 'MADS':
+        out, _, _ = self.optimizer(data)
+      else:
+        out, _ = self.optimizer(data)
       self.log = log_copy
       # self.log.switch_handler("DMDO")
       self.fmin = out["fmin"]
