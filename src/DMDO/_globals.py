@@ -55,7 +55,7 @@ class MSG_TYPE(Enum):
   CRITICAL = auto()
 
 class VAR_TYPE(Enum):
-  CONTINUOUS = auto()
+  REAL = auto()
   INTEGER = auto()
   BINARY = auto()
   CATEGORICAL = auto()
@@ -102,6 +102,7 @@ class MDO_ARCHITECTURE(Enum):
 
 eps_qio = []
 eps_fio = []
+eval_id = 0
 
 user = USER
 VERSION_NUMBER = "2601"

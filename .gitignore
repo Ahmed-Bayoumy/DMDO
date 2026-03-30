@@ -15,8 +15,9 @@ tests/test_files/*
 !tests/test_files/geometric_programming.yaml
 !tests/test_basic.py
 unknown*
-*SBJ.*
+# *SBJ.*
 dist/archive
 code_archive
 build
 .*
+_dntTrack

@@ -62,7 +62,7 @@ class problemSetup:
   SPs: List[SubProblem] = None
   MDAO: MDO = None
   Qscaling: List = None
-  userData: USER = None
+  userData: USER = USER()
   Sets: Dict = None
   log: logger = None
 
@@ -332,7 +332,8 @@ class problemSetup:
         raise IOError(msg)
       self.Coords.append(ADMM(
         index= c[i]["index"],
-        beta=  c[i]["beta"],
+        beta=  c[i]["beta"] if "beta" in c[i].keys() else 1.8,
+        gamma = c[i]["gamma"] if "gamma" in c[i].keys() else 0.0,
         nsp=  c[i]["nsp"],
         index_of_master_SP= c[i]["index_of_master_SP"],
         display= c[i]["display"],
@@ -422,6 +423,7 @@ class problemSetup:
   def UserData(self):
     """ Set user data attr """
     u = self.data["USER"]
+
     if u is not None:
       for i in u:
         setattr(self.userData, i, u[i])
@@ -438,6 +440,9 @@ class problemSetup:
     self.get_varSets()
     self.SPSetup()
     self.MDOSetup()
+    self.MDAO.working_dir = self.data["working_dir"]
+    self.MDAO.post_dir = self.data["post_dir"]
+    self.MDAO.mdo_name = self.data["mdo_name"]
     self.UserData()
     self.log.log_msg(msg = "Successfully completed the MDO problem setup.\n", msg_type=MSG_TYPE.INFO.value)
     self.log.log_msg(msg="--------------------------------------------------\n", msg_type=MSG_TYPE.INFO.value)

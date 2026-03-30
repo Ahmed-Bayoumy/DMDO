@@ -33,6 +33,7 @@ from ._protocols import coordinator, search
 from .MDA import MDA, MDA_data
 from .DA import DA, DA_Data
 from .preprocess import problemSetup, optimizationData
+from .dashboard import main as dmdo_dash
 
 __all__: list[str] = [
   'USER', 
@@ -65,5 +66,6 @@ __all__: list[str] = [
   'MDO', 
   'problemSetup', 
   'main',
-  'logger'
+  'logger',
+  'dmdo_dash'
   ]

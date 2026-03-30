@@ -61,6 +61,7 @@ class ADMM_data(coordinationData):
   save_q_in: bool = False
   save_q_in_out: bool = False
   eps_fo: List = None
+  delta_q: List[float] = None
 
 
 
@@ -70,11 +71,12 @@ class ADMM(ADMM_data):
   " Alternating directions method of multipliers "
   # Constructor
   def __init__(self, nsp, beta, budget, index_of_master_SP, display, scaling, \
-                mode, M_update_scheme, store_q_o=False, store_q_io=False, index = None):
+                mode, M_update_scheme, store_q_o=False, store_q_io=False, index = None, gamma=0.5):
     global eps_fio, eps_qio
     """ Initialize the multiplier vectors """
     self.nsp = nsp
     self.beta = beta
+    self.gamma = gamma
     self.budget = budget
     self.index_of_master_SP = index_of_master_SP
     self.display = display
@@ -94,6 +96,21 @@ class ADMM(ADMM_data):
     self.v = np.zeros([0,0])
     self.w = np.zeros([0,0])
 
+  def __getstate__(self):
+    # Remove or replace non-picklable attributes
+    state = self.__dict__.copy()
+    # Example: remove or replace RLock
+    if '_lock' in state:
+        del state['_lock']
+    # Or replace with a placeholder
+    # state['_lock'] = None
+    return state
+
+  def __setstate__(self, state):
+      self.__dict__.update(state)
+      # Reconstruct non-picklable objects if needed
+      # self._lock = threading.RLock()
+
   def clone_point(self, p: variableData):
     self.var_group.append(p)
 
@@ -108,6 +125,300 @@ class ADMM(ADMM_data):
 
     self._linker.append(a)
     self._linker.append(b)
+
+  def get_target_values(self, vname: str, sp_index: int) -> List[float]:
+    if self.save_q_in_out:
+      global eps_qio
+    targets = []
+    if self.master_vars:
+      for i in range(self._linker.shape[1]):
+        if self.master_vars[self._linker[0, i]-1].sp_index == sp_index:
+          if self.master_vars[self._linker[0, i]-1].name == vname:
+            targets.append(self.master_vars[self._linker[1, i]-1].value) 
+        elif self.master_vars[self._linker[1, i]-1].sp_index == sp_index:
+          if self.master_vars[self._linker[1, i]-1].name == vname:
+            targets.append(self.master_vars[self._linker[0, i]-1].value) 
+    else:
+        raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
+    return targets
+  
+  def set_pair(self):
+    indices1 = []
+    indices2 = []
+    sp_link =  []
+    sp_link_to = []
+    for i in range(len(self.master_vars)):
+      check: bool = False
+      if self.master_vars[i].link and isinstance(self.master_vars[i].link, list):
+        nl = len(self.master_vars[i].link)
+        check = any(self.master_vars[i].link >= np.ones(nl))
+      elif self.master_vars[i].link:
+        check = self.master_vars[i].link >= 1
+      if (self.index == self.master_vars[i].sp_index \
+          or self.master_vars[i].coupling_type != COUPLING_TYPE.UNCOUPLED) \
+            and check and self.master_vars[i].index not in indices2:
+        sp_link.append(self.master_vars[i].sp_index)
+        linked_to = (self.master_vars[i].link)
+        if linked_to and isinstance(linked_to, list):
+          for linki in range(len(linked_to)):
+            indices1.append(self.master_vars[i].index)
+        else:
+          indices1.append(self.master_vars[i].index)
+        for j in range(len(self.master_vars)):
+          check = False
+          if linked_to and isinstance(linked_to, list):
+            nl = len(linked_to)
+            check = any(linked_to == np.multiply(self.master_vars[j].sp_index, np.ones(nl)))
+          else:
+            check = (linked_to == self.master_vars[j].sp_index)
+          if check and (self.master_vars[j].name == self.master_vars[i].name):
+            sp_link_to.append(self.master_vars[i].link)
+            indices2.append(self.master_vars[j].index)
+    
+    # Remove redundant links
+    self._linker = copy.deepcopy(np.array([indices1, indices2]))
+
+  def build_average_matrix(self):
+      """
+      Build averaging matrix A such that y = A @ x returns
+      averaged values for linked variables.
+
+      Parameters
+      ----------
+      n_vars : int
+          Number of variables
+      linker : list[list]
+          Two lists [src, dst] describing linked indices
+
+      Returns
+      -------
+      A : np.ndarray
+          Averaging matrix (n_vars x n_vars)
+      """ 
+      n_vars = len(self.master_vars)
+      self.set_pair()
+      src, dst = self._linker
+
+      # ---- Union-Find structure ----
+      parent = list(range(n_vars))
+
+      def find(x):
+          while parent[x] != x:
+              parent[x] = parent[parent[x]]
+              x = parent[x]
+          return x
+
+      def union(a, b):
+          pa = find(a)
+          pb = find(b)
+          if pa != pb:
+              parent[pb] = pa
+
+      # ---- Apply links ----
+      for a, b in zip(src, dst):
+          union(a-1, b-1)
+
+      # ---- Build groups manually ----
+      groups = []
+      roots = []
+
+      for i in range(n_vars):
+          r = find(i)
+
+          if r not in roots:
+              roots.append(r)
+              groups.append([i])
+          else:
+              idx = roots.index(r)
+              groups[idx].append(i)
+
+      # ---- Build averaging matrix ----
+      A = np.zeros((n_vars, n_vars))
+
+      for group in groups:
+          k = len(group)
+          w = 1.0 / k
+
+          for i in group:
+              for j in group:
+                  A[i, j] = w
+
+      return A
+
+  def get_target_variables(self, vname: str, sp_index: int) -> List[variableData]:
+    if self.save_q_in_out:
+      global eps_qio
+    targets = []
+    if self.master_vars:
+      for i in range(self._linker.shape[1]):
+        if self.master_vars[self._linker[0, i]-1].sp_index-1 == sp_index \
+          and self.master_vars[self._linker[0, i]-1].coupling_type != COUPLING_TYPE.UNCOUPLED:
+          if self.master_vars[self._linker[0, i]-1].name == vname:
+            targets.append(self.master_vars[self._linker[1, i]-1]) 
+    else:
+        raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
+    return targets
+  
+  def get_average_target_variables(self, vname: str, sp_index: int) ->List[variableData]:
+    targets: List[variableData] = self.get_target_variables(vname, sp_index)
+    current = 0
+    for v in self.master_vars:
+      if v.sp_index == sp_index and v.name == vname:
+        current = v.value
+
+    avg_t = (sum([x.value for x in targets]) + current) / (len(targets)+1)
+    
+    for i, t in enumerate(targets):
+      targets[i].value = avg_t
+      
+
+    return targets
+  
+  def calculate_and_set_average_target_values(self, vname: str, sp_index: int):
+    avg_matrix = self.build_average_matrix()
+    m_values= []
+    if self.master_vars:
+      for v in self.master_vars:
+        m_values.append(v.value)
+      m_avg = avg_matrix @ m_values
+      for i, v in enumerate(self.master_vars):
+        self.master_vars[i].value = m_avg[i]
+
+    # tgts = self.get_average_target_variables(vname=vname, sp_index=sp_index)
+    # if self.save_q_in_out:
+    #   global eps_qio
+    # if self.master_vars:
+    #   self.update_master_vector(tgts, None)
+    else:
+        raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
+    self.calc_inconsistency()
+    self.delta_q = np.multiply(-1, self.v)\
+        /(np.multiply(2, np.square(self.w)))- self.q
+    # a = 0
+
+  def get_target_lb(self, vname: str, sp_index: int) -> List[float]:
+    if self.save_q_in_out:
+      global eps_qio
+    targets = []
+    if self.master_vars:
+      for i in range(self._linker.shape[1]):
+        if self.master_vars[self._linker[0, i]-1].sp_index == sp_index:
+          if self.master_vars[self._linker[0, i]-1].name == vname:
+            targets.append(self.master_vars[self._linker[1, i]-1].lb) 
+        elif self.master_vars[self._linker[1, i]-1].sp_index == sp_index:
+          if self.master_vars[self._linker[1, i]-1].name == vname:
+            targets.append(self.master_vars[self._linker[0, i]-1].lb) 
+    else:
+        raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
+    return targets
+  
+  def get_target_ub(self, vname: str, sp_index: int) -> List[float]:
+    if self.save_q_in_out:
+      global eps_qio
+    targets = []
+    if self.master_vars:
+      for i in range(self._linker.shape[1]):
+        if self.master_vars[self._linker[0, i]-1].sp_index == sp_index:
+          if self.master_vars[self._linker[0, i]-1].name == vname:
+            targets.append(self.master_vars[self._linker[1, i]-1].ub) 
+        elif self.master_vars[self._linker[1, i]-1].sp_index == sp_index:
+          if self.master_vars[self._linker[1, i]-1].name == vname:
+            targets.append(self.master_vars[self._linker[0, i]-1].ub) 
+    else:
+        raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
+    return targets
+
+  def get_target_names(self, vname: str, sp_index: int) -> List[float]:
+    if self.save_q_in_out:
+      global eps_qio
+    targets = []
+    if self.master_vars:
+      for i in range(self._linker.shape[1]):
+        if self.master_vars[self._linker[0, i]-1].sp_index == sp_index:
+          if self.master_vars[self._linker[0, i]-1].name == vname:
+            targets.append(self.master_vars[self._linker[1, i]-1].name) 
+        elif self.master_vars[self._linker[1, i]-1].sp_index == sp_index:
+          if self.master_vars[self._linker[1, i]-1].name == vname:
+            targets.append(self.master_vars[self._linker[0, i]-1].name) 
+    else:
+        raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
+    return targets
+  
+  def get_target_SP_indices(self, vname: str, sp_index: int) -> List[float]:
+    if self.save_q_in_out:
+      global eps_qio
+    targets = []
+    if self.master_vars:
+      for i in range(self._linker.shape[1]):
+        if self.master_vars[self._linker[0, i]-1].sp_index == sp_index:
+          if self.master_vars[self._linker[0, i]-1].name == vname:
+            if self.master_vars[self._linker[0, i]-1].link not in targets:
+              targets.append(self.master_vars[self._linker[0, i]-1].link) 
+        elif self.master_vars[self._linker[1, i]-1].sp_index == sp_index:
+          if self.master_vars[self._linker[1, i]-1].name == vname:
+            if self.master_vars[self._linker[1, i]-1].link not in targets:
+              targets.append(self.master_vars[self._linker[1, i]-1].link) 
+    else:
+        raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
+    return targets
+  
+  def get_target_multipliers(self, vname: str, sp_index: int) -> List[float]:
+    if self.save_q_in_out:
+      global eps_qio
+    targets_w = []
+    targets_v = []
+    counter = 0
+    if self.master_vars:
+      for i in range(self._linker.shape[1]):
+        if self.master_vars[self._linker[0, i]-1].sp_index == sp_index:
+          if self.master_vars[self._linker[0, i]-1].name == vname:
+            targets_w.append(self.w[counter]) 
+            targets_v.append(self.v[counter]) 
+        elif self.master_vars[self._linker[1, i]-1].sp_index == sp_index:
+          if self.master_vars[self._linker[1, i]-1].name == vname:
+            targets_w.append(self.w[counter]) 
+            targets_v.append(self.v[counter])
+        counter += 1
+    else:
+        raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
+    
+    return targets_v, targets_w
+  
+  def get_coupling_type(self, vname: str, sp_index: int) -> List[float]:
+    if self.save_q_in_out:
+      global eps_qio
+    targets = []
+    if self.master_vars:
+      for i in range(self._linker.shape[1]):
+        if self.master_vars[self._linker[0, i]-1].sp_index == sp_index:
+          if self.master_vars[self._linker[0, i]-1].name == vname:
+            targets.append(self.master_vars[self._linker[0, i]-1].coupling_type.name) 
+        elif self.master_vars[self._linker[1, i]-1].sp_index == sp_index:
+          if self.master_vars[self._linker[1, i]-1].name == vname:
+            targets.append(self.master_vars[self._linker[1, i]-1].coupling_type.name) 
+    else:
+        raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
+    if len(targets) > 0:
+      return targets
+    return [COUPLING_TYPE.UNCOUPLED.name]
+
+  
+  def get_scaling_factor(self, vname: str, sp_index: int) -> List[float]:
+    if self.save_q_in_out:
+      global eps_qio
+    targets = []
+    if self.master_vars:
+      for i in range(self._linker.shape[1]):
+        if self.master_vars[self._linker[0, i]-1].sp_index == sp_index:
+          if self.master_vars[self._linker[0, i]-1].name == vname:
+            targets.append(self.master_vars[self._linker[0, i]-1].scaling) 
+        elif self.master_vars[self._linker[1, i]-1].sp_index == sp_index:
+          if self.master_vars[self._linker[1, i]-1].name == vname:
+            targets.append(self.master_vars[self._linker[1, i]-1].scaling) 
+    else:
+        raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
+    
+    return targets
   
   def are_master_dims_consistent(self):
     for i in range(self._linker.shape[1]):
@@ -406,7 +717,8 @@ class ADMM(ADMM_data):
         raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
     # qb: list = self.batch_q(q_temp)
     # self.modify_multipliers(qb, wb, vb)
-    self.q = copy.deepcopy(q_temp)
+    # correction = np.array([0 for _ in range(len(q_temp))]) if self.delta_q is None else self.delta_q
+    self.q = copy.deepcopy(q_temp)# + correction
     self.extended_linker = copy.deepcopy(np.array([tl0, tl1]))
     if self.save_q_out:
       self.eps_qo.append(np.max([abs(x) for x in q_temp]))
@@ -518,7 +830,10 @@ class ADMM(ADMM_data):
       raise RuntimeError('The multipliers vectors w and v have inconsistent size!')
     if len(self.q) != len(self.w):
       raise RuntimeError("The variables inconsistency vector has different size from the multipliers vectoe w and v!")
-    phi = np.add(np.multiply(self.v, self.q), np.multiply(np.multiply(self.w, self.w), np.multiply(self.q, self.q)))
+    correction = np.array([0 for _ in range(len(self.q))]) if self.delta_q is None else self.delta_q
+    q_corrected = self.q + correction
+    phi = np.add(np.multiply(self.v, q_corrected), np.multiply(np.multiply(self.w, self.w), 
+                                                               np.multiply(q_corrected, q_corrected)))
     #COMPLETE: Sum relevant components of q to accelerate the convergence of variables consistency
     s = 0
     for i in q_indices:
@@ -612,7 +927,7 @@ class ADMM(ADMM_data):
     for i in range(len(self.w)):
       self.w[i] = copy.deepcopy(np.multiply(self.w[i], np.power(self.beta, increase_w[i])))
 
-    if False and iter > 0:
+    if iter > 0 and False:
       dq = (np.abs(self.q) - np.abs(self.qold))
       # Forget gate
       f =self.sigmoid(dq+np.abs(np.subtract(self.w,wold)))
