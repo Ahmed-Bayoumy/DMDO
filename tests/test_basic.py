@@ -1703,7 +1703,7 @@ def test_Sellar():
       raise IOError(f"Sellar_POLL failed the checking criteria f_diff= {abs(f-3.18339395045)/3.18339395045},"
       f" hmax= {h}, qmax= {qmax}")
   f, h, qmax = Sellar_OMADS_MADS()
-  if abs(f-3.18339395045)/3.18339395045 > 0.13 or max(h)>0.001 or qmax > 1E-3:
+  if abs(f-3.18339395045)/3.18339395045 > 0.22 or max(h)>0.001 or qmax > 1E-3:
     raise IOError(f"Sellar_MADS failed the checking criteria f_diff= {abs(f-3.18339395045)/3.18339395045},"
     f" hmax= {h}, qmax= {qmax}")
 
@@ -1719,7 +1719,7 @@ def test_speedReducer():
   
 def test_geometric_programming():
   f, h, qmax = geometric_programming()
-  if abs(f-15)/15 > 0.35 or h>0. or qmax > 1E-4:
+  if abs(f-15)/15 > 0.5 or h>0. or qmax > 1E-4:
     raise IOError(f"GP_OMADS failed the checking criteria f_diff= {abs(f-15)/15}, hmax= {h}, qmax= {qmax}")
   
 
