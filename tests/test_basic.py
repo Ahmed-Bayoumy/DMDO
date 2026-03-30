@@ -217,8 +217,8 @@ def test_basic_MDO():
   )
 
   # Run the MDO problem
-  # p_file: str = os.path.abspath("./tests/test_files/Basic_MDO.out")
-  MDAO.run(mode="serial")
+  p_file: str = os.path.abspath("./tests/test_files/Basic_MDO.out")
+  MDAO.run(file=p_file, mode="serial")
 
   print('------Run_Summary------')
   print(MDAO.stop)
