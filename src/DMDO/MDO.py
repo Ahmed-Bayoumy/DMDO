@@ -297,6 +297,8 @@ class MDO(MDO_data):
 
   def run(self, file=None, resume= False, mode="Serial"):  # noqa: C901
     global eps_fio, eps_qio
+    if file is not None:
+      self.post_dir = os.path.dirname(file)
     if self.log is None:
       self.log: logger = logger()
       self.log.initialize(os.path.join(self.post_dir, "DMDO.log"), handler_name="DMDO")
