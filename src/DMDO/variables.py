@@ -133,7 +133,7 @@ class variableData:
       else:
         self.value = copy.deepcopy(other)
       self.dim = len(other)
-    elif isinstance(other, int) or isinstance(other, float) or isinstance(other, str):
+    elif isinstance(other, int) or isinstance(other, (float, np.float16, np.float32, np.float64)) or isinstance(other, str):
       self.value = other
     else:
       raise IOError('The variables data dunder equality method expects an object with'

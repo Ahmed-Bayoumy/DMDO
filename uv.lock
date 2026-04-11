@@ -741,7 +741,7 @@ requires-dist = [
     { name = "dash", specifier = ">=4.1.0" },
     { name = "matplotlib", marker = "extra == 'visualization'", specifier = ">=3.10.8" },
     { name = "numpy", specifier = ">=2.2.6" },
-    { name = "omads", specifier = ">=2601.0" },
+    { name = "omads", specifier = ">=2604.0" },
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "plotly", marker = "extra == 'visualization'", specifier = ">=6.5.2" },
     { name = "pyyaml", specifier = ">=6.0.3" },
@@ -1471,7 +1471,7 @@ wheels = [
 
 [[package]]
 name = "omads"
-version = "2601.0"
+version = "2604.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "deap" },
@@ -1490,7 +1490,7 @@ dependencies = [
     { name = "scipy", version = "1.17.0", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
 ]
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/de/17/fd9bd98453ca5273939b7d26c0c1f718e57b1f6a33497e873f6800ed946c/omads-2601.0-py3-none-any.whl", hash = "sha256:dafcb21e5ace8bd665ae57f91c3735eaf0f433eb83e852a82ccf4a2ea1d05510", size = 123982, upload-time = "2026-03-30T06:13:13.304Z" },
+    { url = "https://files.pythonhosted.org/packages/1d/b4/3717de291a6c1ca9fd6a2edef1f6f212f300205ca05a01dd6dfff51bf2e4/omads-2604.0-py3-none-any.whl", hash = "sha256:8c8f4e1869c33906987e10413e501bcdb20302d55178f3d41c3c91a26f0b3be0", size = 124366, upload-time = "2026-04-11T08:30:11.053Z" },
 ]
 
 [[package]]

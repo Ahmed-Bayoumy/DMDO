@@ -27,7 +27,7 @@ import csv
 from dataclasses import dataclass
 from logging import warning
 import os
-import platform
+# import platform
 import time
 from typing import Any, Callable, Dict, List
 import OMADS
@@ -126,7 +126,7 @@ class SubProblem(partitionedProblemData):
       if self.log is not None and self.log.log is not None:
         self.log.log_msg(msg=msg, msg_type=MSG_TYPE.WARNING.value)
       warning(msg)
-      self.solver = 'MADS'
+      self.solver = 'mads'
     self.sets = sets
     self.conf = conf
 
@@ -444,8 +444,8 @@ class SubProblem(partitionedProblemData):
   def solve(self, v, w, file: str = None, iter: int = None):  # noqa: C901
     if file is not None:
       self.iter = iter
-      self.prepare_post(file + f'_{iter}')
-    if self.solver == "POLL" and self.is_main:
+      self.prepare_post(file)
+    if self.solver == "poll" and self.is_main:
       self.set_dependent_baseline(self.coord.master_vars)
     self.cache = []
     self.coord.v = copy.deepcopy(v)
@@ -453,25 +453,38 @@ class SubProblem(partitionedProblemData):
     bl = self.get_list_vars(self.get_design_vars())
     res = None
     self.log.log_msg(msg=f"Coordination iteration # {iter}: running subproblem {self.index}", msg_type=MSG_TYPE.INFO.value)
-    if self.solver == 'OMADS' or self.solver != 'scipy':
+    if self.solver == 'OMADS' or self.solver == 'mads' or self.solver == 'omads' or self.solver != 'scipy':
       eval = {"blackbox": self.evaluate}
       # if self.sets is None:
       #   self.sets = {}
+      # param = {"baseline": bl,
+      #             "lb": self.get_list_vars_lb(self.get_design_vars()),
+      #             "ub": self.get_list_vars_ub(self.get_design_vars()),
+      #             "var_names": self.get_list_vars_names(self.get_design_vars()),
+      #             "var_type": self.get_vars_types(self.get_design_vars()),
+      #             "var_sets": self.sets,
+      #             "scaling": self.get_design_vars_scaling(self.get_design_vars()),
+      #             "mesh_type": "gmesh",
+      #             # "post_dir": "./post",
+      #             "constants": self.get_list_constant_updates(self.get_design_vars()),
+      #             "constants_name": self.get_list_const_names(self.get_design_vars()),
+      #             "name": f"SP_{self.index}",
+      #             "post_dir": self.postDir,
+      #             "constraints_type": ["PB"]*100}
       param = {"baseline": bl,
                   "lb": self.get_list_vars_lb(self.get_design_vars()),
                   "ub": self.get_list_vars_ub(self.get_design_vars()),
                   "var_names": self.get_list_vars_names(self.get_design_vars()),
                   "var_type": self.get_vars_types(self.get_design_vars()),
                   "var_sets": self.sets,
-                  "scaling": self.get_design_vars_scaling(self.get_design_vars()),
+                  "scaling": [1]*self.nv,
                   # "post_dir": "./post",
                   "constants": self.get_list_constant_updates(self.get_design_vars()),
                   "constants_name": self.get_list_const_names(self.get_design_vars()),
                   "name": f"SP_{self.index}",
+                  "mesh_type": "GMESH" if "mesh_type" not in self.conf else self.conf["mesh_type"],
                   "post_dir": self.postDir,
-                  "constraints_type": ["PB"]*100,
-                  "rho": 0.001,
-                  "lambda_multipliers": 1000}
+           }
       pinit = min(max(self.tol, max(self.psize) if isinstance(self.psize, list) else self.psize), 1)
       if self.conf is not None and "options" in self.conf and self.conf["options"] is not None:
         options = self.conf["options"]
@@ -487,7 +500,7 @@ class SubProblem(partitionedProblemData):
           "check_cache": True,
           "store_cache": True,
           "collect_y": False,
-          "rich_direction": False,
+          "rich_direction": True,
           "precision": "high",
           "save_results": False,
           "save_coordinates": False,
@@ -495,8 +508,8 @@ class SubProblem(partitionedProblemData):
           "parallel_mode": False
 
         }
-      isWin = platform.platform().split('-')[0] == 'Windows'
-      options["precision"] = "high" if isWin else "medium"
+      # isWin = platform.platform().split('-')[0] == 'Windows'
+      # options["precision"] = "high" if isWin else "medium"
       if self.conf is not None and "search" in self.conf and self.conf["search"] is not None:
         search = self.conf["search"]
       else:
@@ -518,6 +531,9 @@ class SubProblem(partitionedProblemData):
         if "lambda_multipliers" in self.conf["constraintsHandling"] and \
           self.conf["constraintsHandling"]["lambda_multipliers"] is not None:
           param["lambda_multipliers"] = self.conf["constraintsHandling"]["lambda_multipliers"]
+        if "barriers" in self.conf["constraintsHandling"] and \
+          self.conf["constraintsHandling"]["barriers"] is not None:
+          param["constraints_type"] = self.conf["constraintsHandling"]["barriers"]
       
       data = {"evaluator": eval, "param": param, "options":options, "search": search}
 
@@ -525,7 +541,7 @@ class SubProblem(partitionedProblemData):
       pinit = self.psize
       log_copy = self.log
       # self.log.switch_handler(f"SP{self.index}")
-      if self.solver == 'OMADS' or self.solver == 'MADS':
+      if self.solver == 'OMADS' or self.solver == 'MADS' or self.solver == 'mads' or self.solver == 'omads':
         out, _, _ = self.optimizer(data)
       else:
         out, _ = self.optimizer(data)
@@ -768,20 +784,20 @@ class SubProblem(partitionedProblemData):
         if isinstance(vars[i].type, list):
           for j in range(len(vars[i].type)):
             if vars[i].type[j] == VAR_TYPE.REAL.name:
-              v.append("R")
+              v.append("REAL")
             elif vars[i].type[j] == VAR_TYPE.INTEGER.name:
-              v.append("I")
+              v.append("INTEGER")
             elif vars[i].type[j] == VAR_TYPE.CATEGORICAL.name:
-              v.append("C")
+              v.append("CATEGORICAL")
             else:
               v.append(vars[i].type[j])
         else:
           if vars[i].type == VAR_TYPE.REAL.name:
-            v.append("R")
+            v.append("REAL")
           elif vars[i].type == VAR_TYPE.INTEGER.name:
-            v.append("I")
+            v.append("INTEGER")
           elif vars[i].type == VAR_TYPE.CATEGORICAL.name:
-            v.append("C")
+            v.append("CATEGORICAL")
           else:
             v.append(vars[i].type)
     return v
