@@ -483,7 +483,12 @@ class SubProblem(partitionedProblemData):
                   "constants": self.get_list_constant_updates(self.get_design_vars()),
                   "constants_name": self.get_list_const_names(self.get_design_vars()),
                   "name": f"SP_{self.index}",
-                  "mesh_type": self.conf["mesh_type"] if self.conf is not None and isinstance(self.conf, dict) and "mesh_type" in self.conf and self.conf["mesh_type"] in ["GMESH", "OMESH"] else "GMESH",
+                  "mesh_type": self.conf["mesh_type"] \
+                  if self.conf is not None \
+                  and isinstance(self.conf, dict) \
+                  and "mesh_type" in self.conf \
+                  and self.conf["mesh_type"] in ["GMESH", "OMESH"] \
+                  else "GMESH",
                   "post_dir": self.postDir,
            }
       pinit = min(max(self.tol, max(self.psize) if isinstance(self.psize, list) else self.psize), 1)
