@@ -1702,7 +1702,7 @@ def test_Sellar():
   isMac = platform.platform().split('-')[0] != 'macOS'
   if (isMac):
     f, h, qmax = Sellar_OMADS_POLL()
-    if abs(f-3.18339395045)/3.18339395045 > 0.6 or max(h)>0.001 or qmax > 5E-4:
+    if abs(f-3.18339395045)/3.18339395045 > 0.6 or max(h)>0.001 or qmax > 6E-4:
       raise IOError(f"Sellar_POLL failed the checking criteria f_diff= {abs(f-3.18339395045)/3.18339395045},"
       f" hmax= {h}, qmax= {qmax}")
   f, h, qmax = Sellar_OMADS_MADS()

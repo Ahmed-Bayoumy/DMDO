@@ -495,6 +495,8 @@ class SubProblem(partitionedProblemData):
       if self.conf is not None and "options" in self.conf and self.conf["options"] is not None:
         options = self.conf["options"]
         options["seed"] = self.conf["options"]["seed"] + iter
+        if not is_mac:
+          options["precision"] = "medium"
       else:
         options = {
           "seed": 10000,
