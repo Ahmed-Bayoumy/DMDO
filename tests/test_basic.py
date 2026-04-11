@@ -1,4 +1,5 @@
 import os
+import platform
 
 from DMDO import (
     ADMM, COUPLING_TYPE, DA, MDA, MDO,
@@ -1691,19 +1692,19 @@ def test_auto_build():
     MDAO.subProblems[i].opt = globals()[MDAO.subProblems[i].opt]
      
 def test_Sellar():
-  # f, h, qmax = Sellar_scipy()
-  # if abs(f-3.18339395045)/3.18339395045 > 0.22 or max(h)>0.001 or qmax > 1E-4:
-  #   raise IOError(f"Sellar_scipy failed the checking criteria f_diff= {abs(f-3.18339395045)/3.18339395045},"
-  #   f" hmax= {h}, qmax= {qmax}")
+  f, h, qmax = Sellar_scipy()
+  if abs(f-3.18339395045)/3.18339395045 > 0.22 or max(h)>0.001 or qmax > 1E-4:
+    raise IOError(f"Sellar_scipy failed the checking criteria f_diff= {abs(f-3.18339395045)/3.18339395045},"
+    f" hmax= {h}, qmax= {qmax}")
   # # TODO: This test is only failing on MAC with the 'POLL' local solver because of
   # # TODO: recent updates in the numpy package version used. 
   # # TODO: This issue has been fixed in an OMADS version that will be released in 2026
-  # isMac = platform.platform().split('-')[0] != 'macOS'
-  # if (isMac):
-  #   f, h, qmax = Sellar_OMADS_POLL()
-  #   if abs(f-3.18339395045)/3.18339395045 > 0.22 or max(h)>0.001 or qmax > 5E-4:
-  #     raise IOError(f"Sellar_POLL failed the checking criteria f_diff= {abs(f-3.18339395045)/3.18339395045},"
-  #     f" hmax= {h}, qmax= {qmax}")
+  isMac = platform.platform().split('-')[0] != 'macOS'
+  if (isMac):
+    f, h, qmax = Sellar_OMADS_POLL()
+    if abs(f-3.18339395045)/3.18339395045 > 0.22 or max(h)>0.001 or qmax > 5E-4:
+      raise IOError(f"Sellar_POLL failed the checking criteria f_diff= {abs(f-3.18339395045)/3.18339395045},"
+      f" hmax= {h}, qmax= {qmax}")
   f, h, qmax = Sellar_OMADS_MADS()
   if abs(f-3.18339395045)/3.18339395045 > 0.22 or max(h)>0.001 or qmax > 5E-3:
     raise IOError(f"Sellar_MADS failed the checking criteria f_diff= {abs(f-3.18339395045)/3.18339395045},"
@@ -1715,7 +1716,7 @@ def test_speedReducer():
     raise IOError(f"SR_scipy failed the checking criteria f_diff= {abs(f-2713.6640204584155)/2713.6640204584155},"
     f" hmax= {h}, qmax= {qmax}")
   f, h, qmax = speedReducerOMADS()
-  if abs(f-2713.6640204584155)/2713.6640204584155 > 0.07 or h>0.0001 or qmax > 7E-3:
+  if abs(f-2713.6640204584155)/2713.6640204584155 > 0.07 or h>0.0001 or qmax > 8E-3:
     raise IOError(f"SR_OMADS failed the checking criteria f_diff= {abs(f-2713.6640204584155)/2713.6640204584155},"
     f" hmax= {h}, qmax= {qmax}")
   

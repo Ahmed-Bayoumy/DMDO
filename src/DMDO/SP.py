@@ -27,7 +27,7 @@ import csv
 from dataclasses import dataclass
 from logging import warning
 import os
-# import platform
+import platform
 import time
 from typing import Any, Callable, Dict, List
 import OMADS
@@ -471,6 +471,7 @@ class SubProblem(partitionedProblemData):
       #             "name": f"SP_{self.index}",
       #             "post_dir": self.postDir,
       #             "constraints_type": ["PB"]*100}
+      is_mac = platform.platform().split('-')[0] == 'macOS'
       param = {"baseline": bl,
                   "lb": self.get_list_vars_lb(self.get_design_vars()),
                   "ub": self.get_list_vars_ub(self.get_design_vars()),
@@ -482,7 +483,7 @@ class SubProblem(partitionedProblemData):
                   "constants": self.get_list_constant_updates(self.get_design_vars()),
                   "constants_name": self.get_list_const_names(self.get_design_vars()),
                   "name": f"SP_{self.index}",
-                  "mesh_type": "GMESH" if "mesh_type" not in self.conf else self.conf["mesh_type"],
+                  "mesh_type": self.conf["mesh_type"] if self.conf is not None and isinstance(self.conf, dict) and "mesh_type" in self.conf and self.conf["mesh_type"] in ["GMESH", "OMESH"] else "GMESH",
                   "post_dir": self.postDir,
            }
       pinit = min(max(self.tol, max(self.psize) if isinstance(self.psize, list) else self.psize), 1)
@@ -501,7 +502,7 @@ class SubProblem(partitionedProblemData):
           "store_cache": True,
           "collect_y": False,
           "rich_direction": True,
-          "precision": "high",
+          "precision": "high" if is_mac else "medium",
           "save_results": False,
           "save_coordinates": False,
           "save_all_best": False,
