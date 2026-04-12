@@ -478,7 +478,7 @@ class SubProblem(partitionedProblemData):
                   "var_names": self.get_list_vars_names(self.get_design_vars()),
                   "var_type": self.get_vars_types(self.get_design_vars()),
                   "var_sets": self.sets,
-                  "scaling": [1]*self.nv,
+                  "scaling": [1]*len(self.get_list_vars_lb(self.get_design_vars())),
                   # "post_dir": "./post",
                   "constants": self.get_list_constant_updates(self.get_design_vars()),
                   "constants_name": self.get_list_const_names(self.get_design_vars()),
@@ -541,7 +541,12 @@ class SubProblem(partitionedProblemData):
           param["lambda_multipliers"] = self.conf["constraintsHandling"]["lambda_multipliers"]
         if "barriers" in self.conf["constraintsHandling"] and \
           self.conf["constraintsHandling"]["barriers"] is not None:
-          param["constraints_type"] = self.conf["constraintsHandling"]["barriers"]
+          if self.conf["constraintsHandling"]["barriers"] == "PB_all":
+            param["constraints_type"] = ["PB"]*100
+          elif self.conf["constraintsHandling"]["barriers"] == "EB_all":
+            param["constraints_type"] = ["EB"]*100
+          else:
+            param["constraints_type"] = self.conf["constraintsHandling"]["barriers"]
       
       data = {"evaluator": eval, "param": param, "options":options, "search": search}
 
@@ -581,8 +586,9 @@ class SubProblem(partitionedProblemData):
       # then at the end of each outer loop iteration we can calculate q of that subproblem before updating penalty parameters
 
       #  We need this extra evaluation step to update inconsistincies and the master_variables vector
+      eval_out = out["xmin"] if len(out["xmin"]) > 0 else bl
 
-      self.evaluate(out["xmin"], self.get_list_constant_updates(self.get_design_vars()))
+      self.evaluate(eval_out, self.get_list_constant_updates(self.get_design_vars()))
     elif self.solver == 'scipy':
       if self.scipy is not None and isinstance(self.scipy, dict):
         opts = self.scipy["options"]
