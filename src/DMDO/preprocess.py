@@ -158,7 +158,8 @@ class problemSetup:
     ub: List = [vin[i][6] for i in vin]
     dim: List = [vin[i][7] for i in vin]
     vtype: List = [vin[i][8]  if len(vin[i])>8 else "R" for i in vin]
-    vsets: List = [(vin[i][8].split('_')[1:][0] if len(vin[i][8])>1 else None)  if len(vin[i])>8 else None for i in vin]
+    vsets: List = [(vin[i][8].split('_')[1:][0] if len(vin[i][8])>1 and "_" in vin[i][8] else None)  \
+      if len(vin[i])>8 else None for i in vin]
 
     bl: List = [self.data["Sets"][vsets[list(vin.keys()).index(i)]].index(vin[i][5]) \
                 if (vtype[list(vin.keys()).index(i)] == 'c' \

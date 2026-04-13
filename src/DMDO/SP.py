@@ -94,7 +94,7 @@ class SubProblem(partitionedProblemData):
     self.MDA_process = analysis
     self.coord = coordination
     self.opt = opt
-    self.optimizer = OMADS.MADS.main 
+    self.optimizer = OMADS.mads.main 
     self.fmin_nop = fmin_nop
     self.budget=budget
     self.display = display
@@ -110,15 +110,15 @@ class SubProblem(partitionedProblemData):
     self.eval_ID = 0
     if log is not None:
       self.log = log
-    if solver == 'MADS':
+    if solver == 'mads':
       self.scipy = None
-      self.optimizer = OMADS.MADS.main
-    elif solver == 'POLL':
+      self.optimizer = OMADS.mads.main
+    elif solver == 'poll':
       self.scipy = None
-      self.optimizer = OMADS.POLL.main
-    elif solver == 'SEARCH':
+      self.optimizer = OMADS.poll.main
+    elif solver == 'search':
       self.scipy = None
-      self.optimizer = OMADS.SEARCH.main
+      self.optimizer = OMADS.search.main
     elif solver == 'scipy':
       self.scipy = scipy
     else:
@@ -126,7 +126,7 @@ class SubProblem(partitionedProblemData):
       if self.log is not None and self.log.log is not None:
         self.log.log_msg(msg=msg, msg_type=MSG_TYPE.WARNING.value)
       warning(msg)
-      self.solver = 'MADS'
+      self.solver = 'mads'
     self.sets = sets
     self.conf = conf
 
@@ -444,8 +444,8 @@ class SubProblem(partitionedProblemData):
   def solve(self, v, w, file: str = None, iter: int = None):  # noqa: C901
     if file is not None:
       self.iter = iter
-      self.prepare_post(file + f'_{iter}')
-    if self.solver == "POLL" and self.is_main:
+      self.prepare_post(file)
+    if self.solver == "poll" and self.is_main:
       self.set_dependent_baseline(self.coord.master_vars)
     self.cache = []
     self.coord.v = copy.deepcopy(v)
@@ -453,29 +453,50 @@ class SubProblem(partitionedProblemData):
     bl = self.get_list_vars(self.get_design_vars())
     res = None
     self.log.log_msg(msg=f"Coordination iteration # {iter}: running subproblem {self.index}", msg_type=MSG_TYPE.INFO.value)
-    if self.solver == 'OMADS' or self.solver != 'scipy':
+    if self.solver == 'OMADS' or self.solver == 'mads' or self.solver == 'omads' or self.solver != 'scipy':
       eval = {"blackbox": self.evaluate}
-      if self.sets is None:
-        self.sets = {}
+      # if self.sets is None:
+      #   self.sets = {}
+      # param = {"baseline": bl,
+      #             "lb": self.get_list_vars_lb(self.get_design_vars()),
+      #             "ub": self.get_list_vars_ub(self.get_design_vars()),
+      #             "var_names": self.get_list_vars_names(self.get_design_vars()),
+      #             "var_type": self.get_vars_types(self.get_design_vars()),
+      #             "var_sets": self.sets,
+      #             "scaling": self.get_design_vars_scaling(self.get_design_vars()),
+      #             "mesh_type": "gmesh",
+      #             # "post_dir": "./post",
+      #             "constants": self.get_list_constant_updates(self.get_design_vars()),
+      #             "constants_name": self.get_list_const_names(self.get_design_vars()),
+      #             "name": f"SP_{self.index}",
+      #             "post_dir": self.postDir,
+      #             "constraints_type": ["PB"]*100}
+      is_mac = platform.platform().split('-')[0] == 'macOS'
       param = {"baseline": bl,
                   "lb": self.get_list_vars_lb(self.get_design_vars()),
                   "ub": self.get_list_vars_ub(self.get_design_vars()),
                   "var_names": self.get_list_vars_names(self.get_design_vars()),
                   "var_type": self.get_vars_types(self.get_design_vars()),
                   "var_sets": self.sets,
-                  "scaling": self.get_design_vars_scaling(self.get_design_vars()),
+                  "scaling": [1]*len(self.get_list_vars_lb(self.get_design_vars())),
                   # "post_dir": "./post",
                   "constants": self.get_list_constant_updates(self.get_design_vars()),
                   "constants_name": self.get_list_const_names(self.get_design_vars()),
                   "name": f"SP_{self.index}",
+                  "mesh_type": self.conf["mesh_type"] \
+                  if self.conf is not None \
+                  and isinstance(self.conf, dict) \
+                  and "mesh_type" in self.conf \
+                  and self.conf["mesh_type"] in ["GMESH", "OMESH"] \
+                  else "GMESH",
                   "post_dir": self.postDir,
-                  "constraints_type": ["PB"]*100,
-                  "RHO": 0.001,
-                  "LAMBDA": 1000}
+           }
       pinit = min(max(self.tol, max(self.psize) if isinstance(self.psize, list) else self.psize), 1)
       if self.conf is not None and "options" in self.conf and self.conf["options"] is not None:
         options = self.conf["options"]
         options["seed"] = self.conf["options"]["seed"] + iter
+        if not is_mac:
+          options["precision"] = "medium"
       else:
         options = {
           "seed": 10000,
@@ -487,16 +508,16 @@ class SubProblem(partitionedProblemData):
           "check_cache": True,
           "store_cache": True,
           "collect_y": False,
-          "rich_direction": False,
-          "precision": "high",
+          "rich_direction": True,
+          "precision": "high" if is_mac else "medium",
           "save_results": False,
           "save_coordinates": False,
           "save_all_best": False,
           "parallel_mode": False
 
         }
-      isWin = platform.platform().split('-')[0] == 'Windows'
-      options["precision"] = "high" if isWin else "medium"
+      # isWin = platform.platform().split('-')[0] == 'Windows'
+      # options["precision"] = "high" if isWin else "medium"
       if self.conf is not None and "search" in self.conf and self.conf["search"] is not None:
         search = self.conf["search"]
       else:
@@ -511,12 +532,21 @@ class SubProblem(partitionedProblemData):
       if self.conf is not None and "constraintsHandling" in self.conf and self.conf["constraintsHandling"] is not None:
         if "Barriers" in self.conf["constraintsHandling"] and self.conf["constraintsHandling"]["Barriers"] is not None:
           param["constraints_type"] = copy.deepcopy(self.conf["constraintsHandling"]["Barriers"])
-        if "RHO" in self.conf["constraintsHandling"] and self.conf["constraintsHandling"]["RHO"] is not None:
-          param["RHO"] = self.conf["constraintsHandling"]["RHO"]
+        if "rho" in self.conf["constraintsHandling"] and self.conf["constraintsHandling"]["rho"] is not None:
+          param["rho"] = self.conf["constraintsHandling"]["rho"]
         if "h_max" in self.conf["constraintsHandling"] and self.conf["constraintsHandling"]["h_max"] is not None:
           param["h_max"] = self.conf["constraintsHandling"]["h_max"]
-        if "LAMBDA" in self.conf["constraintsHandling"] and self.conf["constraintsHandling"]["LAMBDA"] is not None:
-          param["LAMBDA"] = self.conf["constraintsHandling"]["LAMBDA"]
+        if "lambda_multipliers" in self.conf["constraintsHandling"] and \
+          self.conf["constraintsHandling"]["lambda_multipliers"] is not None:
+          param["lambda_multipliers"] = self.conf["constraintsHandling"]["lambda_multipliers"]
+        if "barriers" in self.conf["constraintsHandling"] and \
+          self.conf["constraintsHandling"]["barriers"] is not None:
+          if self.conf["constraintsHandling"]["barriers"] == "PB_all":
+            param["constraints_type"] = ["PB"]*100
+          elif self.conf["constraintsHandling"]["barriers"] == "EB_all":
+            param["constraints_type"] = ["EB"]*100
+          else:
+            param["constraints_type"] = self.conf["constraintsHandling"]["barriers"]
       
       data = {"evaluator": eval, "param": param, "options":options, "search": search}
 
@@ -524,7 +554,10 @@ class SubProblem(partitionedProblemData):
       pinit = self.psize
       log_copy = self.log
       # self.log.switch_handler(f"SP{self.index}")
-      out, _ = self.optimizer(data)
+      if self.solver == 'OMADS' or self.solver == 'MADS' or self.solver == 'mads' or self.solver == 'omads':
+        out, _, _ = self.optimizer(data)
+      else:
+        out, _ = self.optimizer(data)
       self.log = log_copy
       # self.log.switch_handler("DMDO")
       self.fmin = out["fmin"]
@@ -553,8 +586,9 @@ class SubProblem(partitionedProblemData):
       # then at the end of each outer loop iteration we can calculate q of that subproblem before updating penalty parameters
 
       #  We need this extra evaluation step to update inconsistincies and the master_variables vector
+      eval_out = out["xmin"] if len(out["xmin"]) > 0 else bl
 
-      self.evaluate(out["xmin"], self.get_list_constant_updates(self.get_design_vars()))
+      self.evaluate(eval_out, self.get_list_constant_updates(self.get_design_vars()))
     elif self.solver == 'scipy':
       if self.scipy is not None and isinstance(self.scipy, dict):
         opts = self.scipy["options"]
@@ -764,20 +798,20 @@ class SubProblem(partitionedProblemData):
         if isinstance(vars[i].type, list):
           for j in range(len(vars[i].type)):
             if vars[i].type[j] == VAR_TYPE.REAL.name:
-              v.append("R")
+              v.append("REAL")
             elif vars[i].type[j] == VAR_TYPE.INTEGER.name:
-              v.append("I")
+              v.append("INTEGER")
             elif vars[i].type[j] == VAR_TYPE.CATEGORICAL.name:
-              v.append("C")
+              v.append("CATEGORICAL")
             else:
               v.append(vars[i].type[j])
         else:
           if vars[i].type == VAR_TYPE.REAL.name:
-            v.append("R")
+            v.append("REAL")
           elif vars[i].type == VAR_TYPE.INTEGER.name:
-            v.append("I")
+            v.append("INTEGER")
           elif vars[i].type == VAR_TYPE.CATEGORICAL.name:
-            v.append("C")
+            v.append("CATEGORICAL")
           else:
             v.append(vars[i].type)
     return v
