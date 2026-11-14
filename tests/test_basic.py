@@ -920,7 +920,7 @@ def geometric_programming():
   coordination=coord,
   opt=GP_opt1,
   fmin_nop=np.inf,
-  budget=250,
+  budget=500,
   display=False,
   psize = 2.,
   pupdate=PSIZE_UPDATE.LAST,
