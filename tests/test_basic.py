@@ -744,8 +744,9 @@ def geometric_programming():
   names = ["z2", "z4", "z5", "z3",   "z7", "z2", "z8", "z9", "z10", "z11",   "z3", "z11", "z12", "z13", "z14", "obj1", "obj2"]
   spi =   [   1,    1,    1,		1,		  1,		2,		2,		2,		 2,	    2,      3,     3,		  3,		 3,     3, 1, 1]  # noqa: E501
   links = [   2, None, None,    3,   None,    1, None, None,  None,     3,      1,     2,  None,  None,  None, None, None]
-  coupling_t = \
-          [  fb,    un,	 un,	 fb,		 un,	 ff,	 un,	 un,	  un,	    s,      ff,     s,    un,    un,    un, ff, ff]
+  coupling_t = [
+    fb, un, un, fb, un, ff, un, un, un, s, ff, s, un, un, un, ff, ff,
+  ]
  
   # This bounded test region contains the optimum while avoiding a million-unit search mesh.
   lb =    [1e-3]*17
