@@ -77,6 +77,9 @@ class w_scheme(Enum):
   MAX = auto()
   NORMAL = auto()
   RANK = auto()
+  NO_UPDATE = auto()
+  MEAN = auto()
+  NORM_2 = auto()
 
 class MODEL_TYPE(Enum):
   SURROGATE = auto()
@@ -99,6 +102,10 @@ class COUPLING_STRENGTH(Enum):
 class MDO_ARCHITECTURE(Enum):
   MDF = auto()
   IDF = auto()
+
+class AI_MODEL_TYPE(Enum):
+  LSTM = auto()
+  GRU = auto()
 
 eps_qio = []
 eps_fio = []

@@ -162,13 +162,14 @@ coord:
     beta: 1.8
     gamma: 0.9
     nsp: 4
-    budget: 64
+    budget: 150
     index_of_master_SP: 1
     display: True
     scaling: null
-    mode: parallel
+    mode: serial
     M_update_scheme: median
     store_q_io: True
+    is_AI_regularizer: True
 
 # coord:
 #   c1:
@@ -181,7 +182,7 @@ coord:
 #     index_of_master_SP: 1
 #     display: True
 #     scaling: null
-#     mode: parallel
+#     mode: serial
 #     M_update_scheme: max
 #     store_q_io: True
 
@@ -205,6 +206,7 @@ subproblem:
     solver: mads
     save_results: True
     configurations: CSP
+    # tweak_csv: "C:/Projects/SW/Dev/AB/DMDO_code/DEV/DMDO/tests/SBJ/SP1.csv"
 
   sp2:
     nv: 2
@@ -224,6 +226,8 @@ subproblem:
     solver: mads
     save_results: True
     configurations: CSP
+    # tweak_csv: "C:/Projects/SW/Dev/AB/DMDO_code/DEV/DMDO/tests/SBJ/SP2.csv"
+
 
   sp3:
     nv: 12
@@ -244,6 +248,8 @@ subproblem:
     save_results: True
     save_all_best: False
     configurations: CSP
+    # tweak_csv: "C:/Projects/SW/Dev/AB/DMDO_code/DEV/DMDO/tests/SBJ/SP3.csv"
+
 
   
   sp4:
@@ -257,14 +263,15 @@ subproblem:
     opt: SBJ_structure_opt
     type: callable
     fmin_nop: inf
-    budget: 50
+    budget: 150
     display: False
     psize: 1.
     pupdate: DEFAULT
-    solver: search
+    solver: mads
     save_results: True
     save_all_best: False
     configurations: CSP
+    # tweak_csv: "C:/Projects/SW/Dev/AB/DMDO_code/DEV/DMDO/tests/SBJ/SP4.csv"
 
 USER:
   h: 55000

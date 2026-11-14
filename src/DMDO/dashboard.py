@@ -251,6 +251,54 @@ def update_plot(data_json, x_col, y_col, size_col):
             color=color_col,
             template="plotly_dark"
         )
+    # ---------------------------------
+    # Add the connecting line trace
+    # ---------------------------------
+    # Ensure data is sorted by X so the line connects sequentially
+    df_sorted = df.sort_values(by=x_col)
+
+    # Generate a base line and set its initial visibility to True
+    line_trace = px.line(df_sorted, x=x_col, y=y_col).data[0]
+    line_trace.update(
+        line=dict(color="rgba(255, 255, 255, 1)", width=2),  # Opaque white
+        name="Connecting Line",
+        visible=True  # Default state is visible
+    )
+    fig.add_trace(line_trace)
+
+    # ---------------------------------
+    # Add Interactive Toggle Control
+    # ---------------------------------
+    # Identify trace index (scatter marks are index 0, line is index 1)
+    # Note: If categorical color creates multiple scatter traces, line will be the last index
+    line_trace_index = len(fig.data) - 1
+
+    fig.update_layout(
+        updatemenus=[
+            dict(
+                type="buttons",
+                direction="right",
+                active=0,  # Matches visible=True default
+                x=0.1,
+                y=1.15,
+                buttons=[
+                    dict(
+                        label="Show Line",
+                        method="update",
+                        args=[{"visible": [True] * len(fig.data)}]  # Keep all traces visible
+                    ),
+                    dict(
+                        label="Hide Line",
+                        method="update",
+                        args=[
+                            # Set visibility to False ONLY for the line trace index
+                            {"visible": [True if i != line_trace_index else False for i in range(len(fig.data))]}
+                        ]
+                    )
+                ]
+            )
+        ]
+    )
 
     # ---------------------------------
     # Marker size scaling
@@ -289,7 +337,8 @@ def update_plot(data_json, x_col, y_col, size_col):
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
         font=dict(color="white"),
-        transition_duration=500
+        transition_duration=500,
+        yaxis=dict(type="log"),
     )
 
     return fig

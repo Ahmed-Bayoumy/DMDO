@@ -62,7 +62,7 @@ def SBJ_auto_build_and_run():
     "run_mode": "build",
     # "is_resume": 0,
     # "restart_file": None,
-    "exec_mode": "parallel",
+    "exec_mode": "serial",
     "mdo_name": "SBJ",
     "working_dir": csd
   }
@@ -72,7 +72,7 @@ def SBJ_auto_build_and_run():
     for j in range(len(temp.analyses)):
       MDAO.subProblems[i].MDA_process.analyses[j].blackbox = globals()[MDAO.subProblems[i].MDA_process.analyses[j].blackbox]
     MDAO.subProblems[i].opt = globals()[MDAO.subProblems[i].opt]
-  out = MDAO.run(os.path.join(csd, "SBJ.out"), mode = "parallel")
+  out = MDAO.run(os.path.join(csd, "SBJ.out"), mode = "serial")
   print(out)
 
   

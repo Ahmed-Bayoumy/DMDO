@@ -21,3 +21,16 @@ code_archive
 build
 .*
 _dntTrack
+tests/Sellar/remote_config.json
+tests/Sellar/run*
+tests/Sellar/*.log
+CHANGELOG*
+*.pkl
+*.out
+# Markdown notes stay local; only the README is tracked
+*.md
+!README.md
+remote_config.json
+*.log
+*.tex
+*.tikz

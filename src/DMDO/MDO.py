@@ -32,9 +32,11 @@ import time
 from typing import Any, Dict, List
 
 import numpy as np
+import pandas as pd
 
 from .SP import SubProblem
 from ._common import MSG_TYPE, logger
+from ._detector import SolveQualityExtractor, latest_detector_metrics
 from ._protocols import Process_data
 from .coordinator import ADMM
 from .variables import variableData
@@ -135,7 +137,11 @@ class MDO(MDO_data):
     return np.linalg.norm(DX, 2)
 
   def check_termination_critt(self, iter):
-    if iter > 1 and np.abs(self.tab_inc[iter]) < self.inc_stop:
+    if (
+      iter > 1
+      and np.abs(self.tab_inc[iter]) < self.inc_stop
+      and np.max(np.abs(np.subtract(np.abs(self.Coordinator.q), np.abs(self.Coordinator.qold)))) < self.inc_stop
+    ):
       msg = f'Stop: qmax = {np.max(np.abs(self.Coordinator.q))} < {self.inc_stop}'
       self.log.log_msg(msg=msg, msg_type=MSG_TYPE.INFO.value)
       print(msg)
@@ -166,6 +172,233 @@ class MDO(MDO_data):
       out += self.subProblems[sp_i].coord.master_vars[link1[i]-1].dim
     
     return out
+
+  def _get_sp_indices(self) -> List[int]:
+    return [sp.index for sp in self.subProblems]
+
+  def _get_hmin_columns(self) -> List[str]:
+    return [f'{f"hmin_{sp_index}".rjust(30)}' for sp_index in self._get_sp_indices()]
+
+  def _get_ol_keys(self) -> List[str]:
+    hmin_cols = self._get_hmin_columns()
+    if self.Coordinator.is_AI_regularizer:
+      adaptive_cols = (
+        [f'{"Eff_spike_w_scale".rjust(30)}',
+         f'{"Eff_spike_gamma_scale".rjust(30)}',
+         f'{"Eff_budget_scale".rjust(30)}',
+         f'{"Adapt_event".rjust(30)}']
+        if getattr(self.Coordinator, "spike_adaptive_scales", True)
+        else []
+      )
+      return [f'{"Time"}', f'{"Iteration #".rjust(30)}', \
+              f'{"Max. inconsistency".rjust(30)}', \
+              # f'{"Max_inc_predicted".rjust(30)}', \
+              f'{"spike_location".rjust(30)}', \
+              f'{"alarm_detected".rjust(30)}', \
+              f'{"spike_detected".rjust(30)}', \
+              f'{"Objective".rjust(30)}', \
+              # f'{"Obj_predicted".rjust(30)}', \
+              f'{"Spike_prob".rjust(30)}', \
+              f'{"Forecast_prob".rjust(30)}', \
+              f'{"Non_improvement_prob".rjust(30)}', \
+              f'{"Obj_non_improvement_prob".rjust(30)}', \
+              f'{"Constraint_non_improvement_prob".rjust(30)}', \
+              f'{"Detector_uncertainty".rjust(30)}', \
+              f'{"Constraint_pressure".rjust(30)}', \
+              f'{"Status".rjust(30)}', \
+              f'{"Variables change".rjust(30)}', \
+              f'{"max(w)".rjust(30)}', \
+              f'{"Coupling_with_qmax".rjust(30)}'] + \
+                adaptive_cols + \
+                hmin_cols + \
+                [f'{f"{x.name}_{x.sp_index}".rjust(30)}' for x in self.Coordinator.master_vars]
+
+    return [f'{"Time"}', f'{"Iteration #".rjust(30)}', \
+            f'{"Max. inconsistency".rjust(30)}', \
+          f'{"alarm_detected".rjust(30)}', \
+          f'{"spike_detected".rjust(30)}', \
+            f'{"Objective".rjust(30)}', \
+            f'{"Status".rjust(30)}', \
+            f'{"Variables change".rjust(30)}', \
+            f'{"max(w)".rjust(30)}', \
+            f'{"Coupling_with_qmax".rjust(30)}'] + \
+              hmin_cols + \
+              [f'{f"{x.name}_{x.sp_index}".rjust(30)}' for x in self.Coordinator.master_vars]
+
+  def _reset_ai_regularizer_outputs(self):
+    # A premature-freeze event (causal response) also triggers the next iteration's budget reallocation.
+    last_detected = bool(
+      getattr(self.Coordinator, "spike_detected", False) or getattr(self.Coordinator, "freeze_detected", False)
+    )
+    self.Coordinator.last_spike_detected = last_detected
+    self.Coordinator.freeze_detected = False
+    # A stale location without a detection would trigger budget expansion every iteration.
+    self.Coordinator.last_spike_location = int(getattr(self.Coordinator, "spike_location", 0)) if last_detected else 0
+    self.Coordinator.qmax_predicted = 0.
+    self.Coordinator.spike_location = 0
+    self.Coordinator.alarm_detected = False
+    self.Coordinator.spike_detected = False
+    self.Coordinator.ai_event_strength = -1.
+    self.Coordinator.fmin_predicted = 0.
+    self.Coordinator.spike_prob = 0.
+    self.Coordinator.forecast_prob = 0.
+    self.Coordinator.non_improvement_prob = 0.
+    self.Coordinator.objective_non_improvement_prob = 0.
+    self.Coordinator.constraint_non_improvement_prob = 0.
+    self.Coordinator.detector_uncertainty = 1.
+    self.Coordinator.constraint_pressure = 0.
+
+  def _get_detector(self):
+    detector = getattr(self.Coordinator, "ai_regularizer", None)
+    if detector is None:
+      for sp in self.subProblems:
+        detector = getattr(sp.coord, "ai_regularizer", None) or getattr(sp, "_AI_regularizer", None)
+        if detector is not None:
+          break
+      if detector is not None:
+        self.Coordinator.ai_regularizer = detector
+    return detector
+
+  @staticmethod
+  def _scalarize_hmin(value) -> float:
+    array = np.atleast_1d(np.asarray(value, dtype=float))
+    finite = array[np.isfinite(array)]
+    if finite.size > 0:
+      return float(max(np.max(finite), 0.0))
+    return float(np.inf) if np.any(array > 0.0) else 0.0
+
+  def _attribute_spike_subproblem(self) -> int:
+    """Subproblem blamed for the largest inconsistency.
+
+    Of the two ends of the worst link, the one with the more erratic inner solve.
+    """
+    coord = self.Coordinator
+    master = int(coord.index_of_master_SP)
+    try:
+      per_link = [
+        float(np.max(np.abs(q))) if isinstance(q, (list, np.ndarray)) else abs(float(q))
+        for q in coord.batch_q(coord.q)
+      ]
+      worst = int(np.argmax(per_link))
+      ends = [int(coord.master_vars[coord._linker[row, worst] - 1].sp_index) for row in (0, 1)]
+    except Exception:
+      return master
+    by_index = {sp.index: sp for sp in self.subProblems}
+    best, best_range = ends[0], -1.0
+    for idx in dict.fromkeys(ends):
+      sp = by_index.get(idx)
+      fingerprint = SolveQualityExtractor.extract(getattr(sp, "Il_file", None)) if sp is not None else None
+      inc_range = float(fingerprint[3]) if fingerprint is not None else 0.0
+      if inc_range > best_range:
+        best, best_range = idx, inc_range
+    return int(best)
+
+  def _rollback_step(self, iter: int) -> None:
+    """Record this iteration's design; on a detected spike with a clearly worse objective, restore a better one.
+
+    Candidates are earlier feasible iterations whose q_max is within rollback_q_factor of the current one (or below
+    100x the tolerance), so the restart point is nearly as consistent as the run has become. The penalty weights
+    are scaled by rollback_w_scale (floor 1) and the multipliers v are restored with the design. At most rollback_max
+    rollbacks per run, at least rollback_gap iterations apart.
+    """
+    coord = self.Coordinator
+    if not (coord.is_AI_regularizer and getattr(coord, "rollback", False)):
+      return
+    q_now = float(np.max(np.abs(coord.q))) if np.size(coord.q) else 0.0
+    obj_now = float(self.fmin[0] if isinstance(self.fmin, (list, tuple, np.ndarray)) else self.fmin)
+    hmax = max([self._scalarize_hmin(v) for v in self.hmin_dict.values()] or [0.0])
+    history = getattr(self, "_rb_history", [])
+    history.append({
+      "iter": int(iter), "obj": obj_now, "q": q_now, "hmax": hmax,
+      "sp_vars": [[copy.deepcopy(v.value) for v in sp.vars] for sp in self.subProblems],
+      "master_vars": copy.deepcopy(coord.master_vars),
+      "v": copy.deepcopy(coord.v),
+    })
+    self._rb_history = history
+
+    n_done = int(getattr(self, "_rb_count", 0))
+    last = int(getattr(self, "_rb_last", -10**9))
+    if str(getattr(coord, "rollback_trigger", "event")) == "forecast":
+      detected = bool(getattr(coord, "_forecast_accepted", False))
+    else:
+      detected = getattr(coord, "_event_kind", "") in ("spike", "hold")
+    # Optional safeguard: a design that has become infeasible is rolled back even without a detector alarm.
+    lost_feasibility = bool(getattr(coord, "rollback_on_infeasible", False)) and hmax > 1e-6
+    if not (detected or lost_feasibility) or n_done >= int(coord.rollback_max) or iter - last < int(coord.rollback_gap):
+      return
+    q_cap = max(float(coord.rollback_q_factor) * q_now, 100.0 * float(self.inc_stop))
+    candidates = [h for h in history[:-1] if np.isfinite(h["obj"]) and h["hmax"] <= 1e-6 and h["q"] <= q_cap]
+    if not candidates:
+      return
+    best = min(candidates, key=lambda h: h["obj"])
+    if not lost_feasibility and not obj_now > best["obj"] + float(coord.rollback_obj_tol) * max(1.0, abs(best["obj"])):
+      return
+    for sp, values in zip(self.subProblems, best["sp_vars"]):
+      for var, value in zip(sp.vars, values):
+        var.value = copy.deepcopy(value)
+        var.baseline = copy.deepcopy(value)
+    coord.master_vars = copy.deepcopy(best["master_vars"])
+    # The multipliers belong to the design they were accumulated on; keeping the current ones would push the
+    # restored design hard in the direction of the abandoned one.
+    coord.v = copy.deepcopy(best["v"])
+    coord.w = np.maximum(np.multiply(coord.w, float(coord.rollback_w_scale)), float(getattr(coord, "w_init", 1.0)))
+    self._rb_count, self._rb_last = n_done + 1, int(iter)
+    why = "feasibility lost" if lost_feasibility and not detected else "detected spike"
+    msg = (f"Rollback at iteration {iter} ({why}): objective {obj_now:.6g}, hmax {hmax:.3g} -> design of iteration "
+           f"{best['iter']} ({best['obj']:.6g})")
+    self.log.log_msg(msg=msg, msg_type=MSG_TYPE.INFO.value)
+    print(msg)
+
+  @staticmethod
+  def _late_improving(sp_file, tail: float = 0.3, rtol: float = 1e-6) -> bool:
+    """True when the solve's best merit (objective + penalty) still improved in its last `tail` fraction of evaluations."""
+    if not sp_file or not os.path.isfile(sp_file):
+      return False
+    try:
+      df = pd.read_csv(sp_file, skipinitialspace=True)
+      df.columns = [str(c).strip() for c in df.columns]
+      merit = (pd.to_numeric(df["Objective"], errors="coerce") + pd.to_numeric(df["Penalty"], errors="coerce")).values
+    except Exception:
+      return False
+    merit = merit[np.isfinite(merit)]
+    if merit.size < 4:
+      return False
+    cut = int(np.floor((1.0 - tail) * merit.size))
+    best_before, best_after = float(np.min(merit[:cut])), float(np.min(merit[cut:]))
+    return best_after < best_before - rtol * max(1.0, abs(best_before))
+
+  def _update_detector_outer_iteration(self, iter: int) -> None:
+    """Feed the detector once per outer iteration (paper Algorithm 1) and publish its outputs."""
+    coord = self.Coordinator
+    detector = self._get_detector()
+    if detector is None or not getattr(coord, "detector_per_outer_iteration", True):
+      return
+
+    q = np.abs(np.asarray(coord.q, dtype=float))
+    inc = float(np.max(q)) if q.size > 0 else 0.0
+    obj = float(self.fmin[0] if isinstance(self.fmin, (list, tuple, np.ndarray)) else self.fmin)
+    hmins = [self._scalarize_hmin(self.hmin_dict.get(sp.index, [0.])) for sp in self.subProblems]
+
+    owner = self._attribute_spike_subproblem()
+    owner_sp = next((sp for sp in self.subProblems if sp.index == owner), None)
+    detector.update_sp_features(getattr(owner_sp, "Il_file", None))
+    alarm = detector.update(obj=obj, inc=inc, hmins=hmins)
+
+    metrics = latest_detector_metrics(detector)
+    coord.qmax_predicted = metrics["forecast_prob"]
+    coord.fmin_predicted = metrics["objective_non_improvement_prob"]
+    coord.spike_prob = metrics["spike_prob"]
+    coord.forecast_prob = metrics["forecast_prob"]
+    coord.non_improvement_prob = metrics["non_improvement_prob"]
+    coord.objective_non_improvement_prob = metrics["objective_non_improvement_prob"]
+    coord.constraint_non_improvement_prob = metrics["constraint_non_improvement_prob"]
+    coord.detector_uncertainty = metrics["detector_uncertainty"]
+    coord.constraint_pressure = metrics["constraint_pressure"]
+    coord.ai_event_strength = float(max(metrics.values()))
+    coord.spike_location = owner
+    coord.alarm_detected = bool(alarm)
+    if str(getattr(coord, "spike_response", "accelerate")) == "causal":
+      coord._sp_late_improving = {sp.index: self._late_improving(getattr(sp, "Il_file", None)) for sp in self.subProblems}
   
   def initialize_OL_res_file(self, file):
     if not hasattr(self.Coordinator, "master_vars"):
@@ -175,14 +408,7 @@ class MDO(MDO_data):
     else:
       mode = 'w'
     with open(file, mode=mode) as csv_file:
-      keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', \
-              f'{"Max. inconsistency".rjust(30)}', \
-                f'{"Objective".rjust(30)}', \
-                  f'{"Status".rjust(30)}', \
-                    f'{"Variables change".rjust(30)}', \
-                      f'{"Maximum penalty".rjust(30)}', \
-                        f'{"Coupling_with_qmax".rjust(30)}'] + \
-                          [f'{f"{x.name}_{x.sp_index}".rjust(30)}' for x in self.Coordinator.master_vars]
+      keys = self._get_ol_keys()
       writer = csv.DictWriter(csv_file, fieldnames=keys)
       writer.writeheader()    # add column names in the CSV file
   
@@ -199,14 +425,7 @@ class MDO(MDO_data):
     
   def Add_OL_res_row(self, r: Dict):
     with open(self.Ol_file, mode='a') as csv_file:
-      keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', \
-              f'{"Max. inconsistency".rjust(30)}', \
-                f'{"Objective".rjust(30)}', \
-                  f'{"Status".rjust(30)}', \
-                    f'{"Variables change".rjust(30)}', \
-                      f'{"Maximum penalty".rjust(30)}', \
-                        f'{"Coupling_with_qmax".rjust(30)}'] + \
-                          [f'{f"{x.name}_{x.sp_index}".rjust(30)}' for x in self.Coordinator.master_vars]
+      keys = self._get_ol_keys()
       writer = csv.DictWriter(csv_file, fieldnames=keys)
       writer.writerow(r)    # add column names in the CSV file
 
@@ -215,11 +434,18 @@ class MDO(MDO_data):
     sp_vnames = [vs.name for vs in self.subProblems[s].vars]
     for nsp in range(len(self.subProblems)):
       ctemp = copy.deepcopy(self.subProblems[nsp].cache)
-      for ct in ctemp:
-        if len(temp_obj) == 0 or ct[0] < min(temp_obj):
-          temp_obj.append(ct[0])
+      if isinstance(ctemp, pd.DataFrame):
+        cache_rows = ctemp.to_dict("records")
+      else:
+        cache_rows = [
+          {"objective": ct[0], "penalty": ct[1], "vlist": ct[2], "outputs": ct[3]}
+          for ct in ctemp
+        ]
+      for ct in cache_rows:
+        if len(temp_obj) == 0 or ct["objective"] < min(temp_obj):
+          temp_obj.append(ct["objective"])
           if s == nsp:
-            copy.deepcopy(ct[1])
+            copy.deepcopy(ct["vlist"])
           else:
             svIndex = -1
             for v in self.subProblems[nsp].vars:
@@ -227,7 +453,7 @@ class MDO(MDO_data):
               try:
                 vindex = sp_vnames.index(v.name)
                 if v.link == self.subProblems[s].index:
-                  self.subProblems[s].vars[vindex].baseline = ct[1][svIndex]
+                  self.subProblems[s].vars[vindex].baseline = ct["vlist"][svIndex]
               except:  # noqa: E722
                 continue
             srIndex = -1
@@ -236,7 +462,7 @@ class MDO(MDO_data):
               try:
                 vindex = sp_vnames.index(v.name)
                 if v.link == self.subProblems[s].index:
-                  self.subProblems[s].vars[vindex].baseline = ct[2][srIndex]
+                  self.subProblems[s].vars[vindex].baseline = ct["outputs"][srIndex]
               except:  # noqa: E722
                 continue
     
@@ -256,7 +482,9 @@ class MDO(MDO_data):
     if self.iter == 0:
       self.subProblems[s].set_pair()
       self.Coordinator.v = [0.] * len(self.subProblems[s].coord._linker[0])
-      self.Coordinator.w = [1.] * len(self.subProblems[s].coord._linker[0])
+      # Initial penalty weight (coord.w_init, default 1); problems whose objective is large relative to the
+      # range-normalised inconsistencies need a larger start so the couplings are not ignored early on.
+      self.Coordinator.w = [float(getattr(self.Coordinator, "w_init", 1.0))] * len(self.subProblems[s].coord._linker[0])
       self.subProblems[s].coord = copy.deepcopy(self.Coordinator)
       
           
@@ -320,8 +548,21 @@ class MDO(MDO_data):
     self.mode = mode
     
     self.Coordinator.mode = mode
+    if self.Coordinator.is_AI_regularizer:
+      # Subproblem solves in parallel mode run in separate processes, so the shared detector cannot be fed there.
+      if str(mode).lower() != "serial":
+        self.Coordinator.detector_per_outer_iteration = False
+      detector = self._get_detector()
+      if detector is not None and detector.tol_floor <= 0.0:
+        detector.tol_floor = float(self.inc_stop)
+      # Tolerance reference for the threshold trigger (coordinator._threshold_spike).
+      self.Coordinator._tol_ref = float(self.inc_stop)
     for iter in range(self.Coordinator.budget):
       self.iter = iter
+      # Initialize hmin dictionary for each SP at the start of each iteration
+      self.hmin_dict = {}
+      if self.Coordinator.is_AI_regularizer:
+        self._reset_ai_regularizer_outputs()
       if iter > 0:
         # log = self.log
         # self.log = None
@@ -350,8 +591,22 @@ class MDO(MDO_data):
             self.subProblems[s].coord = self.Coordinator
           out_sp, sp = self.solve_subproblem(s)
           self.subProblems[s] = copy.deepcopy(sp)
+          # Collect hmin value for this SP
+          sp_index = self.subProblems[s].index
+          if (
+            self.subProblems[s].solver == "OMADS"
+            or self.subProblems[s].solver == "mads"
+            or self.subProblems[s].solver == "poll"
+            or self.subProblems[s].solver == "search"
+          ):
+            self.hmin_dict[sp_index] = out_sp["hmin"]
+          elif self.subProblems[s].solver == "scipy":
+            # Recorded by SP.solve with the same measure as OMADS (sum of squared violations).
+            self.hmin_dict[sp_index] = [float(getattr(self.subProblems[s], "hmin", 0.0))]
+          else:
+            self.hmin_dict[sp_index] = [0.]
           if self.subProblems[s].index == self.Coordinator.index_of_master_SP:
-            self.fmin = self.subProblems[s].fmin
+            self.fmin = self.subProblems[s].fmin_nop
             if self.subProblems[s].solver == "OMADS":
               self.hmin = out_sp["hmin"]
             else:
@@ -366,7 +621,10 @@ class MDO(MDO_data):
             else:
               self.hmin = [0.]
         self.Coordinator.calc_inconsistency()
-        self.Coordinator.update_multipliers(self.iter)
+        if self.Coordinator.is_AI_regularizer:
+          self._update_detector_outer_iteration(self.iter)
+        if not getattr(self.Coordinator, "single_multiplier_update", False):
+          self.Coordinator.update_multipliers(self.iter)
       else:
         # Parallel sunbproblems execution
         """ """
@@ -379,8 +637,14 @@ class MDO(MDO_data):
             s = future_to_index[future]
             out_sp, sp = future.result()
             self.subProblems[s] = copy.deepcopy(sp)
+            # Collect hmin value for this SP
+            sp_index = self.subProblems[s].index
+            if self.subProblems[s].solver == "OMADS":
+              self.hmin_dict[sp_index] = out_sp["hmin"]
+            else:
+              self.hmin_dict[sp_index] = [0.]
             if self.subProblems[s].index == self.Coordinator.index_of_master_SP:
-              self.fmin = self.subProblems[s].fmin
+              self.fmin = self.subProblems[s].fmin_nop
               if self.subProblems[s].solver == "OMADS":
                 self.hmin = out_sp["hmin"]
               else:
@@ -426,36 +690,73 @@ class MDO(MDO_data):
           f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].name}_'
         f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].link}')
       """ Write OL results to the file"""
-      keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', f'{"Max. inconsistency".rjust(30)}', \
-              f'{"Objective".rjust(30)}', f'{"Status".rjust(30)}', \
-              f'{"Variables change".rjust(30)}', f'{"Maximum penalty".rjust(30)}', f'{"Coupling_with_qmax".rjust(30)}'] + \
-                [f'{f"{x.name}_{x.sp_index}".rjust(30)}' for x in self.Coordinator.master_vars]
+      # The objective history must include this iteration before the adaptation scales are evaluated.
+      self.Coordinator.objective_history.append(float(self.fmin))
+      if self.Coordinator.is_AI_regularizer and hasattr(self.Coordinator, "_get_expected_spike_event"):
+        self.Coordinator._get_expected_spike_event(iter)
+      hmin_cols = self._get_hmin_columns()
+      keys = self._get_ol_keys()
       curr_time = time.strftime("%H:%M:%S", time.localtime()) 
       hmin = max(self.hmin) if isinstance(self.hmin, list) and self.hmin is not None and len(self.hmin) > 0 else self.hmin
       hstatus = "Feasible" if hmin <= 0 else "Infeasible"
       status = copy.deepcopy(hstatus) if self.fmin != np.inf else "Error"
       cmax = f'{self.Coordinator.master_vars[self.Coordinator.extended_linker[0,index]-1].name}_'+\
-      f'{self.Coordinator.master_vars[self.Coordinator.extended_linker[0,index]-1].link} '+\
-      f'to {self.Coordinator.master_vars[self.Coordinator.extended_linker[1,index]-1].name}'+\
-      f'_{self.Coordinator.master_vars[self.Coordinator.extended_linker[1,index]-1].link}'
-      row = {keys[0]: f'{f"{curr_time}"}', 
-              keys[1]: f'{f"{iter}".rjust(30)}', 
-              keys[2]: f'{f"{np.max(np.abs(self.Coordinator.q))}".rjust(30)}', 
-              keys[3]: f'{f"{self.fmin}".rjust(30)}', 
-              keys[4]: f'{f"{status}".rjust(30)}',
-              keys[5]: f'{f"{dx}".rjust(30)}',
-              keys[6]: f'{f"{np.max(self.Coordinator.w)}".rjust(30)}',
-              keys[7]: f'{f"{cmax}".rjust(30)}'}
+          f'{self.Coordinator.master_vars[self.Coordinator.extended_linker[0,index]-1].link} '+\
+          f'to {self.Coordinator.master_vars[self.Coordinator.extended_linker[1,index]-1].name}'+\
+          f'_{self.Coordinator.master_vars[self.Coordinator.extended_linker[1,index]-1].link}'
+      if self.Coordinator.is_AI_regularizer:
+        row = {keys[0]: str(curr_time),
+                keys[1]: str(iter).rjust(30),
+                keys[2]: str(np.max(np.abs(self.Coordinator.q))).rjust(30),
+                keys[3]: str(self.Coordinator.spike_location).rjust(30),
+                keys[4]: str(int(bool(getattr(self.Coordinator, "alarm_detected", False)))).rjust(30),
+                keys[5]: str(int(bool(getattr(self.Coordinator, "spike_detected", False)))).rjust(30),
+                keys[6]: str(self.fmin).rjust(30),
+                keys[7]: str(self.Coordinator.spike_prob).rjust(30),
+                keys[8]: str(self.Coordinator.forecast_prob).rjust(30),
+                keys[9]: str(self.Coordinator.non_improvement_prob).rjust(30),
+                keys[10]: str(self.Coordinator.objective_non_improvement_prob).rjust(30),
+                keys[11]: str(self.Coordinator.constraint_non_improvement_prob).rjust(30),
+                keys[12]: str(self.Coordinator.detector_uncertainty).rjust(30),
+                keys[13]: str(self.Coordinator.constraint_pressure).rjust(30),
+                keys[14]: str(status).rjust(30),
+                keys[15]: str(dx).rjust(30),
+                keys[16]: str(np.max(self.Coordinator.w)).rjust(30),
+                keys[17]: str(cmax).rjust(30)}
+        if getattr(self.Coordinator, "spike_adaptive_scales", True):
+          # Scales actually applied by update_multipliers this iteration (recomputing them here would see the cool-down).
+          _eff_w, _eff_g, _eff_b, _event = getattr(self.Coordinator, "_applied_scales", (1.0, 1.0, 1.0, ""))
+          row[f'{"Eff_spike_w_scale".rjust(30)}']    = f'{_eff_w:.6f}'.rjust(30)
+          row[f'{"Eff_spike_gamma_scale".rjust(30)}'] = f'{_eff_g:.6f}'.rjust(30)
+          row[f'{"Eff_budget_scale".rjust(30)}']      = f'{_eff_b:.6f}'.rjust(30)
+          row[f'{"Adapt_event".rjust(30)}']          = str(_event or "none").rjust(30)
+      else:
+        row = {keys[0]: str(curr_time),
+                keys[1]: str(iter).rjust(30),
+                keys[2]: str(np.max(np.abs(self.Coordinator.q))).rjust(30),
+                keys[3]: str(int(bool(getattr(self.Coordinator, "alarm_detected", False)))).rjust(30),
+                keys[4]: str(int(bool(getattr(self.Coordinator, "spike_detected", False)))).rjust(30),
+                keys[5]: str(self.fmin).rjust(30),
+                keys[6]: str(status).rjust(30),
+                keys[7]: str(dx).rjust(30),
+                keys[8]: str(np.max(self.Coordinator.w)).rjust(30),
+                keys[9]: str(cmax).rjust(30)}
+      
+      # Add hmin values for each subproblem
+      for sp_index, hmin_col in zip(self._get_sp_indices(), hmin_cols):
+        hmin_val = self.hmin_dict.get(sp_index, [0.])
+        row[hmin_col] = str(hmin_val).rjust(30)
       
       cv = 0
       lr = len(row)
       for v in self.Coordinator.master_vars:
-        row[keys[lr+cv]] = f'{f"{v.value}".rjust(30)}'
+        row[keys[lr+cv]] = str(v.value).rjust(30)
         cv += 1
         
       self.Add_OL_res_row(row)
       """ Update LM and PM """
       self.Coordinator.update_multipliers(iter)
+      self._rollback_step(iter)
 
       """ Stopping criteria """
       self.tab_inc.append(np.max(np.abs(self.Coordinator.q)))
