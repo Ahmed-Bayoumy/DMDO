@@ -54,6 +54,10 @@ _PSIZE_FLOOR_REL = 1e-4
 _PSIZE_FLOOR_SPAN_CAP = 100.0
 
 
+def _is_number(a) -> bool:
+  return isinstance(a, (int, float, np.number)) and not isinstance(a, bool)
+
+
 def _seed_all_rngs(seed: int) -> None:
   seed_value = int(seed)
   random.seed(seed_value)
@@ -593,6 +597,11 @@ class SubProblem(partitionedProblemData):
   def get_con(self, x):
     return self.evaluate(x, None, "con_only")
   
+  @staticmethod
+  def _is_out_of_bounds(vlist, lb, ub) -> bool:
+    return any(_is_number(x) and _is_number(lo) and _is_number(hi) and not (lo <= x <= hi)
+               for x, lo, hi in zip(vlist, lb, ub))
+
   def evaluate(self, vlist: List[float]=None, clist: List[float]=None, *argv):  # noqa: C901
     is_conOnly = False
     if argv is not None and len(argv)>0 and argv[0] == "con_only":
@@ -605,6 +614,9 @@ class SubProblem(partitionedProblemData):
     if vlist is None:
       v: List = self.get_design_vars()
       vlist: list = self.get_list_vars(v)
+    elif getattr(self, "_omads_bounds", None) is not None and self._is_out_of_bounds(vlist, *self._omads_bounds):
+      # Same output OMADS assigns to a failed evaluation.
+      return [np.inf, [np.inf]]
     
     self.set_variables_value(vlist, clist)
     self.MDA_process.setInputs(self.vars)
@@ -732,6 +744,12 @@ class SubProblem(partitionedProblemData):
     self.coord.v = copy.deepcopy(v)
     self.coord.w = copy.deepcopy(w)
     bl = self.get_list_vars(self.get_design_vars())
+    # Values carried over from other subproblems can land a round-off outside the bounds, which OMADS rejects
+    # ("mesh center values must satisfy: lb <= x^mesh <= ub"), so clamp the start point onto the box.
+    lbs = self.get_list_vars_lb(self.get_design_vars())
+    ubs = self.get_list_vars_ub(self.get_design_vars())
+    bl = [min(max(x, lo), hi) if _is_number(x) and _is_number(lo) and _is_number(hi) else x
+          for x, lo, hi in zip(bl, lbs, ubs)]
     if not(hasattr(self, "xmin_old")):
         self.xmin_old = copy.deepcopy(bl)
     res = None
@@ -945,23 +963,29 @@ class SubProblem(partitionedProblemData):
       # self.log.switch_handler(f"SP{self.index}")
       if not hasattr(self, "fmin_old"):
         self.fmin_old = np.inf
-      if self.solver == 'OMADS' or self.solver == 'MADS' or self.solver == 'mads' or self.solver == 'omads':
-        try:
-          out, _, _ = self.optimizer(data)
-        except Exception as exc:
-          # OMADS cache can occasionally desync its center index; retry once with cache disabled.
-          is_index_error = isinstance(exc, IndexError) or exc.__class__.__name__ == "IndexError"
-          cache_enabled = options.get("check_cache", True) or options.get("store_cache", True)
-          if is_index_error and "list index out of range" in str(exc) and cache_enabled:
-            options["check_cache"] = False
-            options["store_cache"] = False
-            data["options"] = options
+      # OMADS evaluates trial points it fails to snap onto the bounds; reject them in evaluate() so they can
+      # never become the next poll center (which OMADS refuses with "lb <= x^mesh <= ub").
+      self._omads_bounds = (param["lb"], param["ub"])
+      try:
+        if self.solver == 'OMADS' or self.solver == 'MADS' or self.solver == 'mads' or self.solver == 'omads':
+          try:
             out, _, _ = self.optimizer(data)
-          else:
-            raise
+          except Exception as exc:
+            # OMADS cache can occasionally desync its center index; retry once with cache disabled.
+            is_index_error = isinstance(exc, IndexError) or exc.__class__.__name__ == "IndexError"
+            cache_enabled = options.get("check_cache", True) or options.get("store_cache", True)
+            if is_index_error and "list index out of range" in str(exc) and cache_enabled:
+              options["check_cache"] = False
+              options["store_cache"] = False
+              data["options"] = options
+              out, _, _ = self.optimizer(data)
+            else:
+              raise
 
-      else:
-        out, _ = self.optimizer(data)
+        else:
+          out, _ = self.optimizer(data)
+      finally:
+        self._omads_bounds = None
       self.log = log_copy
       # self.log.switch_handler("DMDO")
       self.fmin = out["fmin"]
