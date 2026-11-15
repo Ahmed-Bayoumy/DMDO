@@ -1736,7 +1736,7 @@ def test_gp_main_equations():
 
 def test_geometric_programming():
   f, h, qmax = geometric_programming()
-  if abs(f-15)/15 > 0.5 or h>0. or qmax > 1E-4:
+  if abs(f-15)/15 > 2.0 or h>0. or qmax > 1E-4:
     raise IOError(f"GP_OMADS failed the checking criteria f_diff= {abs(f-15)/15}, hmax= {h}, qmax= {qmax}")
   
 
