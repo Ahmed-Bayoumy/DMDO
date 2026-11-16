@@ -2,5 +2,5 @@
 "Sellar, SLSQP",2,SciPy SLSQP,100,3.60373,3.18339,+13.20 %,9.72e-06,6
 "Sellar, POLL",2,OMADS poll,150,3.5216,3.18339,+10.62 %,6.24e-06,11
 "Sellar, MADS",2,OMADS MADS,150,3.2042,3.18339,+0.65 %,1.29e-06,9
-"Speed reducer, SLSQP",4,SciPy SLSQP,50,2741.41,n/a,n/a,7.40e-04,16
-"Geometric programming, MADS",3,OMADS MADS,100,20.2632,n/a,n/a,1.14e-07,11
+"Speed reducer, SLSQP",4,SciPy SLSQP,50,2741.41,2994.36,-8.45 %,7.40e-04,16
+"Geometric programming, MADS",3,OMADS MADS,100,20.2632,17.59,+15.20 %,1.14e-07,11

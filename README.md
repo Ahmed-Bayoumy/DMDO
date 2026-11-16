@@ -30,7 +30,7 @@ one optimizer that suits every discipline, and every code in one process. DMDO n
   the others, and an augmented Lagrangian coordinator drives the copies to agreement. Coupled analyses never have
   to be iterated to convergence inside the optimizer.
 - **Measured on the classic MDO benchmarks.** On the Sellar problem with derivative-free MADS subproblems, DMDO
-  reaches **f = 3.2042, 0.65 % from the known optimum 3.18339**, with the disciplines consistent to
+  reaches **f = 3.2042, 0.65 % from the best known solution 3.18339** [3], with the disciplines consistent to
   **1.3 × 10⁻⁶**. In all six recorded benchmark runs (Sellar, Golinski's speed reducer, a geometric program and a
   basic two-discipline problem), the inconsistency between disciplines falls **below 10⁻³ within 6 to 16 outer
   iterations**.
@@ -59,21 +59,26 @@ recorded benchmark runs. Details in the
 
 ## Benchmark results
 
-| Problem | Subproblems | Inner solver | Outer iterations | Final objective | Known optimum | Final max. inconsistency |
+| Problem | Subproblems | Inner solver | Outer iterations | Final objective (gap) | Best known solution | Final max. inconsistency |
 |---|:---:|---|:---:|---:|---:|---:|
-| Sellar | 2 | OMADS MADS | 150 | **3.2042** (+0.65 %) | 3.18339 | 1.3 × 10⁻⁶ |
-| Sellar | 2 | OMADS poll | 150 | 3.5216 (+10.6 %) | 3.18339 | 6.2 × 10⁻⁶ |
-| Sellar | 2 | SciPy SLSQP | 100 | 3.6037 (+13.2 %) | 3.18339 | 9.7 × 10⁻⁶ |
-| Speed reducer | 4 | SciPy SLSQP | 50 | 2741.41 | – | 7.4 × 10⁻⁴ |
-| Geometric program | 3 | OMADS MADS | 100 | 20.2632 | – | 1.1 × 10⁻⁷ |
+| Sellar | 2 | OMADS MADS | 150 | **3.2042** (+0.65 %) | 3.18339 [3] | 1.3 × 10⁻⁶ |
+| Sellar | 2 | OMADS poll | 150 | 3.5216 (+10.6 %) | 3.18339 [3] | 6.2 × 10⁻⁶ |
+| Sellar | 2 | SciPy SLSQP | 100 | 3.6037 (+13.2 %) | 3.18339 [3] | 9.7 × 10⁻⁶ |
+| Speed reducer | 4 | SciPy SLSQP | 50 | 2741.41 (−8.45 %)† | 2994.355 [3] | 7.4 × 10⁻⁴ |
+| Geometric program | 3 | OMADS MADS | 100 | 20.2632 (+15.2 %) | 17.59 [4] | 1.1 × 10⁻⁷ |
 | Basic problem | 2 | OMADS poll | 50 | 5.58977 | – | 3.1 × 10⁻⁷ |
-| Supersonic business jet (SBJ)\* | 4 | SciPy SLSQP | 100 | Wt = 35,374 lb | – | 4.4 × 10⁻⁵ |
-| Supersonic business jet (SBJ)\* | 4 | OMADS MADS | 33–64 | Wt = 33,536 lb (median of 86 runs) | – | 8.8 × 10⁻⁹ (median of 100 runs) |
+| Supersonic business jet (SBJ)\* | 4 | SciPy SLSQP | 100 | Wt = 35,374 lb (+5.3 %) | 33,600 lb [5] | 4.4 × 10⁻⁵ |
+| Supersonic business jet (SBJ)\* | 4 | OMADS MADS | 33–64 | Wt = 33,536 lb (−0.2 %; median of 86 runs) | 33,600 lb [5] | 8.8 × 10⁻⁹ (median of 100 runs) |
 
 The numbers come from the recorded regression traces in `tests/golden/traces`, which the current code reproduces
-bit for bit. The Sellar rows show why DMDO lets every subproblem choose its optimizer: with the same coordination,
+bit for bit; the best known solutions are taken from the references [3]–[5], and the gap is relative to them (no best
+known solution is published for the basic problem). The Sellar rows show why DMDO lets every subproblem choose its optimizer: with the same coordination,
 the full MADS algorithm ends within 0.65 % of the optimum, while the poll step alone and SLSQP settle on consistent
 but less optimal designs.
+
+† The speed-reducer run ends below the best known solution because it is not exactly consistent and feasible: its
+final inconsistency is 7.4 × 10⁻⁴, and the regression suite accepts subproblem constraint violations up to 0.06 for
+it.
 
 \* The SBJ rows come from the SBJ benchmarking campaigns rather than from recorded regression traces. The aircraft,
 propulsion, aerodynamics and structures subproblems (`tests/SBJ`) start from randomly perturbed designs; all
@@ -84,7 +89,8 @@ constraints are handled by the progressive barrier; the objective is the total w
   2026 with DMDO 2601 and OMADS 2401): every run brings the inconsistency between disciplines below 10⁻³ (median
   outer iteration 13) and below 10⁻⁴ (median iteration 18), and the final inconsistency has a median of
   8.8 × 10⁻⁹. 86 runs end consistent and meeting the 2000 nm range requirement, at a median weight of 33,536 lb
-  (middle half 26,600–38,800 lb); the histories of this campaign do not record the other disciplines' constraints.
+  (middle half 26,600–38,800 lb); the histories of this campaign do not record the other disciplines' constraints,
+  so a median slightly below the best known solution is compatible with small violations of those constraints.
 - **SLSQP** (one run, β = 1.8, γ = 0.9, at most 50 iterations per solve, 100 outer iterations): the inconsistency
   falls below 10⁻³ at outer iteration 14 and below 10⁻⁴ at iteration 32; the largest remaining constraint violation
   is 3.8 × 10⁻⁴.
@@ -245,6 +251,19 @@ If DMDO contributes to published work, please cite it as follows.
 
 This project is licensed under the GNU General Public License v3.0 or later (GPL-3.0-or-later). See the LICENSE file
 for details.
+
+## Benchmark references
+
+3. N. P. Tedford and J. R. R. A. Martins, "Benchmarking multidisciplinary design optimization algorithms",
+   *Optimization and Engineering*, 11(1), 159–183, 2010. https://doi.org/10.1007/s11081-009-9082-6 (Sellar: Sect.
+   5.1; speed reducer: Sect. 5.2)
+4. B. Talgorn, M. Kokkolaras, A. DeBlois and P. Piperni, "Numerical investigation of non-hierarchical coordination
+   for distributed multidisciplinary design optimization with fixed computational budget", *Structural and
+   Multidisciplinary Optimization*, 55(1), 205–220, 2017. https://doi.org/10.1007/s00158-016-1489-z (geometric
+   programming: Table 1)
+5. S. Tosserams, M. Kokkolaras, L. F. P. Etman and J. E. Rooda, "A nonhierarchical formulation of analytical target
+   cascading", *Journal of Mechanical Design*, 132(5), 051002, 2010. https://doi.org/10.1115/1.4001346 (supersonic
+   business jet: Table 2, lowest all-in-one optimal weight over 100 starting points)
 
 ## References to related frameworks
 

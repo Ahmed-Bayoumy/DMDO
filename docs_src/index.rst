@@ -27,7 +27,8 @@ in one process. DMDO removes those three requirements.
   Adaptive Direct Search (OMADS :cite:p:`OMADS_AB,audet2006mesh`), while a smooth analytical one uses SciPy's SLSQP,
   in the same run. Any other optimizer plugs in through a five-line strategy class.
 * **Measured on the classic MDO benchmarks.** On the Sellar problem :cite:p:`sellar1996response` with MADS
-  subproblems, DMDO reaches :math:`f = 3.2042`, **0.65 % from the known optimum** :math:`f^\ast = 3.18339`, with the
+  subproblems, DMDO reaches :math:`f = 3.2042`, **0.65 % from the best known solution**
+  :math:`f^\ast = 3.18339` :cite:p:`tedford2010benchmarking`, with the
   disciplines consistent to :math:`1.3\times10^{-6}`. Across the six recorded regression runs (Sellar, Golinski's
   speed reducer, a geometric program and a basic two-discipline problem), the maximum inconsistency between
   disciplines falls **below** :math:`10^{-3}` **within 6 to 16 outer iterations**; see :doc:`benchmarking`.
