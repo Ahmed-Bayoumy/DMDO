@@ -69,7 +69,6 @@ recorded benchmark runs. Details in the
 | Basic problem | 2 | OMADS poll | 50 | 5.58977 | – | 3.1 × 10⁻⁷ |
 | Supersonic business jet (SBJ)\* | 4 | SciPy SLSQP | 100 | Wt = 35,374 lb | – | 4.4 × 10⁻⁵ |
 | Supersonic business jet (SBJ)\* | 4 | OMADS MADS | 33–64 | Wt = 33,536 lb (median of 86 runs) | – | 8.8 × 10⁻⁹ (median of 100 runs) |
-| Supersonic business jet (SBJ)\* | 4 | OMADS poll | 100 | not consistent | – | 1.0 × 10⁻² (median of 40 runs) |
 
 The numbers come from the recorded regression traces in `tests/golden/traces`, which the current code reproduces
 bit for bit. The Sellar rows show why DMDO lets every subproblem choose its optimizer: with the same coordination,
@@ -89,9 +88,8 @@ constraints are handled by the progressive barrier; the objective is the total w
 - **SLSQP** (one run, β = 1.8, γ = 0.9, at most 50 iterations per solve, 100 outer iterations): the inconsistency
   falls below 10⁻³ at outer iteration 14 and below 10⁻⁴ at iteration 32; the largest remaining constraint violation
   is 3.8 × 10⁻⁴.
-- **OMADS poll** (40 runs, β = 1.8, γ = 0.9, 50 evaluations per solve, 100 outer iterations): with this small budget
-  no run reaches an inconsistency of 10⁻³ (final values 7.5 × 10⁻³ to 2.8 × 10⁻²). The same holds for MADS with 50
-  evaluations per solve (10 runs, β = 2.4, γ = 0.4; final values 5.0 × 10⁻² to 1.0 × 10⁻¹).
+- With only 50 evaluations per solve (10 runs, β = 2.4, γ = 0.4, 100 outer iterations), MADS does not reach an
+  inconsistency of 10⁻³ (final values 5.0 × 10⁻² to 1.0 × 10⁻¹).
 
 On SBJ the subproblem budget decides whether the derivative-free solvers converge: the structures subproblem, with
 72 constraints, needs a large budget for MADS to reach consistency.
