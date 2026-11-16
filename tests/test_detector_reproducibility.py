@@ -7,9 +7,9 @@ from types import SimpleNamespace
 import numpy as np
 import torch
 
-from DMDO.SP import SubProblem, _seed_all_rngs
-from DMDO.coordinator import ADMM
-from DMDO._detector import BayesianGRU, BayesianLSTM, HybridAnomalyDetector
+from DMDO.subproblem.subproblem import SubProblem, _seed_all_rngs
+from DMDO.coordination.admm import ADMM
+from DMDO.ai.detector import BayesianGRU, BayesianLSTM, HybridAnomalyDetector
 
 
 def _write_minimal_coordination_history(path):

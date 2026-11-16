@@ -22,18 +22,31 @@
 # ------------------------------------------------------------------------------------#
 # """
 
-from .DMDO import main, logger
-from .MDO import MDO, MDO_data
-from ._globals import BARRIER_TYPE, COUPLING_STRENGTH, COUPLING_TYPE, MDO_ARCHITECTURE, MODEL_TYPE, PSIZE_UPDATE, VALIDATOR, \
-VAR_TYPE, w_scheme, double_precision, USER
-from .SP import SubProblem, partitionedProblemData, process, variableData
-from ._protocols import Process_data
-from .coordinator import coordinationData, ADMM, ADMM_data
-from ._protocols import coordinator, search
-from .MDA import MDA, MDA_data
-from .DA import DA, DA_Data
-from .preprocess import problemSetup, optimizationData
+# Must stay first: loads the legacy module aliases before the names below are bound (see _legacy.py).
+from . import _legacy  # noqa: F401
+
+from .app.main import main, logger, build_mdo, load_setup
+from .app.session import RunResult, Session, SessionError
+from .workflow.mdo import MDO, MDO_data
+from .core.enums import (BARRIER_TYPE, COUPLING_STRENGTH, COUPLING_TYPE, MDO_ARCHITECTURE, MODEL_TYPE, PSIZE_UPDATE,
+                         VALIDATOR, VAR_TYPE, w_scheme, double_precision, USER)
+from .subproblem.subproblem import SubProblem, partitionedProblemData, process, variableData
+from .core.protocols import Process_data
+from .coordination.admm import coordinationData, ADMM, ADMM_data
+from .core.protocols import coordinator, search
+from .analysis.mda import MDA, MDA_data
+from .analysis.da import DA, DA_Data
+from .app.builder import problemSetup, optimizationData
 from .dashboard import main as dmdo_dash
+from .ports import (Discipline, Executor, IterationRecord, RunObserver, SubproblemSolver, SolverRequest,
+                    SolverOutcome)
+from .registry import Registry, blackboxes, executors, register_blackbox, solvers
+from .solvers import BaseSolver
+from .workflow.execution import (InProcessExecutor, ProcessExecutor, SubproblemResult, SubproblemTask,
+                                 create_executor, solve_task)
+from .coordination.policy import CoordinationPolicy, NeutralPolicy, SpikeAdaptationPolicy, policies, policy_for
+from .workflow.observers import CheckpointWriter, ConsoleReporter, CoordinationHistoryRecorder
+from .workflow.ai_hooks import AIRegularizerHooks, RollbackGuard
 
 __all__: list[str] = [
   'USER', 
@@ -67,5 +80,39 @@ __all__: list[str] = [
   'problemSetup', 
   'main',
   'logger',
-  'dmdo_dash'
+  'dmdo_dash',
+  'Discipline',
+  'SubproblemSolver',
+  'SolverRequest',
+  'SolverOutcome',
+  'BaseSolver',
+  'Registry',
+  'solvers',
+  'blackboxes',
+  'register_blackbox',
+  'Executor',
+  'executors',
+  'InProcessExecutor',
+  'ProcessExecutor',
+  'SubproblemTask',
+  'SubproblemResult',
+  'create_executor',
+  'solve_task',
+  'RunObserver',
+  'IterationRecord',
+  'CheckpointWriter',
+  'ConsoleReporter',
+  'CoordinationHistoryRecorder',
+  'AIRegularizerHooks',
+  'RollbackGuard',
+  'CoordinationPolicy',
+  'NeutralPolicy',
+  'SpikeAdaptationPolicy',
+  'policies',
+  'policy_for',
+  'Session',
+  'RunResult',
+  'SessionError',
+  'build_mdo',
+  'load_setup',
   ]

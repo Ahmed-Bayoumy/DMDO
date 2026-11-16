@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" data-theme="light">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Problem definition &#8212; DMDO 2612.0</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=6a604523" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=1819abab" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
+
+    <script src="../_static/documentation_options.js?v=d587bd99"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=fd10adb8"></script>
+    <script data-sd-tabs-storage-prefix="sphinx-design-tab-id-" src="../_static/design-tabs.js?v=fcb327ea"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.js"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'user_guide/problem_definition';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Outputs" href="outputs.html" />
+    <link rel="prev" title="The HTTP service and remote workers" href="../tutorials/service.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="2612.0" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="light">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+    
+    <img src="../_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.0 - Home"/>
+    <img src="../_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.0 - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../getting_started.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../background.html">
+    Background
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../implementation.html">
+    Implementation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../benchmarking.html">
+    Benchmarking
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#" aria-current="page">
+    Problem definition
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="outputs.html">
+    Outputs
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../api/index.html">
+    API reference
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../references.html">
+    References
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Ahmed-Bayoumy/DMDO" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../getting_started.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../background.html">
+    Background
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../implementation.html">
+    Implementation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../benchmarking.html">
+    Benchmarking
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#" aria-current="page">
+    Problem definition
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="outputs.html">
+    Outputs
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api/index.html">
+    API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../references.html">
+    References
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Ahmed-Bayoumy/DMDO" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"></div>
+</nav></div>
+        <div class="sidebar-primary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#variables"><code class="docutils literal notranslate"><span class="pre">variables</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#da-disciplinary-analyses"><code class="docutils literal notranslate"><span class="pre">DA</span></code>: disciplinary analyses</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mda-analyses-per-subproblem"><code class="docutils literal notranslate"><span class="pre">MDA</span></code>: analyses per subproblem</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#coord-the-coordinator"><code class="docutils literal notranslate"><span class="pre">coord</span></code>: the coordinator</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subproblem"><code class="docutils literal notranslate"><span class="pre">subproblem</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#config-omads-settings"><code class="docutils literal notranslate"><span class="pre">CONFIG</span></code>: OMADS settings</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mdo-the-run"><code class="docutils literal notranslate"><span class="pre">MDO</span></code>: the run</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sets-and-user"><code class="docutils literal notranslate"><span class="pre">Sets</span></code> and <code class="docutils literal notranslate"><span class="pre">USER</span></code></a></li>
+</ul>
+  </nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-house"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Problem definition</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="problem-definition">
+<h1>Problem definition<a class="headerlink" href="#problem-definition" title="Link to this heading">#</a></h1>
+<p>A DMDO problem is described by a dictionary, usually read from a YAML file with <a class="reference internal" href="../api/session.html#DMDO.load_setup" title="DMDO.load_setup"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_setup()</span></code></a> and built
+by <a class="reference internal" href="../api/session.html#DMDO.Session" title="DMDO.Session"><code class="xref py py-class docutils literal notranslate"><span class="pre">Session</span></code></a> (or <a class="reference internal" href="../api/session.html#DMDO.build_mdo" title="DMDO.build_mdo"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_mdo()</span></code></a>, <a class="reference internal" href="../api/session.html#DMDO.main" title="DMDO.main"><code class="xref py py-func docutils literal notranslate"><span class="pre">main()</span></code></a>). This page lists every section and key.
+<code class="docutils literal notranslate"><span class="pre">examples/basic_problem.yaml</span></code> is a complete example (<a class="reference internal" href="../getting_started.html"><span class="doc">Getting started</span></a>).</p>
+<div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>Three settings have defaults that are easy to get wrong:</p>
+<ul class="simple">
+<li><p>declare real variables with the type <code class="docutils literal notranslate"><span class="pre">REAL</span></code>. OMADS optimizes variables of any other type, including the
+short form <code class="docutils literal notranslate"><span class="pre">R</span></code>, on an integer lattice;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gamma</span></code> defaults to <code class="docutils literal notranslate"><span class="pre">0</span></code>: every link whose inconsistency is not exactly zero then counts as stalled and its
+penalty weight grows at every outer iteration. Values around <code class="docutils literal notranslate"><span class="pre">0.2</span></code>–<code class="docutils literal notranslate"><span class="pre">0.5</span></code> are usual;</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">scaling</span></code> is used only when it is a float (<code class="docutils literal notranslate"><span class="pre">0.1</span></code>, not <code class="docutils literal notranslate"><span class="pre">10</span></code>); otherwise the scale factors are computed from
+the variable bounds.</p></li>
+</ul>
+</div>
+<section id="variables">
+<h2><code class="docutils literal notranslate"><span class="pre">variables</span></code><a class="headerlink" href="#variables" title="Link to this heading">#</a></h2>
+<p>One entry per variable <strong>copy</strong>; each entry is a list:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">variables</span><span class="p">:</span>
+<span class="w">  </span><span class="c1">#    [name, subproblem, link, coupling, lb,  baseline, ub,  dim, type]</span>
+<span class="w">  </span><span class="nt">v0</span><span class="p">:</span><span class="w">  </span><span class="p p-Indicator">[</span><span class="s">"u"</span><span class="p p-Indicator">,</span><span class="w">  </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w">          </span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="w">    </span><span class="nv">s</span><span class="p p-Indicator">,</span><span class="w">        </span><span class="nv">0.</span><span class="p p-Indicator">,</span><span class="w">  </span><span class="nv">1.</span><span class="p p-Indicator">,</span><span class="w">       </span><span class="nv">10.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w">   </span><span class="nv">REAL</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">v1</span><span class="p">:</span><span class="w">  </span><span class="p p-Indicator">[</span><span class="s">"v"</span><span class="p p-Indicator">,</span><span class="w">  </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w">          </span><span class="nv">None</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">u</span><span class="p p-Indicator">,</span><span class="w">        </span><span class="nv">0.</span><span class="p p-Indicator">,</span><span class="w">  </span><span class="nv">1.</span><span class="p p-Indicator">,</span><span class="w">       </span><span class="nv">10.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w">   </span><span class="nv">REAL</span><span class="p p-Indicator">]</span>
+</pre></div>
+</div>
+<div class="pst-scrollable-table-container"><table class="dmdo-ref table">
+<colgroup>
+<col style="width: 16.0%" />
+<col style="width: 84.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Item</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">name</span></code></p></td>
+<td><p>Variable name. Copies of the same quantity in different subproblems share the name.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">subproblem</span></code></p></td>
+<td><p>Index of the subproblem that holds this copy.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">link</span></code></p></td>
+<td><p>Index of the subproblem holding the copy this one must agree with (a list for several), or <code class="docutils literal notranslate"><span class="pre">None</span></code> for a
+local variable.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">coupling</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">s</span></code> shared design variable, <code class="docutils literal notranslate"><span class="pre">ff</span></code> feed-forward coupling, <code class="docutils literal notranslate"><span class="pre">fb</span></code> feedback coupling, <code class="docutils literal notranslate"><span class="pre">u</span></code> local
+(uncoupled), <code class="docutils literal notranslate"><span class="pre">CP</span></code> constant parameter, <code class="docutils literal notranslate"><span class="pre">dummy</span></code> placeholder.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">lb</span></code>, <code class="docutils literal notranslate"><span class="pre">ub</span></code></p></td>
+<td><p>Bounds. They also set the default scale of the inconsistencies (<a class="reference internal" href="../background.html"><span class="doc">Background</span></a>).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">baseline</span></code></p></td>
+<td><p>Starting value.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">dim</span></code></p></td>
+<td><p>Dimension (vector-valued variables have one inconsistency per component).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">type</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">REAL</span></code> (recommended to give explicitly) or <code class="docutils literal notranslate"><span class="pre">INTEGER</span></code>. Default: <code class="docutils literal notranslate"><span class="pre">R</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="da-disciplinary-analyses">
+<h2><code class="docutils literal notranslate"><span class="pre">DA</span></code>: disciplinary analyses<a class="headerlink" href="#da-disciplinary-analyses" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="dmdo-ref table">
+<colgroup>
+<col style="width: 22.0%" />
+<col style="width: 78.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">index</span></code></p></td>
+<td><p>Analysis index, referenced from <code class="docutils literal notranslate"><span class="pre">MDA</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">inputs</span></code></p></td>
+<td><p>Variable keys the analysis reads, in the order the callable receives them.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">outputs</span></code></p></td>
+<td><p>Variable keys the analysis computes, in the order the callable returns them.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">blackbox</span></code></p></td>
+<td><p>Name of the analysis: a key of the session’s <code class="docutils literal notranslate"><span class="pre">blackboxes</span></code> mapping, a registered name, or an import path
+<code class="docutils literal notranslate"><span class="pre">&quot;package.module:attr&quot;</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">type</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">callable</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">links</span></code>, <code class="docutils literal notranslate"><span class="pre">coupling_type</span></code></p></td>
+<td><p>Descriptive: the subproblem the outputs go to and the coupling type (<code class="docutils literal notranslate"><span class="pre">ff</span></code>, <code class="docutils literal notranslate"><span class="pre">fb</span></code>, <code class="docutils literal notranslate"><span class="pre">s</span></code>, <code class="docutils literal notranslate"><span class="pre">un</span></code>).</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="mda-analyses-per-subproblem">
+<h2><code class="docutils literal notranslate"><span class="pre">MDA</span></code>: analyses per subproblem<a class="headerlink" href="#mda-analyses-per-subproblem" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="dmdo-ref table">
+<colgroup>
+<col style="width: 22.0%" />
+<col style="width: 78.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">index</span></code></p></td>
+<td><p>MDA index, referenced from the subproblem.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">nAnalyses</span></code>, <code class="docutils literal notranslate"><span class="pre">analyses</span></code></p></td>
+<td><p>Number and indices of the analyses evaluated, in order, for each design of the subproblem.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">variables</span></code></p></td>
+<td><p>Variable keys the analyses read from the subproblem.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">responses</span></code></p></td>
+<td><p>Variable keys the analyses compute.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="coord-the-coordinator">
+<h2><code class="docutils literal notranslate"><span class="pre">coord</span></code>: the coordinator<a class="headerlink" href="#coord-the-coordinator" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="dmdo-ref table">
+<colgroup>
+<col style="width: 24.0%" />
+<col style="width: 16.0%" />
+<col style="width: 60.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">index</span></code></p></td>
+<td><p>(required)</p></td>
+<td><p>Coordinator index, referenced from the subproblems and <code class="docutils literal notranslate"><span class="pre">MDO</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">type</span></code></p></td>
+<td><p>(required)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">ADMM</span></code>, the only coordinator type.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">budget</span></code></p></td>
+<td><p>(required)</p></td>
+<td><p>Maximum number of outer iterations.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">nsp</span></code></p></td>
+<td><p>(required)</p></td>
+<td><p>Number of subproblems.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">index_of_master_SP</span></code></p></td>
+<td><p>(required)</p></td>
+<td><p>Subproblem that holds the system objective.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">beta</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1.8</span></code></p></td>
+<td><p>Penalty growth factor <span class="math notranslate nohighlight">\(\beta &gt; 1\)</span>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">gamma</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">0.0</span></code></p></td>
+<td><p>Stall threshold <span class="math notranslate nohighlight">\(\gamma\)</span>: a link stalls when <span class="math notranslate nohighlight">\(|q^{t}| &gt; \gamma |q^{t-1}|\)</span>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">M_update_scheme</span></code></p></td>
+<td><p>(required)</p></td>
+<td><p>Which stalled links grow: <code class="docutils literal notranslate"><span class="pre">normal</span></code>, <code class="docutils literal notranslate"><span class="pre">median</span></code>, <code class="docutils literal notranslate"><span class="pre">max</span></code> or <code class="docutils literal notranslate"><span class="pre">rank</span></code> (<a class="reference internal" href="../background.html"><span class="doc">Background</span></a>).</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">scaling</span></code></p></td>
+<td><p>bounds</p></td>
+<td><p>A float scales every inconsistency by that constant; any other value uses <span class="math notranslate nohighlight">\(0.1/(u-\ell)\)</span> per copy.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">mode</span></code></p></td>
+<td><p>(required)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">serial</span></code> or <code class="docutils literal notranslate"><span class="pre">parallel</span></code>; the run’s <code class="docutils literal notranslate"><span class="pre">mode</span></code> argument takes precedence.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">display</span></code>, <code class="docutils literal notranslate"><span class="pre">store_q_io</span></code></p></td>
+<td><p>(required)</p></td>
+<td><p>Console output of the coordinator; whether to store the inconsistency history.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">adaptation_policy</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">none</span></code></p></td>
+<td><p>Name of the coordination policy (<a class="reference internal" href="../tutorials/extending.html"><span class="doc">Extending DMDO</span></a>).</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="subproblem">
+<h2><code class="docutils literal notranslate"><span class="pre">subproblem</span></code><a class="headerlink" href="#subproblem" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="dmdo-ref table">
+<colgroup>
+<col style="width: 22.0%" />
+<col style="width: 16.0%" />
+<col style="width: 62.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">index</span></code>, <code class="docutils literal notranslate"><span class="pre">nv</span></code></p></td>
+<td><p>(required)</p></td>
+<td><p>Subproblem index and number of design variables.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">vars</span></code></p></td>
+<td><p>(required)</p></td>
+<td><p>Variable keys of the design vector <code class="docutils literal notranslate"><span class="pre">x</span></code> passed to the objective.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">resps</span></code></p></td>
+<td><p>(required)</p></td>
+<td><p>Variable keys of the responses <code class="docutils literal notranslate"><span class="pre">y</span></code> passed to the objective.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">is_main</span></code></p></td>
+<td><p>(required)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">True</span></code> for the master subproblem.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MDA</span></code>, <code class="docutils literal notranslate"><span class="pre">coordinator</span></code></p></td>
+<td><p>(required)</p></td>
+<td><p>Indices of the subproblem’s MDA and coordinator.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">opt</span></code>, <code class="docutils literal notranslate"><span class="pre">type</span></code></p></td>
+<td><p>(required)</p></td>
+<td><p>Name of the objective callable (resolved like <code class="docutils literal notranslate"><span class="pre">blackbox</span></code>) and <code class="docutils literal notranslate"><span class="pre">callable</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">solver</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">mads</span></code></p></td>
+<td><p>Inner solver: <code class="docutils literal notranslate"><span class="pre">mads</span></code>, <code class="docutils literal notranslate"><span class="pre">poll</span></code>, <code class="docutils literal notranslate"><span class="pre">search</span></code>, <code class="docutils literal notranslate"><span class="pre">scipy</span></code> or a registered strategy.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">budget</span></code></p></td>
+<td><p>(required)</p></td>
+<td><p>Evaluation budget of each inner solve.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">scipy</span></code></p></td>
+<td><p>SLSQP</p></td>
+<td><p>For <code class="docutils literal notranslate"><span class="pre">solver:</span> <span class="pre">scipy</span></code>: <code class="docutils literal notranslate"><span class="pre">{method,</span> <span class="pre">options,</span> <span class="pre">tol,</span> <span class="pre">is_con}</span></code>. <code class="docutils literal notranslate"><span class="pre">is_con:</span> <span class="pre">true</span></code> passes the constraints to the
+optimizer; otherwise they are penalized.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">configurations</span></code></p></td>
+<td><p>none</p></td>
+<td><p>Name of an entry of the <code class="docutils literal notranslate"><span class="pre">CONFIG</span></code> section with OMADS settings for this subproblem.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">psize</span></code>, <code class="docutils literal notranslate"><span class="pre">pupdate</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1.0</span></code>, <code class="docutils literal notranslate"><span class="pre">last</span></code></p></td>
+<td><p>Initial OMADS frame size, and how it carries over between outer iterations (<code class="docutils literal notranslate"><span class="pre">last</span></code>, <code class="docutils literal notranslate"><span class="pre">success</span></code>,
+<code class="docutils literal notranslate"><span class="pre">max</span></code>, <code class="docutils literal notranslate"><span class="pre">default</span></code>).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fmin_nop</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">inf</span></code></p></td>
+<td><p>Initial best objective.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">freal</span></code></p></td>
+<td><p>none</p></td>
+<td><p>A reference value of the objective, used to report the relative objective error of the master subproblem.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">display</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
+<td><p>Console output of the inner solver.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="config-omads-settings">
+<h2><code class="docutils literal notranslate"><span class="pre">CONFIG</span></code>: OMADS settings<a class="headerlink" href="#config-omads-settings" title="Link to this heading">#</a></h2>
+<p>Named blocks of OMADS options, referenced by <code class="docutils literal notranslate"><span class="pre">configurations</span></code>. Each has an <code class="docutils literal notranslate"><span class="pre">options</span></code> part (<code class="docutils literal notranslate"><span class="pre">seed</span></code>, <code class="docutils literal notranslate"><span class="pre">budget</span></code>,
+<code class="docutils literal notranslate"><span class="pre">tol</span></code>, <code class="docutils literal notranslate"><span class="pre">psize_init</span></code>, <code class="docutils literal notranslate"><span class="pre">opportunistic</span></code>, <code class="docutils literal notranslate"><span class="pre">rich_direction</span></code>, <code class="docutils literal notranslate"><span class="pre">check_cache</span></code>, <code class="docutils literal notranslate"><span class="pre">store_cache</span></code>, …) and a
+<code class="docutils literal notranslate"><span class="pre">search</span></code> part (<code class="docutils literal notranslate"><span class="pre">type</span></code>, <code class="docutils literal notranslate"><span class="pre">s_method</span></code>, <code class="docutils literal notranslate"><span class="pre">ns</span></code>); see the OMADS documentation <span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id24" title="Ahmed H. Bayoumy. OMADS: optimization using mesh adaptive direct search. 2022. URL: https://github.com/Ahmed-Bayoumy/OMADS, doi:10.5281/zenodo.23407559.">Bayoumy, 2022</a>]</span> for their meaning.</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">CONFIG</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">CSP1</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">seed</span><span class="p">:</span><span class="w"> </span><span class="nv">12345</span><span class="p p-Indicator">,</span><span class="nt"> budget</span><span class="p">:</span><span class="w"> </span><span class="nv">250</span><span class="p p-Indicator">,</span><span class="nt"> tol</span><span class="p">:</span><span class="w"> </span><span class="nv">1.0e-9</span><span class="p p-Indicator">,</span><span class="nt"> psize_init</span><span class="p">:</span><span class="w"> </span><span class="nv">2.0</span><span class="p p-Indicator">,</span><span class="nt"> opportunistic</span><span class="p">:</span><span class="w"> </span><span class="nv">False</span><span class="p p-Indicator">,</span>
+<span class="nt">              check_cache</span><span class="p">:</span><span class="w"> </span><span class="nv">True</span><span class="p p-Indicator">,</span><span class="nt"> store_cache</span><span class="p">:</span><span class="w"> </span><span class="nv">True</span><span class="p p-Indicator">,</span><span class="nt"> rich_direction</span><span class="p">:</span><span class="w"> </span><span class="nv">True</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="nt">search</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="nv">sampling</span><span class="p p-Indicator">,</span><span class="nt"> s_method</span><span class="p">:</span><span class="w"> </span><span class="nv">ACTIVE</span><span class="p p-Indicator">,</span><span class="nt"> ns</span><span class="p">:</span><span class="w"> </span><span class="nv">10</span><span class="p p-Indicator">}</span>
+</pre></div>
+</div>
+</section>
+<section id="mdo-the-run">
+<h2><code class="docutils literal notranslate"><span class="pre">MDO</span></code>: the run<a class="headerlink" href="#mdo-the-run" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="dmdo-ref table">
+<colgroup>
+<col style="width: 22.0%" />
+<col style="width: 22.0%" />
+<col style="width: 56.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Key</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">coordinator</span></code>, <code class="docutils literal notranslate"><span class="pre">subproblems</span></code></p></td>
+<td><p>(required)</p></td>
+<td><p>Coordinator index and the list of subproblem indices, in sweep order.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">responses</span></code></p></td>
+<td><p>(required)</p></td>
+<td><p>Variable keys of all analysis responses.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">inc_stop</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1e-9</span></code></p></td>
+<td><p>Stop when the maximum inconsistency is below this value and no longer changes (must be a float).</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">noprogress_stop</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">100</span></code></p></td>
+<td><p>Stop when the maximum inconsistency has not improved for this many outer iterations.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">display</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">True</span></code></p></td>
+<td><p>One progress line per outer iteration.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">stop</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">&quot;Iteration</span> <span class="pre">budget</span> <span class="pre">exhausted&quot;</span></code></p></td>
+<td><p>Initial stopping message, reported if no criterion triggers.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">fmin</span></code>, <code class="docutils literal notranslate"><span class="pre">hmin</span></code>, <code class="docutils literal notranslate"><span class="pre">tab_inc</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">inf</span></code>, <code class="docutils literal notranslate"><span class="pre">inf</span></code>, <code class="docutils literal notranslate"><span class="pre">[]</span></code></p></td>
+<td><p>Initial values of the run’s records.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">architecture</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">IDF</span></code></p></td>
+<td><p>Informational; DMDO solves the distributed NHATC formulation of <a class="reference internal" href="../background.html"><span class="doc">Background</span></a>.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+<section id="sets-and-user">
+<h2><code class="docutils literal notranslate"><span class="pre">Sets</span></code> and <code class="docutils literal notranslate"><span class="pre">USER</span></code><a class="headerlink" href="#sets-and-user" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">Sets</span></code> defines named value sets for categorical and discrete variables. <code class="docutils literal notranslate"><span class="pre">USER</span></code> holds free-form user data,
+attached to the built problem.</p>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="../tutorials/service.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">The HTTP service and remote workers</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="outputs.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Outputs</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2022-2026, Ahmed H. Bayoumy.
+      <br/>
+    
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.1.
+  </p>
+</div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

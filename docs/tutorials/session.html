@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" data-theme="light">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>The Session API &#8212; DMDO 2612.0</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=6a604523" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=1819abab" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
+
+    <script src="../_static/documentation_options.js?v=d587bd99"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=fd10adb8"></script>
+    <script data-sd-tabs-storage-prefix="sphinx-design-tab-id-" src="../_static/design-tabs.js?v=fcb327ea"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.js"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/session';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Serial, parallel and custom execution" href="parallel.html" />
+    <link rel="prev" title="The Sellar problem" href="sellar.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="2612.0" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="light">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+    
+    <img src="../_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.0 - Home"/>
+    <img src="../_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.0 - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../getting_started.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../background.html">
+    Background
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../implementation.html">
+    Implementation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../benchmarking.html">
+    Benchmarking
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../user_guide/problem_definition.html">
+    Problem definition
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../user_guide/outputs.html">
+    Outputs
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../api/index.html">
+    API reference
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../references.html">
+    References
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Ahmed-Bayoumy/DMDO" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../getting_started.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../background.html">
+    Background
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../implementation.html">
+    Implementation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../benchmarking.html">
+    Benchmarking
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../user_guide/problem_definition.html">
+    Problem definition
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../user_guide/outputs.html">
+    Outputs
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api/index.html">
+    API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../references.html">
+    References
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Ahmed-Bayoumy/DMDO" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="basic.html">The basic problem from YAML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sellar.html">The Sellar problem</a></li>
+<li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">The Session API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parallel.html">Serial, parallel and custom execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extending.html">Extending DMDO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="service.html">The HTTP service and remote workers</a></li>
+</ul>
+</div>
+</nav></div>
+        <div class="sidebar-primary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-example">The example</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#building-a-session">Building a session</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#stepping-and-stopping">Stepping and stopping</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#observers">Observers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ask-and-tell">ask and tell</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#results">Results</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#checkpoints-and-resume">Checkpoints and resume</a></li>
+</ul>
+  </nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-house"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Tutorials</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">The Session API</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="the-session-api">
+<h1>The Session API<a class="headerlink" href="#the-session-api" title="Link to this heading">#</a></h1>
+<p><a class="reference internal" href="../api/session.html#DMDO.Session" title="DMDO.Session"><code class="xref py py-class docutils literal notranslate"><span class="pre">Session</span></code></a> is the entry point for driving DMDO from other code. It builds a problem and drives its
+coordination loop in three ways, which can be mixed within one run:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">run()</span></code></dt><dd><p>to the end, with the session’s executor;</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">step()</span></code></dt><dd><p>one outer iteration at a time, returning an <a class="reference internal" href="../api/ports.html#DMDO.IterationRecord" title="DMDO.IterationRecord"><code class="xref py py-class docutils literal notranslate"><span class="pre">IterationRecord</span></code></a>;</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">ask()</span></code> / <code class="docutils literal notranslate"><span class="pre">tell(results)</span></code></dt><dd><p>the caller solves the subproblem tasks itself and hands the results back.</p>
+</dd>
+</dl>
+<p>All three execute the same coordination code, so they produce identical results.</p>
+<section id="the-example">
+<h2>The example<a class="headerlink" href="#the-example" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">examples/session_basics.py</span></code> runs the basic problem (8 outer iterations, for a quick demonstration) in the three
+ways:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">basic_disciplines</span><span class="w"> </span><span class="kn">import</span> <span class="n">BLACKBOXES</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">DMDO</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunObserver</span><span class="p">,</span> <span class="n">Session</span><span class="p">,</span> <span class="n">load_setup</span><span class="p">,</span> <span class="n">solve_task</span>
+
+<span class="n">HERE</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+<span class="n">SETUP</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">HERE</span><span class="p">,</span> <span class="s2">"basic_problem.yaml"</span><span class="p">)</span>
+<span class="n">WORK</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">HERE</span><span class="p">,</span> <span class="s2">"_runs"</span><span class="p">)</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Progress</span><span class="p">(</span><span class="n">RunObserver</span><span class="p">):</span>
+<span class="w">  </span><span class="sd">"""Receives one IterationRecord per outer iteration (could push to a dashboard or a message queue)."""</span>
+
+  <span class="k">def</span><span class="w"> </span><span class="nf">on_iteration_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">,</span> <span class="n">record</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  [observer] iteration </span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">iteration</span><span class="si">}</span><span class="s2">: objective=</span><span class="si">{</span><span class="nb">float</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">objective</span><span class="p">)</span><span class="si">:</span><span class="s2">.6f</span><span class="si">}</span><span class="s2"> "</span>
+          <span class="sa">f</span><span class="s2">"max|q|=</span><span class="si">{</span><span class="n">record</span><span class="o">.</span><span class="n">max_inconsistency</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
+  <span class="n">data</span> <span class="o">=</span> <span class="n">load_setup</span><span class="p">(</span><span class="n">SETUP</span><span class="p">)</span>
+  <span class="n">data</span><span class="p">[</span><span class="s2">"coord"</span><span class="p">][</span><span class="s2">"c1"</span><span class="p">][</span><span class="s2">"budget"</span><span class="p">]</span> <span class="o">=</span> <span class="mi">8</span>   <span class="c1"># problem definitions are plain dictionaries: adjust before building</span>
+  <span class="n">data</span><span class="p">[</span><span class="s2">"MDO"</span><span class="p">][</span><span class="s2">"display"</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>     <span class="c1"># no per-iteration console lines</span>
+
+  <span class="c1"># 1. Run to the end.</span>
+  <span class="n">result</span> <span class="o">=</span> <span class="n">Session</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">working_dir</span><span class="o">=</span><span class="n">WORK</span><span class="p">,</span> <span class="n">mdo_name</span><span class="o">=</span><span class="s2">"run"</span><span class="p">,</span> <span class="n">blackboxes</span><span class="o">=</span><span class="n">BLACKBOXES</span><span class="p">)</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+  <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"run():  </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">iterations</span><span class="si">}</span><span class="s2"> iterations, objective </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">objective</span><span class="si">}</span><span class="s2">, "</span>
+        <span class="sa">f</span><span class="s2">"max|q| </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">max_inconsistency</span><span class="si">:</span><span class="s2">.3e</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">stop_reason</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+
+  <span class="c1"># 2. One outer iteration at a time, with an observer.</span>
+  <span class="k">with</span> <span class="n">Session</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">working_dir</span><span class="o">=</span><span class="n">WORK</span><span class="p">,</span> <span class="n">mdo_name</span><span class="o">=</span><span class="s2">"step"</span><span class="p">,</span> <span class="n">blackboxes</span><span class="o">=</span><span class="n">BLACKBOXES</span><span class="p">,</span>
+                         <span class="n">observers</span><span class="o">=</span><span class="p">[</span><span class="n">Progress</span><span class="p">()])</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">record</span> <span class="o">:=</span> <span class="n">session</span><span class="o">.</span><span class="n">step</span><span class="p">())</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="k">if</span> <span class="n">record</span><span class="o">.</span><span class="n">max_inconsistency</span> <span class="o">&lt;</span> <span class="mf">3e-2</span><span class="p">:</span>
+        <span class="n">session</span><span class="o">.</span><span class="n">request_stop</span><span class="p">()</span>          <span class="c1"># e.g. an outer driver decides it is good enough</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"step(): stopped after </span><span class="si">{</span><span class="n">session</span><span class="o">.</span><span class="n">iteration</span><span class="si">}</span><span class="s2"> iterations (</span><span class="si">{</span><span class="n">session</span><span class="o">.</span><span class="n">result</span><span class="p">()</span><span class="o">.</span><span class="n">stop_reason</span><span class="si">}</span><span class="s2">)"</span><span class="p">)</span>
+
+  <span class="c1"># 3. ask/tell: the caller solves the subproblems (here in-process; could be another framework or a cluster).</span>
+  <span class="k">with</span> <span class="n">Session</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">working_dir</span><span class="o">=</span><span class="n">WORK</span><span class="p">,</span> <span class="n">mdo_name</span><span class="o">=</span><span class="s2">"asktell"</span><span class="p">,</span> <span class="n">blackboxes</span><span class="o">=</span><span class="n">BLACKBOXES</span><span class="p">,</span>
+                         <span class="n">sweep</span><span class="o">=</span><span class="s2">"jacobi"</span><span class="p">)</span> <span class="k">as</span> <span class="n">session</span><span class="p">:</span>
+    <span class="k">while</span> <span class="ow">not</span> <span class="n">session</span><span class="o">.</span><span class="n">done</span><span class="p">:</span>
+      <span class="n">tasks</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">ask</span><span class="p">()</span>                       <span class="c1"># independent tasks: solve them anywhere, in any order</span>
+      <span class="n">results</span> <span class="o">=</span> <span class="p">[</span><span class="n">solve_task</span><span class="p">(</span><span class="n">task</span><span class="p">)</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">]</span>
+      <span class="n">session</span><span class="o">.</span><span class="n">tell</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"ask/tell (Jacobi): objective </span><span class="si">{</span><span class="n">session</span><span class="o">.</span><span class="n">result</span><span class="p">()</span><span class="o">.</span><span class="n">objective</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+  <span class="n">main</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Output:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>run():  finished, 8 iterations, objective 5.511311942324389, max|q| 5.000e-03 (Iteration budget exhausted)
+  [observer] iteration 0: objective=3.000000 max|q|=9.044e-02
+  [observer] iteration 1: objective=4.860200 max|q|=4.142e-02
+  [observer] iteration 2: objective=4.903022 max|q|=2.897e-02
+  [observer] iteration 3: objective=3.501799 max|q|=9.642e-02
+step(): stopped after 4 iterations (Stopped on request)
+ask/tell (Jacobi): objective 4.337014798880885
+</pre></div>
+</div>
+</section>
+<section id="building-a-session">
+<h2>Building a session<a class="headerlink" href="#building-a-session" title="Link to this heading">#</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">Session</span><span class="o">.</span><span class="n">from_yaml</span><span class="p">(</span><span class="s2">"problem.yaml"</span><span class="p">,</span> <span class="n">working_dir</span><span class="o">=</span><span class="s2">"runs"</span><span class="p">,</span> <span class="n">blackboxes</span><span class="o">=</span><span class="p">{</span><span class="o">...</span><span class="p">})</span>   <span class="c1"># name defaults to the file name</span>
+<span class="n">Session</span><span class="o">.</span><span class="n">from_dict</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">working_dir</span><span class="o">=</span><span class="s2">"runs"</span><span class="p">,</span> <span class="n">mdo_name</span><span class="o">=</span><span class="s2">"wing"</span><span class="p">,</span> <span class="n">blackboxes</span><span class="o">=</span><span class="p">{</span><span class="o">...</span><span class="p">})</span>
+<span class="n">Session</span><span class="o">.</span><span class="n">from_checkpoint</span><span class="p">(</span><span class="s2">"runs/wing_post/coord_chk.pkl"</span><span class="p">)</span>                    <span class="c1"># resume an interrupted run</span>
+<span class="n">Session</span><span class="p">(</span><span class="n">mdo</span><span class="p">)</span>                                                               <span class="c1"># an MDO built with the Python API</span>
+</pre></div>
+</div>
+<p>Problem definitions are plain dictionaries: <a class="reference internal" href="../api/session.html#DMDO.load_setup" title="DMDO.load_setup"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_setup()</span></code></a> reads a YAML file into one, which can be
+edited before building (<code class="docutils literal notranslate"><span class="pre">data[&quot;coord&quot;][&quot;c1&quot;][&quot;budget&quot;]</span> <span class="pre">=</span> <span class="pre">8</span></code> above). Keyword options select the sweep and the
+executor (<code class="docutils literal notranslate"><span class="pre">mode=</span></code>, <code class="docutils literal notranslate"><span class="pre">sweep=</span></code>, <code class="docutils literal notranslate"><span class="pre">executor=</span></code>, <code class="docutils literal notranslate"><span class="pre">max_workers=</span></code>) and add observers (<code class="docutils literal notranslate"><span class="pre">observers=</span></code>).</p>
+</section>
+<section id="stepping-and-stopping">
+<h2>Stepping and stopping<a class="headerlink" href="#stepping-and-stopping" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">step()</span></code> runs one outer iteration and returns its <a class="reference internal" href="../api/ports.html#DMDO.IterationRecord" title="DMDO.IterationRecord"><code class="xref py py-class docutils literal notranslate"><span class="pre">IterationRecord</span></code></a> (iteration number, objective,
+maximum inconsistency, largest penalty weight, change of the design, worst link), or <code class="docutils literal notranslate"><span class="pre">None</span></code> once the run is over.
+<code class="docutils literal notranslate"><span class="pre">request_stop()</span></code> ends the run after the current outer iteration; it is safe to call from another thread. In the
+example, the inconsistency falls below <span class="math notranslate nohighlight">\(3\times10^{-2}\)</span> at iteration 2, so the run stops after iteration 3 with
+the reason <code class="docutils literal notranslate"><span class="pre">&quot;Stopped</span> <span class="pre">on</span> <span class="pre">request&quot;</span></code>.</p>
+</section>
+<section id="observers">
+<h2>Observers<a class="headerlink" href="#observers" title="Link to this heading">#</a></h2>
+<p>An observer receives the hooks of the coordination loop (<a class="reference internal" href="../implementation.html"><span class="doc">Implementation</span></a> lists them in order). Subclass
+<a class="reference internal" href="../api/ports.html#DMDO.RunObserver" title="DMDO.RunObserver"><code class="xref py py-class docutils literal notranslate"><span class="pre">RunObserver</span></code></a> and override the hooks you need, or pass any object that defines some of them:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">DMDO</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunObserver</span>
+
+<span class="k">class</span><span class="w"> </span><span class="nc">JsonLines</span><span class="p">(</span><span class="n">RunObserver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""Append one JSON line per outer iteration, e.g. for a dashboard."""</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">path</span> <span class="o">=</span> <span class="n">path</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">on_iteration_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">,</span> <span class="n">record</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="s2">"a"</span><span class="p">)</span> <span class="k">as</span> <span class="n">fh</span><span class="p">:</span>
+            <span class="n">fh</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">"iteration"</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">iteration</span><span class="p">,</span> <span class="s2">"objective"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">objective</span><span class="p">),</span>
+                                 <span class="s2">"max_inconsistency"</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">max_inconsistency</span><span class="p">})</span> <span class="o">+</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
+
+<span class="n">session</span> <span class="o">=</span> <span class="n">Session</span><span class="o">.</span><span class="n">from_yaml</span><span class="p">(</span><span class="s2">"problem.yaml"</span><span class="p">,</span> <span class="n">observers</span><span class="o">=</span><span class="p">[</span><span class="n">JsonLines</span><span class="p">(</span><span class="s2">"progress.jsonl"</span><span class="p">)],</span> <span class="n">blackboxes</span><span class="o">=</span><span class="p">{</span><span class="o">...</span><span class="p">})</span>
+</pre></div>
+</div>
+</section>
+<section id="ask-and-tell">
+<h2>ask and tell<a class="headerlink" href="#ask-and-tell" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">ask()</span></code> returns the subproblem tasks that can be solved now: one at a time with the Gauss–Seidel sweep, all
+subproblems at once with the Jacobi sweep. Each task is a self-contained <a class="reference internal" href="../api/workflow.html#DMDO.SubproblemTask" title="DMDO.SubproblemTask"><code class="xref py py-class docutils literal notranslate"><span class="pre">SubproblemTask</span></code></a>;
+<a class="reference internal" href="../api/workflow.html#DMDO.solve_task" title="DMDO.solve_task"><code class="xref py py-func docutils literal notranslate"><span class="pre">DMDO.solve_task()</span></code></a> solves it, here or anywhere else (another framework’s evaluator, a cluster, a remote
+service). <code class="docutils literal notranslate"><span class="pre">tell(results)</span></code> accepts the results in any order and returns the iteration record when the results
+completed an outer iteration.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">DMDO</span><span class="w"> </span><span class="kn">import</span> <span class="n">solve_task</span>
+
+<span class="k">while</span> <span class="ow">not</span> <span class="n">session</span><span class="o">.</span><span class="n">done</span><span class="p">:</span>
+    <span class="n">tasks</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">ask</span><span class="p">()</span>
+    <span class="n">results</span> <span class="o">=</span> <span class="p">[</span><span class="n">solve_task</span><span class="p">(</span><span class="n">task</span><span class="p">)</span> <span class="k">for</span> <span class="n">task</span> <span class="ow">in</span> <span class="n">tasks</span><span class="p">]</span>     <span class="c1"># solve them wherever you like</span>
+    <span class="n">record</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">tell</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">record</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">iteration</span><span class="p">,</span> <span class="n">record</span><span class="o">.</span><span class="n">max_inconsistency</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><a class="reference internal" href="parallel.html"><span class="doc">Serial, parallel and custom execution</span></a> solves the tasks in a process pool.</p>
+</section>
+<section id="results">
+<h2>Results<a class="headerlink" href="#results" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">session.result()</span></code> returns a <a class="reference internal" href="../api/session.html#DMDO.RunResult" title="DMDO.RunResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">RunResult</span></code></a>: the status (<code class="docutils literal notranslate"><span class="pre">created</span></code>, <code class="docutils literal notranslate"><span class="pre">running</span></code>, <code class="docutils literal notranslate"><span class="pre">finished</span></code>,
+<code class="docutils literal notranslate"><span class="pre">failed</span></code>, <code class="docutils literal notranslate"><span class="pre">closed</span></code>), the stopping reason, the number of outer iterations, the objective of the master
+subproblem, the maximum inconsistency, whether the master subproblem is feasible, every variable copy
+(<code class="docutils literal notranslate"><span class="pre">&quot;&lt;name&gt;_&lt;subproblem&gt;&quot;</span></code>) and the list of iteration records. <code class="docutils literal notranslate"><span class="pre">result.to_dict()</span></code> converts everything to plain
+JSON-ready values.</p>
+</section>
+<section id="checkpoints-and-resume">
+<h2>Checkpoints and resume<a class="headerlink" href="#checkpoints-and-resume" title="Link to this heading">#</a></h2>
+<p>Every run writes <code class="docutils literal notranslate"><span class="pre">coord_chk.pkl</span></code> at the start of each outer iteration after the first. A session resumed from it
+continues at the checkpointed iteration and ends with exactly the same result as an uninterrupted run:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">session</span> <span class="o">=</span> <span class="n">Session</span><span class="o">.</span><span class="n">from_checkpoint</span><span class="p">(</span><span class="s2">"runs/wing_post/coord_chk.pkl"</span><span class="p">)</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">iterations</span><span class="p">)</span>   <span class="c1"># counts the iterations before the checkpoint too</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="sellar.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">The Sellar problem</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="parallel.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Serial, parallel and custom execution</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2022-2026, Ahmed H. Bayoumy.
+      <br/>
+    
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.1.
+  </p>
+</div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

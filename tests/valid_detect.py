@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import os
 
-from DMDO._detector import HybridAnomalyDetector
+from DMDO.ai.detector import HybridAnomalyDetector
 
 import pandas as pd
 # =========================================================

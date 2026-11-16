@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" data-theme="light">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>The basic problem from YAML &#8212; DMDO 2612.0</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=6a604523" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=1819abab" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
+
+    <script src="../_static/documentation_options.js?v=d587bd99"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=fd10adb8"></script>
+    <script data-sd-tabs-storage-prefix="sphinx-design-tab-id-" src="../_static/design-tabs.js?v=fcb327ea"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.js"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/basic';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The Sellar problem" href="sellar.html" />
+    <link rel="prev" title="Tutorials" href="index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="2612.0" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="light">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+    
+    <img src="../_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.0 - Home"/>
+    <img src="../_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.0 - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../getting_started.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../background.html">
+    Background
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../implementation.html">
+    Implementation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../benchmarking.html">
+    Benchmarking
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../user_guide/problem_definition.html">
+    Problem definition
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../user_guide/outputs.html">
+    Outputs
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../api/index.html">
+    API reference
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../references.html">
+    References
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Ahmed-Bayoumy/DMDO" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../getting_started.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../background.html">
+    Background
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../implementation.html">
+    Implementation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../benchmarking.html">
+    Benchmarking
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../user_guide/problem_definition.html">
+    Problem definition
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../user_guide/outputs.html">
+    Outputs
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api/index.html">
+    API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../references.html">
+    References
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Ahmed-Bayoumy/DMDO" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">The basic problem from YAML</a></li>
+<li class="toctree-l1"><a class="reference internal" href="sellar.html">The Sellar problem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="session.html">The Session API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parallel.html">Serial, parallel and custom execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extending.html">Extending DMDO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="service.html">The HTTP service and remote workers</a></li>
+</ul>
+</div>
+</nav></div>
+        <div class="sidebar-primary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-problem">The problem</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-analyses">The analyses</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-problem-definition">The problem definition</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#running-it">Running it</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-output-files">The output files</a></li>
+</ul>
+  </nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-house"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Tutorials</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">The basic problem from YAML</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="the-basic-problem-from-yaml">
+<h1>The basic problem from YAML<a class="headerlink" href="#the-basic-problem-from-yaml" title="Link to this heading">#</a></h1>
+<p>This tutorial runs the basic two-discipline problem of <a class="reference internal" href="../getting_started.html"><span class="doc">Getting started</span></a> from its YAML definition and walks
+through what DMDO prints and writes.</p>
+<section id="the-problem">
+<h2>The problem<a class="headerlink" href="#the-problem" title="Link to this heading">#</a></h2>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{ll}
+\min_{u,v,w} &amp; u + v + a + b \\[2pt]
+\text{s.t.}  &amp; a = \log_{10} u + \log_{10} v + \log_{10} b, \qquad b = u^{-1} + w^{-1} + a^{-1}, \\
+             &amp; w + b - 10 \le 0, \qquad 0 \le u, v, w, a, b \le 10.
+\end{array}\end{split}\]</div>
+<p>Subproblem 1 owns <span class="math notranslate nohighlight">\(v\)</span>, computes <span class="math notranslate nohighlight">\(a\)</span> and holds the objective; subproblem 2 owns <span class="math notranslate nohighlight">\(w\)</span>, computes
+<span class="math notranslate nohighlight">\(b\)</span> and holds the constraint; both keep copies of <span class="math notranslate nohighlight">\(u\)</span>, <span class="math notranslate nohighlight">\(a\)</span> and <span class="math notranslate nohighlight">\(b\)</span> (see
+<a class="reference internal" href="../background.html"><span class="doc">Background</span></a> for the partitioned formulation).</p>
+</section>
+<section id="the-analyses">
+<h2>The analyses<a class="headerlink" href="#the-analyses" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">examples/basic_disciplines.py</span></code> writes the two analyses as <a class="reference internal" href="../api/ports.html#DMDO.Discipline" title="DMDO.Discipline"><code class="xref py py-class docutils literal notranslate"><span class="pre">Discipline</span></code></a> objects (inputs and outputs
+keyed by variable name) and the subproblem objectives as plain functions:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Analysis1</span><span class="p">:</span>
+<span class="w">  </span><span class="sd">"""a = log10(u) + log10(v) + log10(b)"""</span>
+
+  <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+    <span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">b</span> <span class="o">=</span> <span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">inputs</span><span class="p">[</span><span class="n">n</span><span class="p">]),</span> <span class="mf">1e-12</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"u"</span><span class="p">,</span> <span class="s2">"v"</span><span class="p">,</span> <span class="s2">"b"</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"a"</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">u</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">b</span><span class="p">)}</span>
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">Analysis2</span><span class="p">:</span>
+<span class="w">  </span><span class="sd">"""b = 1/u + 1/w + 1/a"""</span>
+
+  <span class="k">def</span><span class="w"> </span><span class="nf">compute</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+    <span class="n">u</span><span class="p">,</span> <span class="n">w</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">inputs</span><span class="p">[</span><span class="n">n</span><span class="p">]),</span> <span class="mf">1e-12</span><span class="p">)</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"u"</span><span class="p">,</span> <span class="s2">"w"</span><span class="p">,</span> <span class="s2">"a"</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s2">"b"</span><span class="p">:</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">u</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">w</span> <span class="o">+</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">a</span><span class="p">}</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">opt1</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">  </span><span class="sd">"""Subproblem 1 objective: u + v + b + a (no constraint)."""</span>
+  <span class="k">return</span> <span class="p">[</span><span class="nb">sum</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mf">0.</span><span class="p">]]</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">opt2</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">  </span><span class="sd">"""Subproblem 2: no objective, constraint w + b - 10 &lt;= 0."""</span>
+  <span class="k">return</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="mf">10.</span><span class="p">]]</span>
+
+
+<span class="n">A1</span> <span class="o">=</span> <span class="n">Analysis1</span><span class="p">()</span>
+<span class="n">A2</span> <span class="o">=</span> <span class="n">Analysis2</span><span class="p">()</span>
+
+<span class="c1"># Names used in basic_problem.yaml. Over the HTTP service, give them as import paths ("basic_disciplines:A1", ...).</span>
+<span class="n">BLACKBOXES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"A1"</span><span class="p">:</span> <span class="n">A1</span><span class="p">,</span> <span class="s2">"A2"</span><span class="p">:</span> <span class="n">A2</span><span class="p">,</span> <span class="s2">"opt1"</span><span class="p">:</span> <span class="n">opt1</span><span class="p">,</span> <span class="s2">"opt2"</span><span class="p">:</span> <span class="n">opt2</span><span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="the-problem-definition">
+<h2>The problem definition<a class="headerlink" href="#the-problem-definition" title="Link to this heading">#</a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="c1"># The basic MDO problem</span>
+<span class="nt">variables</span><span class="p">:</span>
+<span class="c1"># vs:  [name, SP_index, Link, coupling type, lb, bl, ub, dim]</span>
+<span class="hll"><span class="w">  </span><span class="nt">v0</span><span class="p">:</span><span class="w">  </span><span class="p p-Indicator">[</span><span class="s">"u"</span><span class="p p-Indicator">,</span><span class="w">     </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w">       </span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="w">          </span><span class="nv">s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">10.</span><span class="p p-Indicator">,</span><span class="w">  </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">'REAL'</span><span class="p p-Indicator">]</span>
+</span><span class="hll"><span class="w">  </span><span class="nt">v1</span><span class="p">:</span><span class="w">  </span><span class="p p-Indicator">[</span><span class="s">"v"</span><span class="p p-Indicator">,</span><span class="w">     </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w">    </span><span class="nv">None</span><span class="p p-Indicator">,</span><span class="w">          </span><span class="nv">u</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">10.</span><span class="p p-Indicator">,</span><span class="w">  </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">'REAL'</span><span class="p p-Indicator">]</span>
+</span><span class="hll"><span class="w">  </span><span class="nt">v2</span><span class="p">:</span><span class="w">  </span><span class="p p-Indicator">[</span><span class="s">"a"</span><span class="p p-Indicator">,</span><span class="w">     </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w">       </span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="w">         </span><span class="nv">ff</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">10.</span><span class="p p-Indicator">,</span><span class="w">  </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">'REAL'</span><span class="p p-Indicator">]</span>
+</span><span class="hll"><span class="w">  </span><span class="nt">v3</span><span class="p">:</span><span class="w">  </span><span class="p p-Indicator">[</span><span class="s">"b"</span><span class="p p-Indicator">,</span><span class="w">     </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w">       </span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="w">         </span><span class="nv">fb</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">10.</span><span class="p p-Indicator">,</span><span class="w">  </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">'REAL'</span><span class="p p-Indicator">]</span>
+</span><span class="hll"><span class="w">  </span><span class="nt">v4</span><span class="p">:</span><span class="w">  </span><span class="p p-Indicator">[</span><span class="s">"u"</span><span class="p p-Indicator">,</span><span class="w">     </span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="w">       </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w">          </span><span class="nv">s</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">10.</span><span class="p p-Indicator">,</span><span class="w">  </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">'REAL'</span><span class="p p-Indicator">]</span>
+</span><span class="hll"><span class="w">  </span><span class="nt">v5</span><span class="p">:</span><span class="w">  </span><span class="p p-Indicator">[</span><span class="s">"w"</span><span class="p p-Indicator">,</span><span class="w">     </span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="w">    </span><span class="nv">None</span><span class="p p-Indicator">,</span><span class="w">          </span><span class="nv">u</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">10.</span><span class="p p-Indicator">,</span><span class="w">  </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">'REAL'</span><span class="p p-Indicator">]</span>
+</span><span class="hll"><span class="w">  </span><span class="nt">v6</span><span class="p">:</span><span class="w">  </span><span class="p p-Indicator">[</span><span class="s">"a"</span><span class="p p-Indicator">,</span><span class="w">     </span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="w">       </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w">         </span><span class="nv">fb</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">10.</span><span class="p p-Indicator">,</span><span class="w">  </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">'REAL'</span><span class="p p-Indicator">]</span>
+</span><span class="hll"><span class="w">  </span><span class="nt">v7</span><span class="p">:</span><span class="w">  </span><span class="p p-Indicator">[</span><span class="s">"b"</span><span class="p p-Indicator">,</span><span class="w">     </span><span class="nv">2</span><span class="p p-Indicator">,</span><span class="w">       </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w">         </span><span class="nv">ff</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">0.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">1.</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">10.</span><span class="p p-Indicator">,</span><span class="w">  </span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">'REAL'</span><span class="p p-Indicator">]</span>
+</span>
+<span class="nt">DA</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">DA1</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">index</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">inputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">v0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">v1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">v3</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">v2</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">blackbox</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">A1</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">callable</span>
+<span class="w">    </span><span class="nt">links</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">coupling_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ff</span>
+
+<span class="w">  </span><span class="nt">DA2</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">index</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">inputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">v4</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">v5</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">v6</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">outputs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">v7</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">blackbox</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">A2</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">callable</span>
+<span class="w">    </span><span class="nt">links</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">coupling_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ff</span>
+
+<span class="nt">MDA</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">MDA1</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">index</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">nAnalyses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">analyses</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">variables</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">v0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">v1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">v3</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">responses</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">v2</span><span class="p p-Indicator">]</span>
+
+<span class="w">  </span><span class="nt">MDA2</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">index</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">nAnalyses</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">analyses</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">2</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">variables</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">v4</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">v5</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">v6</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">responses</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">v7</span><span class="p p-Indicator">]</span>
+
+<span class="nt">coord</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">c1</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">index</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ADMM</span>
+<span class="w">    </span><span class="nt">beta</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.3</span>
+<span class="hll"><span class="w">    </span><span class="nt">gamma</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.5</span>
+</span><span class="w">    </span><span class="nt">nsp</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">budget</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
+<span class="w">    </span><span class="nt">index_of_master_SP</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">display</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
+<span class="hll"><span class="w">    </span><span class="nt">scaling</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span>
+</span><span class="w">    </span><span class="nt">mode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">serial</span>
+<span class="hll"><span class="w">    </span><span class="nt">M_update_scheme</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">normal</span>
+</span><span class="w">    </span><span class="nt">store_q_io</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
+
+<span class="nt">subproblem</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">sp1</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">nv</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">    </span><span class="nt">index</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">vars</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">v0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">v1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">v3</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">resps</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">v2</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">is_main</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
+<span class="w">    </span><span class="nt">MDA</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">coordinator</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">opt</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">opt1</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">callable</span>
+<span class="w">    </span><span class="nt">fmin_nop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">inf</span>
+<span class="hll"><span class="w">    </span><span class="nt">solver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">poll</span>
+</span><span class="hll"><span class="w">    </span><span class="nt">budget</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">150</span>
+</span><span class="w">    </span><span class="nt">display</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span>
+<span class="w">    </span><span class="nt">psize</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.</span>
+<span class="w">    </span><span class="nt">pupdate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Last</span>
+<span class="w">    </span><span class="nt">freal</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2.625</span>
+
+<span class="w">  </span><span class="nt">sp2</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">nv</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3</span>
+<span class="w">    </span><span class="nt">index</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">vars</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">v4</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">v5</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">v6</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">resps</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">v7</span><span class="p p-Indicator">]</span>
+<span class="w">    </span><span class="nt">is_main</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span>
+<span class="w">    </span><span class="nt">MDA</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">    </span><span class="nt">coordinator</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">opt</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">opt2</span>
+<span class="w">    </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">callable</span>
+<span class="w">    </span><span class="nt">fmin_nop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">inf</span>
+<span class="hll"><span class="w">    </span><span class="nt">solver</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">poll</span>
+</span><span class="hll"><span class="w">    </span><span class="nt">budget</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">150</span>
+</span><span class="w">    </span><span class="nt">display</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span>
+<span class="w">    </span><span class="nt">psize</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.</span>
+<span class="w">    </span><span class="nt">pupdate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Last</span>
+
+<span class="nt">USER</span><span class="p">:</span>
+
+
+<span class="nt">MDO</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">architecture</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">IDF</span>
+<span class="w">  </span><span class="nt">coordinator</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">  </span><span class="nt">subproblems</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">1</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">2</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">responses</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">v2</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">v7</span><span class="p p-Indicator">]</span>
+<span class="w">  </span><span class="nt">fmin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">inf</span>
+<span class="w">  </span><span class="nt">hmin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">inf</span>
+<span class="w">  </span><span class="nt">display</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
+<span class="w">  </span><span class="nt">inc_stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0000000001</span>
+<span class="w">  </span><span class="nt">stop</span><span class="p">:</span><span class="w"> </span><span class="s">"Iteration</span><span class="nv"> </span><span class="s">budget</span><span class="nv"> </span><span class="s">exhausted"</span>
+<span class="w">  </span><span class="nt">tab_inc</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[]</span>
+<span class="w">  </span><span class="nt">noprogress_stop</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
+</pre></div>
+</div>
+<p>The highlighted lines are the settings that matter most:</p>
+<ul class="simple">
+<li><p>every variable is declared <code class="docutils literal notranslate"><span class="pre">REAL</span></code>. OMADS optimizes variables of any other type on an integer lattice, so real
+variables must be declared with this exact keyword;</p></li>
+<li><p>the coordinator uses <span class="math notranslate nohighlight">\(\beta = 1.3\)</span> and <span class="math notranslate nohighlight">\(\gamma = 0.5\)</span> with the <code class="docutils literal notranslate"><span class="pre">normal</span></code> update scheme, and scales
+the inconsistencies by <code class="docutils literal notranslate"><span class="pre">0.1</span></code> (one tenth, which is <span class="math notranslate nohighlight">\(1/(u - \ell)\)</span> for these bounds);</p></li>
+<li><p>both subproblems are solved by the OMADS <code class="docutils literal notranslate"><span class="pre">poll</span></code> step with 150 evaluations per outer iteration.</p></li>
+</ul>
+</section>
+<section id="running-it">
+<h2>Running it<a class="headerlink" href="#running-it" title="Link to this heading">#</a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">basic_disciplines</span><span class="w"> </span><span class="kn">import</span> <span class="n">BLACKBOXES</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">DMDO</span><span class="w"> </span><span class="kn">import</span> <span class="n">Session</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">"__main__"</span><span class="p">:</span>
+    <span class="n">session</span> <span class="o">=</span> <span class="n">Session</span><span class="o">.</span><span class="n">from_yaml</span><span class="p">(</span><span class="s2">"basic_problem.yaml"</span><span class="p">,</span> <span class="n">working_dir</span><span class="o">=</span><span class="s2">"_runs"</span><span class="p">,</span> <span class="n">blackboxes</span><span class="o">=</span><span class="n">BLACKBOXES</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">status</span><span class="p">,</span> <span class="s2">"|"</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">stop_reason</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">iterations</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">max_inconsistency</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">feasible</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>With <code class="docutils literal notranslate"><span class="pre">display:</span> <span class="pre">True</span></code> (the <code class="docutils literal notranslate"><span class="pre">MDO</span></code> section), DMDO prints one line per outer iteration: the maximum inconsistency
+<code class="docutils literal notranslate"><span class="pre">qmax</span></code>, the objective of the master subproblem, the change of the design vector <code class="docutils literal notranslate"><span class="pre">dx</span></code> and the largest penalty
+weight, followed by the link with the largest inconsistency.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>   0 || qmax: 0.09043601 ||  Obj: 3.00000000 ||   dx: 7.04896213 || max(w): 1.30000000
+Highest inconsistency : b_2 to b_1
+   1 || qmax: 0.04141597 ||  Obj: 4.86020038 ||   dx: 1.13437264 || max(w): 1.69000000
+Highest inconsistency : a_2 to a_1
+   2 || qmax: 0.02897034 ||  Obj: 4.90302218 ||   dx: 0.21088849 || max(w): 2.19700000
+Highest inconsistency : a_2 to a_1
+...
+  48 || qmax: 0.00000050 ||  Obj: 5.58977652 ||   dx: 0.00000506 || max(w): 4843785982.75789833
+Highest inconsistency : b_2 to b_1
+  49 || qmax: 0.00000031 ||  Obj: 5.58977066 ||   dx: 0.00000507 || max(w): 6296921777.58526802
+Highest inconsistency : a_2 to a_1
+finished | Iteration budget exhausted
+50 5.589770658112853 3.051476282101007e-07 True
+</pre></div>
+</div>
+<p>After 50 outer iterations the two copies of every shared and coupling variable agree to <span class="math notranslate nohighlight">\(3\times10^{-7}\)</span>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="mi">5</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">variables</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+<span class="go">{'u_1': 1.54957, 'v_1': 0.91759, 'a_1': 0.56132, 'b_1': 2.56129,</span>
+<span class="go"> 'u_2': 1.54957, 'w_2': 7.43805, 'a_2': 0.56132, 'b_2': 2.56129}</span>
+</pre></div>
+</div>
+<p>These values match, to every digit shown, the recorded regression run of this problem (<code class="docutils literal notranslate"><span class="pre">basic_poll</span></code> in
+<a class="reference internal" href="../benchmarking.html"><span class="doc">Benchmarking</span></a>), which builds the same problem with the Python API instead of YAML.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">max(w)</span></code> column shows the penalty weights growing on the links that stall, from 1.3 to about
+<span class="math notranslate nohighlight">\(6        imes10^{9}\)</span>; this growth is what eventually forces the copies together.</p>
+</section>
+<section id="the-output-files">
+<h2>The output files<a class="headerlink" href="#the-output-files" title="Link to this heading">#</a></h2>
+<p>The run writes its outputs to <code class="docutils literal notranslate"><span class="pre">_runs/basic_problem_post</span></code>:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>_runs/basic_problem_post/
+├── Coordination_history.out          one row per outer iteration
+├── DMDO.log                          the log of the run
+├── coord_chk.pkl                     checkpoint for resuming the run
+└── coordination_summary_post/
+    ├── SP_1/
+    │   ├── SP_1_0.out ... SP_1_49.out   every evaluation of subproblem 1, per outer iteration
+    │   └── OMADS.log
+    └── SP_2/ ...
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">Coordination_history.out</span></code> is a comma-separated table with, for each outer iteration, the time, the iteration
+number, the maximum inconsistency, the objective, the feasibility status, the change of the design, the largest
+penalty weight, the link with the largest inconsistency, the constraint violation of each subproblem and the value
+of every variable copy. It can be loaded with <code class="xref py py-func docutils literal notranslate"><span class="pre">pandas.read_csv()</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">pandas</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">pd</span>
+
+<span class="n">history</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s2">"_runs/basic_problem_post/Coordination_history.out"</span><span class="p">,</span> <span class="n">skipinitialspace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">history</span><span class="o">.</span><span class="n">columns</span> <span class="o">=</span> <span class="n">history</span><span class="o">.</span><span class="n">columns</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+<span class="n">history</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="o">=</span><span class="s2">"Iteration #"</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="s2">"Max. inconsistency"</span><span class="p">,</span> <span class="n">logy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><a class="reference internal" href="../user_guide/outputs.html"><span class="doc">Outputs</span></a> describes every file and column.</p>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Tutorials</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="sellar.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">The Sellar problem</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2022-2026, Ahmed H. Bayoumy.
+      <br/>
+    
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.1.
+  </p>
+</div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
