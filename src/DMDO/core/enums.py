@@ -107,6 +107,9 @@ class AI_MODEL_TYPE(Enum):
   LSTM = auto()
   GRU = auto()
 
+# Largest constraint violation still reported as feasible: OMADS reports feasible solves with h = 1e-15, not 0.
+FEASIBILITY_TOL = 1e-12
+
 eps_qio = []
 eps_fio = []
 eval_id = 0

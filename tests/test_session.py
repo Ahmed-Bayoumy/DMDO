@@ -189,3 +189,16 @@ def test_from_checkpoint_loads_a_resumable_session(data, wd):
   resumed = Session.from_checkpoint(checkpoint)
   assert resumed.status == "created" and resumed._resume
   assert resumed.mdo.mdo_name == "chk"
+
+def test_relative_working_dir_and_feasible_result(data, wd, monkeypatch):
+  monkeypatch.chdir(wd)
+  session = _session(data, "runs", "relative")
+  session.step()
+  post = os.path.join("runs", "relative_post")
+  # Subproblem outputs sit next to the coordination history, not in a copy of the relative path.
+  assert os.path.isdir(os.path.join(post, "coordination_summary_post", "SP_1"))
+  assert not os.path.exists(os.path.join(post, "runs"))
+  # OMADS reports a feasible solve as h = 1e-15; it must not be reported as infeasible.
+  assert session.result().feasible
+  with open(os.path.join(post, "Coordination_history.out")) as fh:
+    assert "Infeasible" not in fh.read()

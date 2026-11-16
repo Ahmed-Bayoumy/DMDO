@@ -13,6 +13,7 @@ from typing import Any, Iterable, List, Optional
 
 import numpy as np
 
+from ..core.enums import FEASIBILITY_TOL
 from ..ports import IterationRecord, RunObserver
 from ..utils.log import MSG_TYPE
 
@@ -151,7 +152,7 @@ class CoordinationHistoryRecorder(RunObserver):
     keys = self.columns(run)
     curr_time = time.strftime("%H:%M:%S", time.localtime())
     hmin = max(run.hmin) if isinstance(run.hmin, list) and run.hmin is not None and len(run.hmin) > 0 else run.hmin
-    hstatus = "Feasible" if hmin <= 0 else "Infeasible"
+    hstatus = "Feasible" if hmin <= FEASIBILITY_TOL else "Infeasible"
     status = copy.deepcopy(hstatus) if run.fmin != np.inf else "Error"
     a = coord.master_vars[coord.extended_linker[0, index]-1]
     b = coord.master_vars[coord.extended_linker[1, index]-1]

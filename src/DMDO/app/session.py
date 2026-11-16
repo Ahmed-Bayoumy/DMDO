@@ -27,6 +27,7 @@ from typing import Any, Dict, Iterable, List, Mapping, Optional, Sequence
 
 import numpy as np
 
+from ..core.enums import FEASIBILITY_TOL
 from ..ports import IterationRecord
 from ..workflow.execution import SubproblemResult, SubproblemTask, create_executor, solve_task
 from ..workflow.mdo import MDO, IterationEnd
@@ -266,7 +267,7 @@ class Session:
       iterations=self.iteration,
       objective=mdo.fmin,
       max_inconsistency=float(np.max(np.abs(q))) if q.size else float("nan"),
-      feasible=bool(hmax <= 0.0),
+      feasible=bool(hmax <= FEASIBILITY_TOL),
       variables=variables,
       history=list(self.history),
       post_dir=getattr(mdo, "post_dir", None),

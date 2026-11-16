@@ -417,7 +417,8 @@ class SubProblem(partitionedProblemData):
   
   def prepare_post(self, file):
     ht = os.path.split(file)
-    name = file.split('.')[0]
+    # Base name only: a relative or dotted path in `file` would otherwise be nested inside its own directory.
+    name = os.path.splitext(os.path.basename(file))[0]
     pd = os.path.join(ht[0], f'{name}_post')
     pdsb = os.path.join(pd, f'SP_{self.index}')
     pfo = os.path.join(pdsb, f'SP_{self.index}_{self.iter}.out')
