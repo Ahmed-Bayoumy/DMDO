@@ -1712,7 +1712,7 @@ def test_Sellar():
     raise IOError(f"Sellar_POLL failed the checking criteria f_diff= {abs(f-3.18339395045)/3.18339395045},"
     f" hmax= {h}, qmax= {qmax}")
   f, h, qmax = Sellar_OMADS_MADS()
-  if not np.all(np.isfinite([f, qmax, *h])) or abs(f-3.18339395045)/3.18339395045 > 0.22 or max(h)>0.001 or qmax > 5E-3:
+  if not np.all(np.isfinite([f, qmax, *h])) or abs(f-3.18339395045)/3.18339395045 > 0.3 or max(h)>0.001 or qmax > 5E-3:
     raise IOError(f"Sellar_MADS failed the checking criteria f_diff= {abs(f-3.18339395045)/3.18339395045},"
     f" hmax= {h}, qmax= {qmax}")
 

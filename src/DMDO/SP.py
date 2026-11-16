@@ -215,7 +215,7 @@ class SubProblem(partitionedProblemData):
         self.log.log_msg(msg=msg, msg_type=MSG_TYPE.WARNING.value)
       warning(msg)
       self.scipy: Dict = {}
-      self.scipy["options"] = {'disp': False, 'verbose': 0}
+      self.scipy["options"] = {'disp': False}
       self.scipy["method"] = 'SLSQP'
       self.scipy["is_con"] = False
       self.scipy["tol"] = 1E-4
@@ -1028,6 +1028,9 @@ class SubProblem(partitionedProblemData):
       if self.scipy is not None and isinstance(self.scipy, dict):
         opts = copy.deepcopy(self.scipy["options"])
         # The inner budget (and the AI's budget expansion) acts on the iteration limit.
+        # Only trust-constr accepts 'verbose'; other methods emit OptimizeWarning for it.
+        if str(self.scipy["method"]).lower() != "trust-constr":
+          opts.pop("verbose", None)
         if "maxiter" in opts:
           opts["maxiter"] = max(1, int(round(float(opts["maxiter"]) * float(budget_scale))))
         lb = np.asarray(self.get_list_vars_lb(self.get_design_vars()), dtype=float)
