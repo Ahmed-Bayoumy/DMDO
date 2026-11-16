@@ -1,7 +1,7 @@
 DMDO: Distributed Multidisciplinary Design Optimization
 =======================================================
 
-| **Author:** Ahmed H. Bayoumy
+| **Author:** Dr. Ahmed H. Bayoumy
 | **Release:** |release|
 | **Source:** https://github.com/Ahmed-Bayoumy/DMDO
 
@@ -171,7 +171,7 @@ If DMDO contributes to published work, please cite it as follows.
 License
 -------
 
-© Ahmed H. Bayoumy 2022–2026. DMDO is free software distributed under the GNU General Public License, version 3 or
+© Dr. Ahmed H. Bayoumy 2022–2026. DMDO is free software distributed under the GNU General Public License, version 3 or
 later; see the `LICENSE <https://github.com/Ahmed-Bayoumy/DMDO/blob/DEV/LICENSE>`_ file.
 
 .. toctree::

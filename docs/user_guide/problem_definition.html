@@ -31,7 +31,7 @@
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/proof.css?v=8c6b312c" />
     <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=6a604523" />
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.css" />
     <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=1819abab" />
@@ -55,7 +55,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Outputs" href="outputs.html" />
-    <link rel="prev" title="The HTTP service and remote workers" href="../tutorials/service.html" />
+    <link rel="prev" title="The post-processing dashboard" href="../tutorials/dashboard.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
@@ -774,7 +774,7 @@ optimizer; otherwise they are penalized.</p></td>
 <h2><code class="docutils literal notranslate"><span class="pre">CONFIG</span></code>: OMADS settings<a class="headerlink" href="#config-omads-settings" title="Link to this heading">#</a></h2>
 <p>Named blocks of OMADS options, referenced by <code class="docutils literal notranslate"><span class="pre">configurations</span></code>. Each has an <code class="docutils literal notranslate"><span class="pre">options</span></code> part (<code class="docutils literal notranslate"><span class="pre">seed</span></code>, <code class="docutils literal notranslate"><span class="pre">budget</span></code>,
 <code class="docutils literal notranslate"><span class="pre">tol</span></code>, <code class="docutils literal notranslate"><span class="pre">psize_init</span></code>, <code class="docutils literal notranslate"><span class="pre">opportunistic</span></code>, <code class="docutils literal notranslate"><span class="pre">rich_direction</span></code>, <code class="docutils literal notranslate"><span class="pre">check_cache</span></code>, <code class="docutils literal notranslate"><span class="pre">store_cache</span></code>, …) and a
-<code class="docutils literal notranslate"><span class="pre">search</span></code> part (<code class="docutils literal notranslate"><span class="pre">type</span></code>, <code class="docutils literal notranslate"><span class="pre">s_method</span></code>, <code class="docutils literal notranslate"><span class="pre">ns</span></code>); see the OMADS documentation <span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id24" title="Ahmed H. Bayoumy. OMADS: optimization using mesh adaptive direct search. 2022. URL: https://github.com/Ahmed-Bayoumy/OMADS, doi:10.5281/zenodo.23407559.">Bayoumy, 2022</a>]</span> for their meaning.</p>
+<code class="docutils literal notranslate"><span class="pre">search</span></code> part (<code class="docutils literal notranslate"><span class="pre">type</span></code>, <code class="docutils literal notranslate"><span class="pre">s_method</span></code>, <code class="docutils literal notranslate"><span class="pre">ns</span></code>); see the OMADS documentation <span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id26" title="Ahmed H. Bayoumy. OMADS: optimization using mesh adaptive direct search. 2022. URL: https://github.com/Ahmed-Bayoumy/OMADS, doi:10.5281/zenodo.23407559.">Bayoumy, 2022</a>]</span> for their meaning.</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">CONFIG</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">CSP1</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">seed</span><span class="p">:</span><span class="w"> </span><span class="nv">12345</span><span class="p p-Indicator">,</span><span class="nt"> budget</span><span class="p">:</span><span class="w"> </span><span class="nv">250</span><span class="p p-Indicator">,</span><span class="nt"> tol</span><span class="p">:</span><span class="w"> </span><span class="nv">1.0e-9</span><span class="p p-Indicator">,</span><span class="nt"> psize_init</span><span class="p">:</span><span class="w"> </span><span class="nv">2.0</span><span class="p p-Indicator">,</span><span class="nt"> opportunistic</span><span class="p">:</span><span class="w"> </span><span class="nv">False</span><span class="p p-Indicator">,</span>
@@ -852,12 +852,12 @@ attached to the built problem.</p>
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="../tutorials/service.html"
+       href="../tutorials/dashboard.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">The HTTP service and remote workers</p>
+        <p class="prev-next-title">The post-processing dashboard</p>
       </div>
     </a>
     <a class="right-next"
@@ -899,7 +899,7 @@ attached to the built problem.</p>
 
   <p class="copyright">
     
-      © Copyright 2022-2026, Ahmed H. Bayoumy.
+      © Copyright 2022-2026, Dr. Ahmed H. Bayoumy.
       <br/>
     
   </p>
