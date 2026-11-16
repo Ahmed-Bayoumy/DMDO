@@ -51,6 +51,9 @@ dev = [
     "pytest-cov>=7.0.0",
 ]
 
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [tool.ruff]
 line-length = 127
 
