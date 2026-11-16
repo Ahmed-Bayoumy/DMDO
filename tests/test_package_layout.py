@@ -62,6 +62,7 @@ LAYERS = {
   "subproblem": 4,
   "workflow": 5,
   "app": 6, "dashboard": 6,
+  "service": 7,
 }
 PKG_DIR = os.path.dirname(DMDO.__file__)
 

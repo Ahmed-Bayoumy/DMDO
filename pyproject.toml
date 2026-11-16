@@ -32,6 +32,9 @@ dependencies = [
     "torch>=2.12.1",
 ]
 
+[project.scripts]
+dmdo = "DMDO.service.cli:main"
+
 [project.optional-dependencies]
 visualization = [
     "matplotlib>=3.10.8",

@@ -169,6 +169,40 @@ option `adaptation_policy` selects another one by name or import path. A policy 
 event)` and is registered with `DMDO.policies.register("name", MyPolicy)` or through the `dmdo.policies` entry-point
 group.
 
+## Running DMDO as a service (optional)
+
+`DMDO.service` exposes sessions over HTTP and sends subproblem solves to remote workers, for setups where the driver,
+the coordination and the analyses run on different machines or in different languages. It uses only the Python
+standard library and is not imported by `import DMDO`.
+
+```commandline
+dmdo serve  --host 0.0.0.0 --port 8400 --token <secret>                   # the service
+dmdo worker --connect http://dmdo-host:8400 --tags aero --token <secret>  # where the aero code lives
+dmdo worker --connect http://dmdo-host:8400 --tags structures --token <secret>
+```
+
+```python
+from DMDO.service import Client
+
+client = Client("http://dmdo-host:8400", token="<secret>")
+session = client.create_session(setup_file="problem.yaml", mdo_name="wing",
+                                blackboxes={"A1": "my_pkg.aero:A1", "A2": "my_pkg.structures:A2"},
+                                sweep="jacobi", placement={1: "aero", 2: "structures"})
+session.run()                       # or session.step() for one outer iteration
+for event in session.events():      # server-sent events: iteration_end records, then run_end
+    print(event)
+print(session.result())
+```
+
+Endpoints: `POST /sessions`, `GET /sessions/{id}`, `POST /sessions/{id}/run|step|stop`,
+`GET /sessions/{id}/result|history|events`, `DELETE /sessions/{id}`, plus `/work` for workers (see
+`DMDO/service/server.py`). Workers run the same `solve_task` as local process pools, and with the Jacobi sweep the
+results do not depend on which worker finishes first. `python -m DMDO.service` works without the `dmdo` script.
+
+**Security.** Jobs and results are pickled, so the service, its workers and every client that holds the token must
+trust each other. The service listens on `127.0.0.1` by default and refuses other interfaces without a token. Put TLS
+(a reverse proxy) in front of it when traffic leaves a trusted network.
+
 ## How to run DMDO from terminal
 After installing the libraries listed in the `requirements.txt`, `DMDO/DMDO.py` can be called directly from a 
 terminal window under the src directory. The path of the JSON template, which contains the problem input parameters, should be entered as an input argument to the `DMDO.py` call. 
