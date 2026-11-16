@@ -22,14 +22,15 @@ TRACES = os.path.join(ROOT, "tests", "golden", "traces")
 OUT = os.path.abspath(os.path.join(HERE, "..", "_static"))
 
 # Best known solutions: Sellar and speed reducer from Tedford and Martins (2010), geometric programming from Talgorn et
-# al. (2017); none is published for the basic problem.
+# al. (2017); the basic problem's has no published reference.
+BASIC_OPT = 5.58
 SELLAR_OPT = 3.18339395045
 SPEED_REDUCER_OPT = 2994.355026
 GP_OPT = 17.59
 
 # name: (label, problem, subproblems, inner solver, outer budget, reference optimum or None)
 CASES = {
-  "basic_poll": ("Basic, POLL", "Basic two-discipline problem", 2, "OMADS poll", 50, None),
+  "basic_poll": ("Basic, POLL", "Basic two-discipline problem", 2, "OMADS poll", 50, BASIC_OPT),
   "sellar_scipy": ("Sellar, SLSQP", "Sellar", 2, "SciPy SLSQP", 100, SELLAR_OPT),
   "sellar_poll": ("Sellar, POLL", "Sellar", 2, "OMADS poll", 150, SELLAR_OPT),
   "sellar_mads": ("Sellar, MADS", "Sellar", 2, "OMADS MADS", 150, SELLAR_OPT),

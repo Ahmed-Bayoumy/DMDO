@@ -66,13 +66,13 @@ recorded benchmark runs. Details in the
 | Sellar | 2 | SciPy SLSQP | 100 | 3.6037 (+13.2 %) | 3.18339 [3] | 9.7 × 10⁻⁶ |
 | Speed reducer | 4 | SciPy SLSQP | 50 | 2741.41 (−8.45 %)† | 2994.355 [3] | 7.4 × 10⁻⁴ |
 | Geometric program | 3 | OMADS MADS | 100 | 20.2632 (+15.2 %) | 17.59 [4] | 1.1 × 10⁻⁷ |
-| Basic problem | 2 | OMADS poll | 50 | 5.58977 | – | 3.1 × 10⁻⁷ |
+| Basic problem | 2 | OMADS poll | 50 | 5.58977 (+0.18 %) | 5.58 | 3.1 × 10⁻⁷ |
 | Supersonic business jet (SBJ)\* | 4 | SciPy SLSQP | 100 | Wt = 35,374 lb (+5.3 %) | 33,600 lb [5] | 4.4 × 10⁻⁵ |
 | Supersonic business jet (SBJ)\* | 4 | OMADS MADS | 33–64 | Wt = 33,536 lb (−0.2 %; median of 86 runs) | 33,600 lb [5] | 8.8 × 10⁻⁹ (median of 100 runs) |
 
 The numbers come from the recorded regression traces in `tests/golden/traces`, which the current code reproduces
-bit for bit; the best known solutions are taken from the references [3]–[5], and the gap is relative to them (no best
-known solution is published for the basic problem). The Sellar rows show why DMDO lets every subproblem choose its optimizer: with the same coordination,
+bit for bit; the best known solutions are taken from the references [3]–[5] (the basic problem's, 5.58, has no
+published reference), and the gap is relative to them. The Sellar rows show why DMDO lets every subproblem choose its optimizer: with the same coordination,
 the full MADS algorithm ends within 0.65 % of the optimum, while the poll step alone and SLSQP settle on consistent
 but less optimal designs.
 
