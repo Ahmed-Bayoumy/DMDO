@@ -68,7 +68,7 @@ recorded benchmark runs. Details in the
 | Geometric program | 3 | OMADS MADS | 100 | 20.2632 | – | 1.1 × 10⁻⁷ |
 | Basic problem | 2 | OMADS poll | 50 | 5.58977 | – | 3.1 × 10⁻⁷ |
 | Supersonic business jet (SBJ)\* | 4 | SciPy SLSQP | 100 | Wt = 35,374 lb | – | 4.4 × 10⁻⁵ |
-| Supersonic business jet (SBJ)\* | 4 | OMADS MADS | 100 | not consistent | – | 8.9 × 10⁻² (median of 10 runs) |
+| Supersonic business jet (SBJ)\* | 4 | OMADS MADS | 33–64 | Wt = 33,536 lb (median of 86 runs) | – | 8.8 × 10⁻⁹ (median of 100 runs) |
 | Supersonic business jet (SBJ)\* | 4 | OMADS poll | 100 | not consistent | – | 1.0 × 10⁻² (median of 40 runs) |
 
 The numbers come from the recorded regression traces in `tests/golden/traces`, which the current code reproduces
@@ -77,19 +77,24 @@ the full MADS algorithm ends within 0.65 % of the optimum, while the poll step a
 but less optimal designs.
 
 \* The SBJ rows come from the SBJ benchmarking campaigns rather than from recorded regression traces. The aircraft,
-propulsion, aerodynamics and structures subproblems (`tests/SBJ`) start from designs perturbed by up to 25 %, with
-100 outer iterations and 50 evaluations (or SLSQP iterations) per subproblem solve; the objective is the total
-weight Wt.
+propulsion, aerodynamics and structures subproblems (`tests/SBJ`) start from randomly perturbed designs; all
+constraints are handled by the progressive barrier; the objective is the total weight Wt.
 
-- **SLSQP** (one run, coordinator β = 1.8, γ = 0.9): the inconsistency between disciplines falls below 10⁻³ at
-  outer iteration 14 and below 10⁻⁴ at iteration 32; the largest remaining constraint violation is 3.8 × 10⁻⁴.
-- **OMADS MADS** (10 runs, β = 2.4, γ = 0.4) and **OMADS poll** (40 runs, β = 1.8, γ = 0.9): no run reaches an
-  inconsistency of 10⁻³ (final values 5.0 × 10⁻² to 1.0 × 10⁻¹ with MADS, 7.5 × 10⁻³ to 2.8 × 10⁻² with poll),
-  and the two subproblems' copies of the weight still differ by thousands of pounds (median 15,300 lb with MADS,
-  4,400 lb with poll), so these runs have no consistent design to report.
+- **OMADS MADS** (100 starts, coordinator β = 1.8, γ = 0.9; 150 evaluations per solve in the aircraft, propulsion and
+  aerodynamics subproblems and 500 in the structures subproblem, which holds most of the constraints; run in March
+  2026 with DMDO 2601 and OMADS 2401): every run brings the inconsistency between disciplines below 10⁻³ (median
+  outer iteration 13) and below 10⁻⁴ (median iteration 18), and the final inconsistency has a median of
+  8.8 × 10⁻⁹. 86 runs end consistent and meeting the 2000 nm range requirement, at a median weight of 33,536 lb
+  (middle half 26,600–38,800 lb); the histories of this campaign do not record the other disciplines' constraints.
+- **SLSQP** (one run, β = 1.8, γ = 0.9, at most 50 iterations per solve, 100 outer iterations): the inconsistency
+  falls below 10⁻³ at outer iteration 14 and below 10⁻⁴ at iteration 32; the largest remaining constraint violation
+  is 3.8 × 10⁻⁴.
+- **OMADS poll** (40 runs, β = 1.8, γ = 0.9, 50 evaluations per solve, 100 outer iterations): with this small budget
+  no run reaches an inconsistency of 10⁻³ (final values 7.5 × 10⁻³ to 2.8 × 10⁻²). The same holds for MADS with 50
+  evaluations per solve (10 runs, β = 2.4, γ = 0.4; final values 5.0 × 10⁻² to 1.0 × 10⁻¹).
 
-On SBJ, whose subproblems are smooth analytical models, gradient-based subproblems are what make the coordination
-converge: with the same budget per solve, SLSQP reaches consistency where the derivative-free solvers do not.
+On SBJ the subproblem budget decides whether the derivative-free solvers converge: the structures subproblem, with
+72 constraints, needs a large budget for MADS to reach consistency.
 
 ## Features
 
