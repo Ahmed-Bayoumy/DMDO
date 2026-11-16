@@ -112,6 +112,7 @@ On SBJ the subproblem budget decides whether the derivative-free solvers converg
 - Analyses as plain callables or as `Discipline` objects (`compute(inputs) -> outputs`), the natural form of an
   adapter around a simulation code or another framework's model
 - Optional HTTP service (`dmdo serve`) with remote workers (`dmdo worker --tags ...`), standard library only
+- Post-processing dashboard: interactive plots of any column of a run's history files
 
 ## Installation
 
@@ -192,6 +193,28 @@ dmdo worker --connect http://dmdo-host:8400 --tags aero --token <secret>  # wher
 
 See the tutorials on [parallel execution](https://ahmed-bayoumy.github.io/DMDO/tutorials/parallel.html) and the
 [HTTP service](https://ahmed-bayoumy.github.io/DMDO/tutorials/service.html).
+
+## Post-processing dashboard
+
+DMDO includes a web dashboard for exploring the files a run writes. Start it and open http://127.0.0.1:8050:
+
+```python
+from DMDO import dmdo_dash
+
+dmdo_dash()                  # or, from a terminal:  python -m DMDO.dashboard
+```
+
+Drop a run's `Coordination_history.out` (or the evaluation history `SP_<j>_<t>.out` of a subproblem solve) on the
+page, then choose the columns for the X axis, the Y axis (logarithmic) and, optionally, the marker size and color.
+Hover to read values, drag to zoom, and toggle the line joining the points.
+
+<p align="center">
+  <img width="780" alt="DMDO dashboard: maximum inconsistency per outer iteration, markers sized and colored by the largest penalty weight" src="https://ahmed-bayoumy.github.io/DMDO/_static/dashboard_plot.png?v=2612">
+</p>
+
+*The basic problem in the dashboard: maximum inconsistency at each outer iteration, with markers sized and colored
+by the largest penalty weight `max(w)`. See the
+[dashboard tutorial](https://ahmed-bayoumy.github.io/DMDO/tutorials/dashboard.html).*
 
 ## Extending DMDO and connecting other packages
 

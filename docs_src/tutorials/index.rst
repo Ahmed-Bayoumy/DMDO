@@ -22,6 +22,8 @@ produce.
 :doc:`service`
    The HTTP service: sessions over HTTP, live events, and remote workers pinned to the machines that hold the
    analysis codes.
+:doc:`dashboard`
+   The post-processing dashboard: interactive plots of the coordination history and of the subproblem solves.
 
 .. toctree::
    :hidden:
@@ -32,6 +34,7 @@ produce.
    parallel
    extending
    service
+   dashboard
 
 .. note::
 
