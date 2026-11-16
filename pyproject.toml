@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=77"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
 
 [project]
 name = "DMDO"
@@ -51,8 +51,12 @@ dev = [
     "pytest-cov>=7.0.0",
 ]
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.hatch.build.targets.wheel]
+# The import package is "DMDO" while the project name normalises to "dmdo": name it explicitly.
+packages = ["src/DMDO"]
+
+[tool.hatch.build.targets.sdist]
+include = ["/src/DMDO", "/tests/test_*.py", "/README.md", "/LICENSE"]
 
 [tool.ruff]
 line-length = 127
