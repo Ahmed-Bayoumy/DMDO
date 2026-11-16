@@ -96,6 +96,24 @@ class MySolver(BaseSolver):
 my_solver = "my_pkg.solvers:MySolver"
 ```
 
+**Serial and parallel execution.** Two choices are independent of each other:
+
+- the *sweep* decides what each subproblem sees within an outer iteration: `gauss_seidel` (each solve uses the
+  targets updated by the previous ones) or `jacobi` (all solves start from the same snapshot; results are merged in
+  subproblem order, so the outcome does not depend on which worker finishes first);
+- the *executor* decides where the solves run: `inprocess`, `process` (a pool of worker processes), or any object with
+  `map(fn, tasks)` / `close()` — e.g. a client for remote workers or a cluster.
+
+```python
+MDAO.run(file, mode="serial")                         # Gauss-Seidel, in this process (default)
+MDAO.run(file, mode="parallel")                       # Jacobi, one worker process per subproblem
+MDAO.run(file, sweep="jacobi", executor=my_cluster)   # Jacobi on remote workers
+```
+
+Each solve is shipped as a `SubproblemTask` and solved by the module-level `DMDO.solve_task`, so a remote worker only
+needs DMDO and the problem's blackboxes installed. Executors can also be registered by name
+(`DMDO.executors.register`) or through the `dmdo.executors` entry-point group.
+
 ## How to run DMDO from terminal
 After installing the libraries listed in the `requirements.txt`, `DMDO/DMDO.py` can be called directly from a 
 terminal window under the src directory. The path of the JSON template, which contains the problem input parameters, should be entered as an input argument to the `DMDO.py` call. 

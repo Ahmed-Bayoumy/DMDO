@@ -6,13 +6,17 @@ imports those packages; an adapter only has to satisfy the protocol.
 
 * :class:`Discipline` - a disciplinary analysis: named inputs in, named outputs out.
 * :class:`SubproblemSolver` - an optimizer that solves one subproblem given a :class:`SolverRequest`.
+* :class:`Executor` - runs subproblem tasks: in-process, in a process pool, or on remote workers/services.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Mapping, Optional, Protocol, Sequence, runtime_checkable
+from typing import Any, Callable, Dict, List, Mapping, Optional, Protocol, Sequence, TypeVar, runtime_checkable
 
-__all__ = ["Discipline", "SubproblemSolver", "SolverRequest", "SolverOutcome"]
+__all__ = ["Discipline", "SubproblemSolver", "SolverRequest", "SolverOutcome", "Executor"]
+
+_T = TypeVar("_T")
+_R = TypeVar("_R")
 
 
 @runtime_checkable
@@ -101,4 +105,25 @@ class SubproblemSolver(Protocol):
 
   def report_hmin(self, hmin: Any) -> Any:
     """The constraint-violation value to report for a solve (logs, detector, rollback)."""
+    ...
+
+
+@runtime_checkable
+class Executor(Protocol):
+  """Runs independent tasks and returns their results **in task order**.
+
+  The coordination loop hands an executor :class:`DMDO.workflow.execution.SubproblemTask` messages together with the
+  module-level function that solves one (:func:`DMDO.workflow.execution.solve_task`). Local executors call it in
+  this process or in worker processes; a remote executor (an HTTP/gRPC/queue client, a Ray or Dask cluster, ...)
+  ships the pickled task to a worker that calls the same function. Whether subproblems see each other's updates
+  within an outer iteration is decided by the coordination sweep, not by the executor.
+
+  Register an implementation with ``DMDO.registry.executors.register("name", factory)`` (or via the
+  ``dmdo.executors`` entry-point group); the factory is called as ``factory(max_workers=n)``.
+  """
+
+  def map(self, fn: Callable[[_T], _R], tasks: Sequence[_T]) -> List[_R]:
+    ...
+
+  def close(self) -> None:
     ...

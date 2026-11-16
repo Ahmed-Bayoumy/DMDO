@@ -421,10 +421,8 @@ class SubProblem(partitionedProblemData):
     pd = os.path.join(ht[0], f'{name}_post')
     pdsb = os.path.join(pd, f'SP_{self.index}')
     pfo = os.path.join(pdsb, f'SP_{self.index}_{self.iter}.out')
-    if not os.path.exists(pd):
-      os.mkdir(pd)
-    if not os.path.exists(pdsb):
-      os.mkdir(pdsb)
+    # exist_ok: subproblems solved concurrently (Jacobi sweep in worker processes) share the post directory.
+    os.makedirs(pdsb, exist_ok=True)
     self.postDir = pdsb
     self.Il_file = pfo
     self.initialize_IL_res_file(pfo)

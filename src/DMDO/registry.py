@@ -22,7 +22,7 @@ from typing import Callable, Dict, Generic, Iterable, List, Optional, TypeVar
 
 T = TypeVar("T")
 
-__all__ = ["Registry", "RegistryError", "solvers", "blackboxes", "register_blackbox"]
+__all__ = ["Registry", "RegistryError", "solvers", "blackboxes", "executors", "register_blackbox"]
 
 
 class RegistryError(KeyError):
@@ -150,6 +150,10 @@ solvers: Registry[Callable] = Registry("solver", "dmdo.solvers")
 #: Analysis / optimization blackboxes referenced by name from a problem definition (YAML ``blackbox:`` and
 #: ``opt:`` keys). Values are callables or :class:`DMDO.ports.Discipline` objects.
 blackboxes: Registry[Callable] = Registry("blackbox", "dmdo.blackboxes")
+
+
+#: Executor factories (called as ``factory(max_workers=n)``), see :class:`DMDO.ports.Executor`.
+executors: Registry[Callable] = Registry("executor", "dmdo.executors")
 
 
 def register_blackbox(name: str, component: Optional[Callable] = None, *, override: bool = True):

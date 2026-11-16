@@ -40,7 +40,7 @@ from ..ai.detector import SolveQualityExtractor, latest_detector_metrics
 from ..core.protocols import Process_data
 from ..coordination.admm import ADMM
 from ..core.variables import variableData
-import concurrent.futures
+from .execution import SubproblemTask, create_executor, solve_task
 
 @dataclass
 class MDO_data(Process_data):
@@ -415,9 +415,7 @@ class MDO(MDO_data):
   def prepare_post(self):
     pd = self.post_dir
     pfo = os.path.join(pd, 'Coordination_history.out')
-    if not os.path.exists(pd):
-      # shutil.rmtree(pd)
-      os.mkdir(pd)
+    os.makedirs(pd, exist_ok=True)
     self.postDir = pd
     self.Ol_file = pfo
     # self.log.relocate_logger(source_file=self.log.log.handlers[0].baseFilename, Dest_file=pd)
@@ -488,27 +486,13 @@ class MDO(MDO_data):
     return out_sp, self.subProblems[s]
 
   def prepare_SP_jobs(self, s: int):
+    """Bring subproblem ``s`` up to date with the coordinator before a (Gauss-Seidel) solve."""
     if self.iter == 0:
-      self.subProblems[s].set_pair()
-      self.Coordinator.v = [0.] * len(self.subProblems[s].coord._linker[0])
-      # Initial penalty weight (coord.w_init, default 1); problems whose objective is large relative to the
-      # range-normalised inconsistencies need a larger start so the couplings are not ignored early on.
-      self.Coordinator.w = [float(getattr(self.Coordinator, "w_init", 1.0))] * len(self.subProblems[s].coord._linker[0])
-      self.subProblems[s].coord = copy.deepcopy(self.Coordinator)
-      
-          
-      self.subProblems[s].log = self.log
-      self.subProblems[s].postDir = self.post_dir 
-      
+      self._initialize_subproblem(s)
     else:
       self.subProblems[s].coord.master_vars = copy.deepcopy(self.Coordinator.master_vars)
     self.subProblems[s].modify_cond_vars(self.Coordinator.master_vars)
-    if self.mode == "parallel":
-      # self.Coordinator._linker = self.subProblems[s].coord._linker
-      for v in self.Coordinator.master_vars:
-        self.subProblems[s].coord.calculate_and_set_average_target_values(v.name, sp_index=s)
-      self.Coordinator = copy.deepcopy(self.subProblems[s].coord)
-  
+
   def format_log_message(self, iter, qmax, obj, dx, wmax):
     """Format log message with dynamic spacing for vertical alignment"""
     # Use consistent width for each field
@@ -532,7 +516,161 @@ class MDO(MDO_data):
 
  
 
-  def run(self, file=None, resume= False, mode="Serial"):  # noqa: C901
+  # ------------------------------------------------------------------------------------------------ coordination loop
+  @staticmethod
+  def _is_serial(mode) -> bool:
+    return str(mode).lower() == "serial"
+
+  def _resolve_sweep(self, mode, sweep):
+    name = str(sweep if sweep is not None else ("gauss_seidel" if self._is_serial(mode) else "jacobi")).lower()
+    if name in ("gauss_seidel", "gauss-seidel", "gs", "sequential"):
+      return self._sweep_gauss_seidel
+    if name in ("jacobi", "parallel"):
+      return self._sweep_jacobi
+    raise ValueError(f"Unknown coordination sweep '{sweep}'. Use 'gauss_seidel' or 'jacobi'.")
+
+  def _sweep_gauss_seidel(self, executor) -> None:
+    """Solve the subproblems one after another; each one sees the coordinator updated by the previous solves."""
+    for s in range(len(self.subProblems)):
+      if self.iter > 0:
+        self.subProblems[s].coord = self.Coordinator
+      self.prepare_SP_jobs(s=s)
+      task = SubproblemTask(index=s, subproblem=self.subProblems[s], v=self.Coordinator.v, w=self.Coordinator.w,
+                            iteration=self.iter, file=self.file)
+      result = executor.map(solve_task, [task])[0]
+      self.subProblems[s] = copy.deepcopy(result.subproblem)
+      self._record_subproblem_solve(s)
+      self.Coordinator = copy.deepcopy(self.subProblems[s].coord)
+
+  def _sweep_jacobi(self, executor) -> None:
+    """Solve all subproblems from the same coordinator snapshot, then merge their results in subproblem order.
+
+    The outcome does not depend on how (or in which order) the executor runs the tasks.
+    """
+    n = len(self.subProblems)
+    if self.iter == 0:
+      for s in range(n):
+        self._initialize_subproblem(s)
+    # Consensus targets: every linked group of copies starts the sweep from its mean.
+    self.Coordinator.calculate_and_set_average_target_values(None, None)
+    tasks = []
+    for s in range(n):
+      sp = self.subProblems[s]
+      sp.coord = copy.deepcopy(self.Coordinator)
+      sp.modify_cond_vars(self.Coordinator.master_vars)
+      tasks.append(SubproblemTask(index=s, subproblem=sp, v=copy.deepcopy(self.Coordinator.v),
+                                  w=copy.deepcopy(self.Coordinator.w), iteration=self.iter, file=self.file))
+    results = sorted(executor.map(solve_task, tasks), key=lambda r: r.index)
+
+    merged = copy.deepcopy(self.Coordinator)
+    for result in results:
+      s, sp = result.index, result.subproblem
+      self.subProblems[s] = sp
+      self._record_subproblem_solve(s)
+      # Each subproblem owns the master-vector entries of its own variable and response copies.
+      owned = [v.index for v in sp.vars] + [r.index for r in (sp.MDA_process.responses or [])]
+      for idx in owned:
+        merged.master_vars[idx - 1] = copy.deepcopy(sp.coord.master_vars[idx - 1])
+      if sp.is_main:
+        merged.eps_fo = list(sp.coord.eps_fo)
+    wb, vb = merged.batch_multipliers()
+    merged.calc_inconsistency()
+    if np.size(merged.q) != np.size(merged.w):
+      merged.modify_multipliers(merged.batch_q(merged.q), wb, vb)
+    self.Coordinator = merged
+
+  def _initialize_subproblem(self, s: int) -> None:
+    """First-iteration setup of subproblem ``s``: linking pairs, initial multipliers, logging and output paths."""
+    sp = self.subProblems[s]
+    sp.set_pair()
+    self.Coordinator.v = [0.] * len(sp.coord._linker[0])
+    # Initial penalty weight (coord.w_init, default 1); problems whose objective is large relative to the
+    # range-normalised inconsistencies need a larger start so the couplings are not ignored early on.
+    self.Coordinator.w = [float(getattr(self.Coordinator, "w_init", 1.0))] * len(sp.coord._linker[0])
+    sp.coord = copy.deepcopy(self.Coordinator)
+    sp.log = self.log
+    sp.postDir = self.post_dir
+
+  def _after_sweep(self) -> None:
+    """Coordinator update once all subproblems of the outer iteration are solved."""
+    self.Coordinator.calc_inconsistency()
+    if self.Coordinator.is_AI_regularizer:
+      self._update_detector_outer_iteration(self.iter)
+    if not getattr(self.Coordinator, "single_multiplier_update", False):
+      self.Coordinator.update_multipliers(self.iter)
+
+  def _worst_link_index(self) -> int:
+    qb = self.Coordinator.batch_q(self.Coordinator.q)
+    ql = [max(np.abs(q)) if isinstance(q, list) else abs(q) for q in qb]
+    return int(np.argmax(ql))
+
+  def _display_iteration(self, iter: int, dx: float, index: int) -> None:
+    coord = self.Coordinator
+    formatted_msg = self.format_log_message(
+        iter,
+        np.max(np.abs(coord.q)),
+        self.fmin[0] if isinstance(self.fmin, list) else self.fmin,
+        dx,
+        np.max(coord.w)
+    )
+    self.log.log_msg(msg=formatted_msg, msg_type=MSG_TYPE.INFO.value)
+    print(formatted_msg)
+    a = coord.master_vars[coord._linker[0, index]-1]
+    b = coord.master_vars[coord._linker[1, index]-1]
+    self.log.log_msg(msg=f'Highest inconsistency : {a.name}_{a.sp_index} to {b.name}_{b.link}',
+                     msg_type=MSG_TYPE.INFO.value)
+    print(f'Highest inconsistency : {a.name}_{a.link} to {b.name}_{b.link}')
+
+  def _write_iteration_row(self, iter: int, dx: float, index: int) -> None:
+    """Append this outer iteration to the coordination history file."""
+    coord = self.Coordinator
+    hmin_cols = self._get_hmin_columns()
+    keys = self._get_ol_keys()
+    curr_time = time.strftime("%H:%M:%S", time.localtime())
+    hmin = max(self.hmin) if isinstance(self.hmin, list) and self.hmin is not None and len(self.hmin) > 0 else self.hmin
+    hstatus = "Feasible" if hmin <= 0 else "Infeasible"
+    status = copy.deepcopy(hstatus) if self.fmin != np.inf else "Error"
+    a = coord.master_vars[coord.extended_linker[0, index]-1]
+    b = coord.master_vars[coord.extended_linker[1, index]-1]
+    cmax = f'{a.name}_{a.link} to {b.name}_{b.link}'
+    if coord.is_AI_regularizer:
+      values = [curr_time, iter, np.max(np.abs(coord.q)), coord.spike_location,
+                int(bool(getattr(coord, "alarm_detected", False))), int(bool(getattr(coord, "spike_detected", False))),
+                self.fmin, coord.spike_prob, coord.forecast_prob, coord.non_improvement_prob,
+                coord.objective_non_improvement_prob, coord.constraint_non_improvement_prob,
+                coord.detector_uncertainty, coord.constraint_pressure, status, dx, np.max(coord.w), cmax]
+    else:
+      values = [curr_time, iter, np.max(np.abs(coord.q)), int(bool(getattr(coord, "alarm_detected", False))),
+                int(bool(getattr(coord, "spike_detected", False))), self.fmin, status, dx, np.max(coord.w), cmax]
+    row = {keys[0]: str(values[0])}
+    for k, value in zip(keys[1:len(values)], values[1:]):
+      row[k] = str(value).rjust(30)
+    if coord.is_AI_regularizer and getattr(coord, "spike_adaptive_scales", True):
+      # Scales actually applied by update_multipliers this iteration (recomputing them here would see the cool-down).
+      _eff_w, _eff_g, _eff_b, _event = getattr(coord, "_applied_scales", (1.0, 1.0, 1.0, ""))
+      row[f'{"Eff_spike_w_scale".rjust(30)}'] = f'{_eff_w:.6f}'.rjust(30)
+      row[f'{"Eff_spike_gamma_scale".rjust(30)}'] = f'{_eff_g:.6f}'.rjust(30)
+      row[f'{"Eff_budget_scale".rjust(30)}'] = f'{_eff_b:.6f}'.rjust(30)
+      row[f'{"Adapt_event".rjust(30)}'] = str(_event or "none").rjust(30)
+
+    # Add hmin values for each subproblem
+    for sp_index, hmin_col in zip(self._get_sp_indices(), hmin_cols):
+      row[hmin_col] = str(self.hmin_dict.get(sp_index, [0.])).rjust(30)
+    lr = len(row)
+    for cv, v in enumerate(coord.master_vars):
+      row[keys[lr+cv]] = str(v.value).rjust(30)
+    self.Add_OL_res_row(row)
+
+  def run(self, file=None, resume=False, mode="Serial", executor=None, sweep=None, max_workers=None):  # noqa: C901
+    """Run the coordination loop.
+
+    :param mode: ``"serial"`` (default sweep Gauss-Seidel, in-process) or ``"parallel"`` (default sweep Jacobi, process
+      pool with one worker per subproblem).
+    :param executor: an :class:`~DMDO.ports.Executor` instance or a registered executor name (``"inprocess"``,
+      ``"process"`` or a plugin) that runs the subproblem solves; overrides the one implied by ``mode``.
+    :param sweep: ``"gauss_seidel"`` or ``"jacobi"``; overrides the one implied by ``mode``.
+    :param max_workers: worker count for executors created from a name (default: number of subproblems).
+    """
     global eps_fio, eps_qio
     if file is not None:
       self.post_dir = os.path.dirname(file)
@@ -541,7 +679,7 @@ class MDO(MDO_data):
       self.log.initialize(os.path.join(self.post_dir, "DMDO.log"), handler_name="DMDO")
     if not resume:
       self.log.log_msg(msg="Running MDO ... ", msg_type=MSG_TYPE.INFO.value)
-      # Note: once you run MDAO, the data stored in eps_fio and eps_qio shall be deleted. 
+      # Note: once you run MDAO, the data stored in eps_fio and eps_qio shall be deleted.
       # It is recommended to store such data to a different variable before running another MDAO
       eps_fio = []
       eps_qio = []
@@ -550,190 +688,63 @@ class MDO(MDO_data):
       self.log.log_msg(msg=f"Resuming MDO coordination at iteration #{self.iter} ... ", msg_type=MSG_TYPE.INFO.value)
       file = self.file
 
-
-    """ Run the MDO process """
-    #  COMPLETE: fix the setup of the local (associated with SP) and global (associated with MDO) coordinators
     self.fmin = np.inf
     self.mode = mode
-    
     self.Coordinator.mode = mode
+    run_sweep = self._resolve_sweep(mode, sweep)
+    owns_executor = executor is None or isinstance(executor, str)
+    if executor is None:
+      executor = "inprocess" if self._is_serial(mode) else "process"
+    executor = create_executor(executor, max_workers=max_workers or len(self.subProblems))
+
     if self.Coordinator.is_AI_regularizer:
-      # Subproblem solves in parallel mode run in separate processes, so the shared detector cannot be fed there.
-      if str(mode).lower() != "serial":
-        self.Coordinator.detector_per_outer_iteration = False
       detector = self._get_detector()
       if detector is not None and detector.tol_floor <= 0.0:
         detector.tol_floor = float(self.inc_stop)
       # Tolerance reference for the threshold trigger (coordinator._threshold_spike).
       self.Coordinator._tol_ref = float(self.inc_stop)
-    for iter in range(self.Coordinator.budget):
-      self.iter = iter
-      # Initialize hmin dictionary for each SP at the start of each iteration
-      self.hmin_dict = {}
-      if self.Coordinator.is_AI_regularizer:
-        self._reset_ai_regularizer_outputs()
-      if iter > 0:
-        # log = self.log
-        # self.log = None
-        # sp_logs = [sp.log for sp in self.subProblems]
-        # for i in range(len(self.subProblems)):
-        #   self.subProblems[i].log = None
-        pickle.dump(self, open(self.post_dir + '/coord_chk.pkl', "wb"))
-        # self.log = log
-        # for i in range(len(self.subProblems)):
-        #   self.subProblems[i].log = sp_logs[i]
-        self.Coordinator.master_vars_old = copy.deepcopy(self.Coordinator.master_vars)
-      else:
-        self.Coordinator.master_vars_old = copy.deepcopy(self.variables)
-        self.Coordinator.master_vars = copy.deepcopy(self.variables)
-        self.prepare_post()
-
-      """ ADMM inner loop """
-  
-        
-      self.is_pickleable(self.subProblems[0])
-      self.is_pickleable(self)
-      if mode == "Serial" or mode == "serial":
-        for s in range(len(self.subProblems)):
-          # self.prepare_post()
-          if self.iter > 0:
-            self.subProblems[s].coord = self.Coordinator
-          out_sp, sp = self.solve_subproblem(s)
-          self.subProblems[s] = copy.deepcopy(sp)
-          self._record_subproblem_solve(s)
-          self.Coordinator = copy.deepcopy(self.subProblems[s].coord)
-        self.Coordinator.calc_inconsistency()
+    try:
+      for iter in range(self.Coordinator.budget):
+        self.iter = iter
+        # Initialize hmin dictionary for each SP at the start of each iteration
+        self.hmin_dict = {}
         if self.Coordinator.is_AI_regularizer:
-          self._update_detector_outer_iteration(self.iter)
-        if not getattr(self.Coordinator, "single_multiplier_update", False):
-          self.Coordinator.update_multipliers(self.iter)
-      else:
-        # Parallel sunbproblems execution
-        """ """
-        out_sp: dict = {}
-        with concurrent.futures.ProcessPoolExecutor(max_workers=len(self.subProblems)) as executor:
-          future_to_index = {
-              executor.submit(self.solve_subproblem, i): (i)
-              for i in range(len(self.subProblems))}
-          for future in concurrent.futures.as_completed(future_to_index):
-            s = future_to_index[future]
-            out_sp, sp = future.result()
-            self.subProblems[s] = copy.deepcopy(sp)
-            self._record_subproblem_solve(s)
-            self.subProblems[s].coord.calc_inconsistency()
-            self.subProblems[s].coord.update_multipliers(self.iter)
-            self.Coordinator = copy.deepcopy(self.subProblems[s].coord)
-      """ Display convergence """
-      
-      dx = self.get_master_vars_difference()
-      if self.display:
-        formatted_msg = self.format_log_message(
-            iter, 
-            np.max(np.abs(self.Coordinator.q)), 
-            self.fmin[0] if isinstance(self.fmin, list) else self.fmin, 
-            dx, 
-            np.max(self.Coordinator.w)
-        )
-        self.log.log_msg(msg=formatted_msg, msg_type=MSG_TYPE.INFO.value)
-        print(formatted_msg)
-        qb = self.Coordinator.batch_q(self.Coordinator.q)
-        ql: list = []
-        for i in range(len(qb)):
-          if isinstance(qb[i], list):
-            ql.append(max(np.abs(qb[i])))
-          else:
-            ql.append(abs(qb[i]))
+          self._reset_ai_regularizer_outputs()
+        if iter > 0:
+          with open(os.path.join(self.post_dir, 'coord_chk.pkl'), "wb") as fh:
+            pickle.dump(self, fh)
+          self.Coordinator.master_vars_old = copy.deepcopy(self.Coordinator.master_vars)
+        else:
+          self.Coordinator.master_vars_old = copy.deepcopy(self.variables)
+          self.Coordinator.master_vars = copy.deepcopy(self.variables)
+          self.prepare_post()
 
-        index = np.argmax(ql)
-        self.log.log_msg(
-          msg=f'Highest inconsistency : {self.Coordinator.master_vars[self.Coordinator._linker[0,index]-1].name}_'
-        f'{self.Coordinator.master_vars[self.Coordinator._linker[0,index]-1].sp_index} to '
-          f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].name}_'
-        f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].link}', msg_type=MSG_TYPE.INFO.value)
-      print(f'Highest inconsistency : {self.Coordinator.master_vars[self.Coordinator._linker[0,index]-1].name}_'
-        f'{self.Coordinator.master_vars[self.Coordinator._linker[0,index]-1].link} to '
-          f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].name}_'
-        f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].link}')
-      """ Write OL results to the file"""
-      # The objective history must include this iteration before the adaptation scales are evaluated.
-      self.Coordinator.objective_history.append(float(self.fmin))
-      if self.Coordinator.is_AI_regularizer and hasattr(self.Coordinator, "_get_expected_spike_event"):
-        self.Coordinator._get_expected_spike_event(iter)
-      hmin_cols = self._get_hmin_columns()
-      keys = self._get_ol_keys()
-      curr_time = time.strftime("%H:%M:%S", time.localtime()) 
-      hmin = max(self.hmin) if isinstance(self.hmin, list) and self.hmin is not None and len(self.hmin) > 0 else self.hmin
-      hstatus = "Feasible" if hmin <= 0 else "Infeasible"
-      status = copy.deepcopy(hstatus) if self.fmin != np.inf else "Error"
-      cmax = f'{self.Coordinator.master_vars[self.Coordinator.extended_linker[0,index]-1].name}_'+\
-          f'{self.Coordinator.master_vars[self.Coordinator.extended_linker[0,index]-1].link} '+\
-          f'to {self.Coordinator.master_vars[self.Coordinator.extended_linker[1,index]-1].name}'+\
-          f'_{self.Coordinator.master_vars[self.Coordinator.extended_linker[1,index]-1].link}'
-      if self.Coordinator.is_AI_regularizer:
-        row = {keys[0]: str(curr_time),
-                keys[1]: str(iter).rjust(30),
-                keys[2]: str(np.max(np.abs(self.Coordinator.q))).rjust(30),
-                keys[3]: str(self.Coordinator.spike_location).rjust(30),
-                keys[4]: str(int(bool(getattr(self.Coordinator, "alarm_detected", False)))).rjust(30),
-                keys[5]: str(int(bool(getattr(self.Coordinator, "spike_detected", False)))).rjust(30),
-                keys[6]: str(self.fmin).rjust(30),
-                keys[7]: str(self.Coordinator.spike_prob).rjust(30),
-                keys[8]: str(self.Coordinator.forecast_prob).rjust(30),
-                keys[9]: str(self.Coordinator.non_improvement_prob).rjust(30),
-                keys[10]: str(self.Coordinator.objective_non_improvement_prob).rjust(30),
-                keys[11]: str(self.Coordinator.constraint_non_improvement_prob).rjust(30),
-                keys[12]: str(self.Coordinator.detector_uncertainty).rjust(30),
-                keys[13]: str(self.Coordinator.constraint_pressure).rjust(30),
-                keys[14]: str(status).rjust(30),
-                keys[15]: str(dx).rjust(30),
-                keys[16]: str(np.max(self.Coordinator.w)).rjust(30),
-                keys[17]: str(cmax).rjust(30)}
-        if getattr(self.Coordinator, "spike_adaptive_scales", True):
-          # Scales actually applied by update_multipliers this iteration (recomputing them here would see the cool-down).
-          _eff_w, _eff_g, _eff_b, _event = getattr(self.Coordinator, "_applied_scales", (1.0, 1.0, 1.0, ""))
-          row[f'{"Eff_spike_w_scale".rjust(30)}']    = f'{_eff_w:.6f}'.rjust(30)
-          row[f'{"Eff_spike_gamma_scale".rjust(30)}'] = f'{_eff_g:.6f}'.rjust(30)
-          row[f'{"Eff_budget_scale".rjust(30)}']      = f'{_eff_b:.6f}'.rjust(30)
-          row[f'{"Adapt_event".rjust(30)}']          = str(_event or "none").rjust(30)
-      else:
-        row = {keys[0]: str(curr_time),
-                keys[1]: str(iter).rjust(30),
-                keys[2]: str(np.max(np.abs(self.Coordinator.q))).rjust(30),
-                keys[3]: str(int(bool(getattr(self.Coordinator, "alarm_detected", False)))).rjust(30),
-                keys[4]: str(int(bool(getattr(self.Coordinator, "spike_detected", False)))).rjust(30),
-                keys[5]: str(self.fmin).rjust(30),
-                keys[6]: str(status).rjust(30),
-                keys[7]: str(dx).rjust(30),
-                keys[8]: str(np.max(self.Coordinator.w)).rjust(30),
-                keys[9]: str(cmax).rjust(30)}
-      
-      # Add hmin values for each subproblem
-      for sp_index, hmin_col in zip(self._get_sp_indices(), hmin_cols):
-        hmin_val = self.hmin_dict.get(sp_index, [0.])
-        row[hmin_col] = str(hmin_val).rjust(30)
-      
-      cv = 0
-      lr = len(row)
-      for v in self.Coordinator.master_vars:
-        row[keys[lr+cv]] = str(v.value).rjust(30)
-        cv += 1
-        
-      self.Add_OL_res_row(row)
-      """ Update LM and PM """
-      self.Coordinator.update_multipliers(iter)
-      self._rollback_step(iter)
+        run_sweep(executor)
+        self._after_sweep()
 
-      """ Stopping criteria """
-      self.tab_inc.append(np.max(np.abs(self.Coordinator.q)))
-      stop: bool = self.check_termination_critt(iter)
-      
+        dx = self.get_master_vars_difference()
+        index = self._worst_link_index()
+        if self.display:
+          self._display_iteration(iter, dx, index)
+        # The objective history must include this iteration before the adaptation scales are evaluated.
+        self.Coordinator.objective_history.append(float(self.fmin))
+        if self.Coordinator.is_AI_regularizer and hasattr(self.Coordinator, "_get_expected_spike_event"):
+          self.Coordinator._get_expected_spike_event(iter)
+        self._write_iteration_row(iter, dx, index)
 
-      if stop:
-        break
-      self.eps_qio = copy.deepcopy(eps_qio)
-      self.eps_fio = copy.deepcopy(eps_fio)
-        
-        
+        # Update Lagrange multipliers and penalty weights
+        self.Coordinator.update_multipliers(iter)
+        self._rollback_step(iter)
+
+        # Stopping criteria
+        self.tab_inc.append(np.max(np.abs(self.Coordinator.q)))
+        if self.check_termination_critt(iter):
+          break
+        self.eps_qio = copy.deepcopy(eps_qio)
+        self.eps_fio = copy.deepcopy(eps_fio)
+    finally:
+      if owns_executor:
+        executor.close()
 
   def validation(self, vType: int):
     self.term_status = []
