@@ -34,12 +34,12 @@ from typing import Any, Dict, List
 import numpy as np
 import pandas as pd
 
-from .SP import SubProblem
-from ._common import MSG_TYPE, logger
-from ._detector import SolveQualityExtractor, latest_detector_metrics
-from ._protocols import Process_data
-from .coordinator import ADMM
-from .variables import variableData
+from ..subproblem.subproblem import SubProblem
+from ..utils.log import MSG_TYPE, logger
+from ..ai.detector import SolveQualityExtractor, latest_detector_metrics
+from ..core.protocols import Process_data
+from ..coordination.admm import ADMM
+from ..core.variables import variableData
 import concurrent.futures
 
 @dataclass

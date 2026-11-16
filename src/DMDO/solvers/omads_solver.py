@@ -8,8 +8,8 @@ from typing import Any, Callable, Dict, List, Tuple
 import numpy as np
 import OMADS
 
-from .._globals import PSIZE_UPDATE
-from .._rng import seed_all_rngs
+from ..core.enums import PSIZE_UPDATE
+from ..utils.rng import seed_all_rngs
 from ..ports import SolverOutcome, SolverRequest
 from .base import BaseSolver
 

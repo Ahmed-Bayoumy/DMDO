@@ -25,7 +25,7 @@
 import os
 import shutil
 
-from ._globals import MSG_TYPE, VERSION_NUMBER
+from ..core.enums import MSG_TYPE, VERSION_NUMBER
 import logging 
 import time
 

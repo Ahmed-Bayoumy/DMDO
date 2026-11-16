@@ -33,9 +33,9 @@ from typing import Dict, Any
 import numpy as np
 import yaml
 
-from .MDO import MDO
-from ._common import MSG_TYPE, logger
-from .preprocess import problemSetup
+from ..workflow.mdo import MDO
+from ..utils.log import MSG_TYPE, logger
+from .builder import problemSetup
 
 @dataclass
 class ModelInadequacyData:

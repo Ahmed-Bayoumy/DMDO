@@ -29,8 +29,8 @@ from typing import Any, List, Callable, Optional, Dict
 
 import numpy as np
 
-from .variables import variableData
-from .ports import Discipline
+from ..core.variables import variableData
+from ..ports import Discipline
 from dataclasses import dataclass, field
 
 import inspect

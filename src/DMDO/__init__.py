@@ -22,17 +22,18 @@
 # ------------------------------------------------------------------------------------#
 # """
 
-from .DMDO import main, logger
-from .MDO import MDO, MDO_data
-from ._globals import BARRIER_TYPE, COUPLING_STRENGTH, COUPLING_TYPE, MDO_ARCHITECTURE, MODEL_TYPE, PSIZE_UPDATE, VALIDATOR, \
-VAR_TYPE, w_scheme, double_precision, USER
-from .SP import SubProblem, partitionedProblemData, process, variableData
-from ._protocols import Process_data
-from .coordinator import coordinationData, ADMM, ADMM_data
-from ._protocols import coordinator, search
-from .MDA import MDA, MDA_data
-from .DA import DA, DA_Data
-from .preprocess import problemSetup, optimizationData
+
+from .app.main import main, logger
+from .workflow.mdo import MDO, MDO_data
+from .core.enums import (BARRIER_TYPE, COUPLING_STRENGTH, COUPLING_TYPE, MDO_ARCHITECTURE, MODEL_TYPE, PSIZE_UPDATE,
+                         VALIDATOR, VAR_TYPE, w_scheme, double_precision, USER)
+from .subproblem.subproblem import SubProblem, partitionedProblemData, process, variableData
+from .core.protocols import Process_data
+from .coordination.admm import coordinationData, ADMM, ADMM_data
+from .core.protocols import coordinator, search
+from .analysis.mda import MDA, MDA_data
+from .analysis.da import DA, DA_Data
+from .app.builder import problemSetup, optimizationData
 from .dashboard import main as dmdo_dash
 from .ports import Discipline, SubproblemSolver, SolverRequest, SolverOutcome
 from .registry import Registry, blackboxes, register_blackbox, solvers

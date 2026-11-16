@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
 
-from DMDO._decisor import resolve_level
-from DMDO._detector import HybridAnomalyDetector, _rls_step, _signed_log1p
+from DMDO.ai.decisor import resolve_level
+from DMDO.ai.detector import HybridAnomalyDetector, _rls_step, _signed_log1p
 
 
 def _stream(n=40, spike_at=(20, 21)):

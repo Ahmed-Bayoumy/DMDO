@@ -29,7 +29,7 @@ from logging import warning
 
 import numpy as np
 
-from ._globals import VAR_TYPE
+from .enums import VAR_TYPE
 
 
 @dataclass

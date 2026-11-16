@@ -31,19 +31,19 @@ from typing import Any, Callable, Dict, List
 
 import numpy as np
 
-from .DA import DA
-from .MDA import MDA
-from .MDO import MDO
-from .SP import SubProblem
-from ._common import MSG_TYPE, logger
-from ._globals import COUPLING_TYPE, MDO_ARCHITECTURE, PSIZE_UPDATE, USER, w_scheme
-from .coordinator import ADMM
+from ..analysis.da import DA
+from ..analysis.mda import MDA
+from ..workflow.mdo import MDO
+from ..subproblem.subproblem import SubProblem
+from ..utils.log import MSG_TYPE, logger
+from ..core.enums import COUPLING_TYPE, MDO_ARCHITECTURE, PSIZE_UPDATE, USER, w_scheme
+from ..coordination.admm import ADMM
 
-from ._protocols import coordinator
-from ._protocols import process
-from .variables import variableData
-from .ports import Discipline
-from .registry import blackboxes as _blackbox_registry
+from ..core.protocols import coordinator
+from ..core.protocols import process
+from ..core.variables import variableData
+from ..ports import Discipline
+from ..registry import blackboxes as _blackbox_registry
 
 # Optional coordinator keys (YAML coord.<id>) that tune the detector and the adaptation.
 _AI_OPTION_KEYS = (

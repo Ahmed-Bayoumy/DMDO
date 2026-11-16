@@ -6,7 +6,7 @@ from DMDO import (
   COUPLING_TYPE, DA, BaseSolver, Discipline, Registry, SolverOutcome, SubproblemSolver, blackboxes,
   register_blackbox, solvers, variableData,
 )
-from DMDO.preprocess import problemSetup
+from DMDO.app.builder import problemSetup
 from DMDO.registry import RegistryError
 from DMDO.solvers import MADSSolver, PollSolver, ScipySolver, SearchSolver, create_solver
 

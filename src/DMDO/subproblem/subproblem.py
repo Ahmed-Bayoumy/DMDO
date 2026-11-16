@@ -32,22 +32,22 @@ import time
 from typing import Any, Callable, Dict, List
 import numpy as np
 
-from ._common import MSG_TYPE, logger
-from ._globals import COUPLING_TYPE, PSIZE_UPDATE, VAR_TYPE, eps_fio
-from ._protocols import process
-from .coordinator import ADMM
-from .variables import variableData
+from ..utils.log import MSG_TYPE, logger
+from ..core.enums import COUPLING_TYPE, PSIZE_UPDATE, VAR_TYPE, eps_fio
+from ..core.protocols import process
+from ..coordination.admm import ADMM
+from ..core.variables import variableData
 import pandas as pd
-from ._detector import HybridAnomalyDetector, latest_detector_metrics
-from .DA import analyze_and_validate_types
-from ._rng import seed_all_rngs as _seed_all_rngs  # noqa: F401  (backward-compatible alias)
-from .ports import SolverRequest
-from .registry import solvers
-from .solvers import DEFAULT_SOLVER, create_solver
+from ..ai.detector import HybridAnomalyDetector, latest_detector_metrics
+from ..analysis.da import analyze_and_validate_types
+from ..utils.rng import seed_all_rngs as _seed_all_rngs  # noqa: F401  (backward-compatible alias)
+from ..ports import SolverRequest
+from ..registry import solvers
+from ..solvers import DEFAULT_SOLVER, create_solver
 
 
 # Kept for backward compatibility; the values live with the OMADS strategy.
-from .solvers.omads_solver import PSIZE_FLOOR_REL as _PSIZE_FLOOR_REL, PSIZE_FLOOR_SPAN_CAP as _PSIZE_FLOOR_SPAN_CAP  # noqa: E402,F401
+from ..solvers.omads_solver import PSIZE_FLOOR_REL as _PSIZE_FLOOR_REL, PSIZE_FLOOR_SPAN_CAP as _PSIZE_FLOOR_SPAN_CAP  # noqa: E402,F401
 
 
 def _is_number(a) -> bool:

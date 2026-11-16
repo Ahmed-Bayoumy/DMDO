@@ -30,8 +30,8 @@ from genericpath import isfile
 import json
 from typing import Any, Dict, List
 
-from .DA import DA
-from .MDO import Process_data
+from .da import DA
+from ..core.protocols import Process_data
 
 
 @dataclass

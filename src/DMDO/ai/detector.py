@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from ._decisor import ConfidenceLevel, InferenceDecision, compute_confidence, resolve_level
+from .decisor import ConfidenceLevel, InferenceDecision, compute_confidence, resolve_level
 
 
 # =============================================

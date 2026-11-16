@@ -30,10 +30,10 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 
-from ._globals import COUPLING_TYPE, w_scheme, eps_qio
-from .variables import variableData
-from ._detector import HybridAnomalyDetector
-from ._decisor import resolve_level
+from ..core.enums import COUPLING_TYPE, w_scheme, eps_qio
+from ..core.variables import variableData
+from ..ai.detector import HybridAnomalyDetector
+from ..ai.decisor import resolve_level
 from dataclasses import dataclass, field
 
 @dataclass
