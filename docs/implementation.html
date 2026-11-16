@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="./" data-theme="light">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Implementation &#8212; DMDO 2612.0</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/proof.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=6a604523" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.css" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=1819abab" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
+
+    <script src="_static/documentation_options.js?v=d587bd99"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=fd10adb8"></script>
+    <script data-sd-tabs-storage-prefix="sphinx-design-tab-id-" src="_static/design-tabs.js?v=fcb327ea"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.js"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'implementation';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Benchmarking" href="benchmarking.html" />
+    <link rel="prev" title="Background" href="background.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="2612.0" />
+  
+    
+    <script src="_static/searchtools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="light">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+    
+    
+    
+    <img src="_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.0 - Home"/>
+    <img src="_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.0 - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="getting_started.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="background.html">
+    Background
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#" aria-current="page">
+    Implementation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="benchmarking.html">
+    Benchmarking
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="user_guide/problem_definition.html">
+    Problem definition
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="user_guide/outputs.html">
+    Outputs
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="api/index.html">
+    API reference
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="references.html">
+    References
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Ahmed-Bayoumy/DMDO" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="getting_started.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="background.html">
+    Background
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#" aria-current="page">
+    Implementation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="benchmarking.html">
+    Benchmarking
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="user_guide/problem_definition.html">
+    Problem definition
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="user_guide/outputs.html">
+    Outputs
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="api/index.html">
+    API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="references.html">
+    References
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Ahmed-Bayoumy/DMDO" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"></div>
+</nav></div>
+        <div class="sidebar-primary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#design-principles">Design principles</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#package-layout">Package layout</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ports">Ports</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#registries-and-plugins">Registries and plugins</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subproblem-solvers">Subproblem solvers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-coordination-loop">The coordination loop</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#executors">Executors</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#observers">Observers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#checkpoints-and-resume">Checkpoints and resume</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sessions">Sessions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#coordination-policies">Coordination policies</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#service-layer">Service layer</a></li>
+</ul>
+  </nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-house"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Implementation</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="implementation">
+<h1>Implementation<a class="headerlink" href="#implementation" title="Link to this heading">#</a></h1>
+<p>This chapter explains how DMDO is organized: the package layers, the interfaces through which it talks to analyses,
+optimizers and execution back ends, the coordination loop, and the layers built on top of it (sessions, observers and
+the HTTP service). It is meant for users who extend DMDO or embed it in another tool.</p>
+<section id="design-principles">
+<h2>Design principles<a class="headerlink" href="#design-principles" title="Link to this heading">#</a></h2>
+<p>DMDO follows a <strong>ports and adapters</strong> design. The coordination logic depends only on a few small interfaces
+(<em>ports</em>); everything that varies between applications (the analyses, the subproblem optimizers, where the
+subproblems run, what is recorded) is an <em>adapter</em> that implements one of them. DMDO never imports a third-party
+modeling framework: an adapter written in user code only has to satisfy the interface.</p>
+<ul class="simple">
+<li><p><strong>Strategies</strong> select behavior by name: subproblem solvers, executors and coordination policies are interchangeable
+classes looked up in <strong>registries</strong>, which plugins extend through Python entry points.</p></li>
+<li><p><strong>Messages</strong> decouple the loop from where work is done: a subproblem solve is a picklable task that any executor
+can run, in this process, in a worker process or on another machine.</p></li>
+<li><p><strong>Observers</strong> receive every phase of the loop, so outputs (history file, console, checkpoints) and monitoring are
+pluggable instead of hard-wired.</p></li>
+<li><p><strong>One loop, several drivers</strong>: the coordination loop is a generator; <code class="docutils literal notranslate"><span class="pre">MDO.run</span></code>, <code class="docutils literal notranslate"><span class="pre">Session.step</span></code> and
+<code class="docutils literal notranslate"><span class="pre">Session.ask</span></code>/<code class="docutils literal notranslate"><span class="pre">tell</span></code> all drive the same code.</p></li>
+</ul>
+</section>
+<section id="package-layout">
+<h2>Package layout<a class="headerlink" href="#package-layout" title="Link to this heading">#</a></h2>
+<p>Each subpackage may only import from lower layers; a test of the test suite enforces this rule.</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<colgroup>
+<col style="width: 22.0%" />
+<col style="width: 10.0%" />
+<col style="width: 68.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Subpackage</p></th>
+<th class="head"><p>Layer</p></th>
+<th class="head"><p>Responsibility</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DMDO.core</span></code></p></td>
+<td><p>0</p></td>
+<td><p>Variables (<a class="reference internal" href="api/problem.html#DMDO.variableData" title="DMDO.variableData"><code class="xref py py-class docutils literal notranslate"><span class="pre">variableData</span></code></a>), enumerations and base protocols.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">DMDO.utils</span></code>, <code class="docutils literal notranslate"><span class="pre">DMDO.ports</span></code>, <code class="docutils literal notranslate"><span class="pre">DMDO.registry</span></code></p></td>
+<td><p>1</p></td>
+<td><p>Logging and seeding; the interfaces (ports) and messages; the registries.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DMDO.solvers</span></code>, <code class="docutils literal notranslate"><span class="pre">DMDO.analysis</span></code>, <code class="docutils literal notranslate"><span class="pre">DMDO.coordination</span></code></p></td>
+<td><p>3</p></td>
+<td><p>Subproblem solver strategies; disciplinary analyses and MDA groups; the ADMM coordinator and its adaptation
+policies.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">DMDO.subproblem</span></code></p></td>
+<td><p>4</p></td>
+<td><p>The subproblem: assembles the penalized objective and calls its solver strategy.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DMDO.workflow</span></code></p></td>
+<td><p>5</p></td>
+<td><p>The coordination loop (<a class="reference internal" href="api/workflow.html#DMDO.MDO" title="DMDO.MDO"><code class="xref py py-class docutils literal notranslate"><span class="pre">MDO</span></code></a>), executors, task messages and the built-in observers.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">DMDO.app</span></code></p></td>
+<td><p>6</p></td>
+<td><p>Problem building from YAML or dictionaries, <a class="reference internal" href="api/session.html#DMDO.main" title="DMDO.main"><code class="xref py py-func docutils literal notranslate"><span class="pre">main()</span></code></a> and the <a class="reference internal" href="api/session.html#DMDO.Session" title="DMDO.Session"><code class="xref py py-class docutils literal notranslate"><span class="pre">Session</span></code></a> API.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DMDO.service</span></code></p></td>
+<td><p>7</p></td>
+<td><p>Optional HTTP service, remote workers and client (standard library only, not imported by <code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">DMDO</span></code>).</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Module paths of earlier releases (<code class="docutils literal notranslate"><span class="pre">DMDO.SP</span></code>, <code class="docutils literal notranslate"><span class="pre">DMDO.MDO</span></code>, <code class="docutils literal notranslate"><span class="pre">DMDO.coordinator</span></code>, <code class="docutils literal notranslate"><span class="pre">DMDO.preprocess</span></code>, …) remain
+importable as aliases of the new modules, and checkpoints written by earlier releases can still be loaded.</p>
+</section>
+<section id="ports">
+<h2>Ports<a class="headerlink" href="#ports" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">Discipline</span></code></dt><dd><p>An analysis: <code class="docutils literal notranslate"><span class="pre">compute(inputs)</span> <span class="pre">-&gt;</span> <span class="pre">outputs</span></code>, with inputs and outputs keyed by variable name. Plain callables that
+take and return lists remain supported.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">SubproblemSolver</span></code></dt><dd><p>An optimizer for one subproblem: <code class="docutils literal notranslate"><span class="pre">solve(request)</span> <span class="pre">-&gt;</span> <span class="pre">outcome</span></code>. The <a class="reference internal" href="api/ports.html#DMDO.SolverRequest" title="DMDO.SolverRequest"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverRequest</span></code></a> carries the
+penalized objective, the constraints, the start point, bounds, variable types, budget and seed; the
+<a class="reference internal" href="api/ports.html#DMDO.SolverOutcome" title="DMDO.SolverOutcome"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverOutcome</span></code></a> returns the best point, its objective and constraint violation, and solver-specific
+state to warm-start the next outer iteration.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">Executor</span></code></dt><dd><p>Runs subproblem tasks: <code class="docutils literal notranslate"><span class="pre">map(fn,</span> <span class="pre">tasks)</span> <span class="pre">-&gt;</span> <span class="pre">results</span></code> (results in task order) and <code class="docutils literal notranslate"><span class="pre">close()</span></code>. Which subproblems
+see each other’s updates is decided by the sweep, not by the executor.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">RunObserver</span></code></dt><dd><p>Optional hooks called by the loop (see <a class="reference internal" href="#observers">Observers</a>).</p>
+</dd>
+</dl>
+</section>
+<section id="registries-and-plugins">
+<h2>Registries and plugins<a class="headerlink" href="#registries-and-plugins" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table">
+<colgroup>
+<col style="width: 26.0%" />
+<col style="width: 26.0%" />
+<col style="width: 48.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Registry</p></th>
+<th class="head"><p>Entry-point group</p></th>
+<th class="head"><p>Built-in entries</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DMDO.solvers</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dmdo.solvers</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">mads</span></code> (alias <code class="docutils literal notranslate"><span class="pre">OMADS</span></code>), <code class="docutils literal notranslate"><span class="pre">poll</span></code>, <code class="docutils literal notranslate"><span class="pre">search</span></code>, <code class="docutils literal notranslate"><span class="pre">scipy</span></code></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">DMDO.executors</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dmdo.executors</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">inprocess</span></code> (alias <code class="docutils literal notranslate"><span class="pre">serial</span></code>), <code class="docutils literal notranslate"><span class="pre">process</span></code> (alias <code class="docutils literal notranslate"><span class="pre">parallel</span></code>)</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DMDO.blackboxes</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dmdo.blackboxes</span></code></p></td>
+<td><p>(empty) analyses and objectives referenced by name from problem definitions</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">DMDO.policies</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">dmdo.policies</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">none</span></code>: the plain ADMM update of <a class="reference internal" href="background.html"><span class="doc">Background</span></a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Names are case-insensitive. Besides registered names, every registry accepts an import path <code class="docutils literal notranslate"><span class="pre">&quot;package.module:attr&quot;</span></code>,
+and installed packages can contribute entries without any code change in DMDO:</p>
+<div class="highlight-toml notranslate"><div class="highlight"><pre><span></span><span class="c1"># pyproject.toml of a plugin package</span>
+<span class="k">[project.entry-points.</span><span class="s2">"dmdo.solvers"</span><span class="k">]</span>
+<span class="n">my_solver</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"my_pkg.solvers:MySolver"</span>
+</pre></div>
+</div>
+</section>
+<section id="subproblem-solvers">
+<h2>Subproblem solvers<a class="headerlink" href="#subproblem-solvers" title="Link to this heading">#</a></h2>
+<p>A subproblem translates its state into a <a class="reference internal" href="api/ports.html#DMDO.SolverRequest" title="DMDO.SolverRequest"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverRequest</span></code></a> and hands it to its solver strategy:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">mads</span></code>, <code class="docutils literal notranslate"><span class="pre">poll</span></code>, <code class="docutils literal notranslate"><span class="pre">search</span></code></dt><dd><p>OMADS <span class="bibtex-citation" id="id1">[<a class="reference internal" href="references.html#id24" title="Ahmed H. Bayoumy. OMADS: optimization using mesh adaptive direct search. 2022. URL: https://github.com/Ahmed-Bayoumy/OMADS, doi:10.5281/zenodo.23407559.">Bayoumy, 2022</a>]</span>: the complete Mesh Adaptive Direct Search algorithm <span class="bibtex-citation" id="id2">[<a class="reference internal" href="references.html#id23" title="Charles Audet and Jr. Dennis, John E. Mesh adaptive direct search algorithms for constrained optimization. SIAM Journal on Optimization, 17(1):188–217, 2006. doi:10.1137/040603371.">Audet and Dennis, 2006</a>]</span>, its poll
+step alone, or its sampling search alone. Derivative-free, suitable for noisy, non-smooth or failing analyses.
+Options come from the subproblem’s <code class="docutils literal notranslate"><span class="pre">CONFIG</span></code> entry; the frame size of the previous outer iteration warm-starts
+the next one.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">scipy</span></code></dt><dd><p><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.optimize.minimize()</span></code> (SLSQP by default) on the scalar penalized objective. With <code class="docutils literal notranslate"><span class="pre">is_con:</span> <span class="pre">true</span></code> the
+subproblem constraints are passed to the optimizer as inequality constraints; by default they are added to the
+objective as a quadratic penalty <span class="math notranslate nohighlight">\(\max(g, 0)^2\)</span>, and points violating a constraint by more than
+<span class="math notranslate nohighlight">\(10^{-3}\)</span> are rejected.</p>
+</dd>
+</dl>
+<p>A custom strategy subclasses <a class="reference internal" href="api/extension.html#DMDO.BaseSolver" title="DMDO.BaseSolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseSolver</span></code></a>; see <a class="reference internal" href="tutorials/extending.html"><span class="doc">Extending DMDO</span></a>.</p>
+</section>
+<section id="the-coordination-loop">
+<h2>The coordination loop<a class="headerlink" href="#the-coordination-loop" title="Link to this heading">#</a></h2>
+<p><code class="xref py py-meth docutils literal notranslate"><span class="pre">MDO.coordinate()</span></code> is the loop of <a class="reference internal" href="background.html#a-nhatc"><span class="std std-numref">Algorithm 2</span></a> written as a Python generator. It
+yields two kinds of items:</p>
+<ul class="simple">
+<li><p>a <strong>batch of subproblem tasks</strong> (<a class="reference internal" href="api/workflow.html#DMDO.SubproblemTask" title="DMDO.SubproblemTask"><code class="xref py py-class docutils literal notranslate"><span class="pre">SubproblemTask</span></code></a>), which the driver solves and sends back as
+<a class="reference internal" href="api/workflow.html#DMDO.SubproblemResult" title="DMDO.SubproblemResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">SubproblemResult</span></code></a> objects in any order. Gauss–Seidel yields one task at a time, Jacobi one batch with
+every subproblem;</p></li>
+<li><p>an <strong>end-of-iteration marker</strong> carrying the <a class="reference internal" href="api/ports.html#DMDO.IterationRecord" title="DMDO.IterationRecord"><code class="xref py py-class docutils literal notranslate"><span class="pre">IterationRecord</span></code></a> of the outer iteration, and whether it
+was the last one.</p></li>
+</ul>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>driver                                   MDO.coordinate()
+──────                                   ────────────────
+next()                       ───────▶    start; on_run_start
+                             ◀───────    [task_1]                (Gauss–Seidel) or [task_1 .. task_M] (Jacobi)
+send([solve_task(task_1)])   ───────▶    merge result
+                               ...
+                             ◀───────    IterationEnd(record, finished)
+send(None)                   ───────▶    next outer iteration (or on_run_end and stop)
+</pre></div>
+</div>
+<p><code class="xref py py-meth docutils literal notranslate"><span class="pre">MDO.run()</span></code> drives the generator with an executor; <a class="reference internal" href="api/session.html#DMDO.Session" title="DMDO.Session"><code class="xref py py-class docutils literal notranslate"><span class="pre">Session</span></code></a> drives it one outer
+iteration at a time (<code class="docutils literal notranslate"><span class="pre">step</span></code>) or lets the caller solve the tasks (<code class="docutils literal notranslate"><span class="pre">ask</span></code>/<code class="docutils literal notranslate"><span class="pre">tell</span></code>). All drivers execute the same
+code, so they produce identical results.</p>
+<p>A task is self-contained: it holds the subproblem (with its analyses and current targets), the multipliers and the
+iteration number, and <a class="reference internal" href="api/workflow.html#DMDO.solve_task" title="DMDO.solve_task"><code class="xref py py-func docutils literal notranslate"><span class="pre">DMDO.solve_task()</span></code></a> solves it. Because tasks and results are picklable, the same task can be
+solved in-process, in a worker process or by a remote worker.</p>
+</section>
+<section id="executors">
+<h2>Executors<a class="headerlink" href="#executors" title="Link to this heading">#</a></h2>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">inprocess</span></code></dt><dd><p>Solves tasks in the calling process (default for <code class="docutils literal notranslate"><span class="pre">mode=&quot;serial&quot;</span></code>).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">process</span></code></dt><dd><p>A pool of worker processes, created on first use and reused across outer iterations (default for
+<code class="docutils literal notranslate"><span class="pre">mode=&quot;parallel&quot;</span></code>). Analyses and objectives must be importable, module-level callables.</p>
+</dd>
+<dt>Remote</dt><dd><p><a class="reference internal" href="api/service.html#DMDO.service.RemoteExecutor" title="DMDO.service.RemoteExecutor"><code class="xref py py-class docutils literal notranslate"><span class="pre">DMDO.service.RemoteExecutor</span></code></a> puts tasks on a queue served by remote workers (see <a class="reference internal" href="#service-layer">Service layer</a>).</p>
+</dd>
+<dt>Custom</dt><dd><p>Any object with <code class="docutils literal notranslate"><span class="pre">map(fn,</span> <span class="pre">tasks)</span></code> and <code class="docutils literal notranslate"><span class="pre">close()</span></code>: a client for a cluster scheduler, a job queue, or another
+framework’s parallel evaluator.</p>
+</dd>
+</dl>
+<p>The sweep and the executor are independent choices: <code class="docutils literal notranslate"><span class="pre">mode=&quot;serial&quot;</span></code> means Gauss–Seidel in-process,
+<code class="docutils literal notranslate"><span class="pre">mode=&quot;parallel&quot;</span></code> means Jacobi in a process pool, and <code class="docutils literal notranslate"><span class="pre">sweep=</span></code> and <code class="docutils literal notranslate"><span class="pre">executor=</span></code> override either.</p>
+</section>
+<section id="observers">
+<h2>Observers<a class="headerlink" href="#observers" title="Link to this heading">#</a></h2>
+<p>Observers receive the following hooks, in this order within an outer iteration:</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<colgroup>
+<col style="width: 34.0%" />
+<col style="width: 66.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Hook</p></th>
+<th class="head"><p>Called</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">on_run_start(run)</span></code></p></td>
+<td><p>once, before the first outer iteration</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">on_iteration_start(run,</span> <span class="pre">iteration)</span></code></p></td>
+<td><p>before the subproblems are solved</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">on_resume(run,</span> <span class="pre">iteration)</span></code></p></td>
+<td><p>instead of <code class="docutils literal notranslate"><span class="pre">on_iteration_start</span></code> for the first iteration of a resumed run</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">on_sweep_end(run,</span> <span class="pre">iteration)</span></code></p></td>
+<td><p>all subproblems solved and the inconsistencies computed, before the penalty update</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">on_iteration_end(run,</span> <span class="pre">record)</span></code></p></td>
+<td><p>the iteration is final for reporting; <code class="docutils literal notranslate"><span class="pre">record</span></code> is an <a class="reference internal" href="api/ports.html#DMDO.IterationRecord" title="DMDO.IterationRecord"><code class="xref py py-class docutils literal notranslate"><span class="pre">IterationRecord</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">on_multipliers_updated(run,</span> <span class="pre">iteration)</span></code></p></td>
+<td><p>after the multipliers and penalty weights were updated, before the stopping test</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">on_run_end(run)</span></code></p></td>
+<td><p>once, after the last outer iteration</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>DMDO’s own outputs are observers: <a class="reference internal" href="api/extension.html#DMDO.CheckpointWriter" title="DMDO.CheckpointWriter"><code class="xref py py-class docutils literal notranslate"><span class="pre">CheckpointWriter</span></code></a> (<code class="docutils literal notranslate"><span class="pre">coord_chk.pkl</span></code>),
+<a class="reference internal" href="api/extension.html#DMDO.ConsoleReporter" title="DMDO.ConsoleReporter"><code class="xref py py-class docutils literal notranslate"><span class="pre">ConsoleReporter</span></code></a> (one progress line per iteration) and <a class="reference internal" href="api/extension.html#DMDO.CoordinationHistoryRecorder" title="DMDO.CoordinationHistoryRecorder"><code class="xref py py-class docutils literal notranslate"><span class="pre">CoordinationHistoryRecorder</span></code></a>
+(<code class="docutils literal notranslate"><span class="pre">Coordination_history.out</span></code>). User observers are called after them. Observers are passed to <code class="docutils literal notranslate"><span class="pre">run</span></code> or to the
+session, never stored on the run, so checkpoints never have to pickle them.</p>
+</section>
+<section id="checkpoints-and-resume">
+<h2>Checkpoints and resume<a class="headerlink" href="#checkpoints-and-resume" title="Link to this heading">#</a></h2>
+<p>At the start of every outer iteration after the first, the whole run is pickled to <code class="docutils literal notranslate"><span class="pre">coord_chk.pkl</span></code>. A run resumed
+from that file (<code class="docutils literal notranslate"><span class="pre">Session.from_checkpoint</span></code> or <code class="docutils literal notranslate"><span class="pre">main</span></code> with <code class="docutils literal notranslate"><span class="pre">is_resume</span></code>) continues at the checkpointed iteration:
+its observers receive <code class="docutils literal notranslate"><span class="pre">on_resume</span></code> instead of <code class="docutils literal notranslate"><span class="pre">on_iteration_start</span></code> for that iteration, and history rows written
+after the checkpoint are replaced rather than duplicated. A resumed run ends with exactly the same result as an
+uninterrupted one.</p>
+</section>
+<section id="sessions">
+<h2>Sessions<a class="headerlink" href="#sessions" title="Link to this heading">#</a></h2>
+<p><a class="reference internal" href="api/session.html#DMDO.Session" title="DMDO.Session"><code class="xref py py-class docutils literal notranslate"><span class="pre">Session</span></code></a> is the public entry point for other code. It builds the problem (<code class="docutils literal notranslate"><span class="pre">from_yaml</span></code>, <code class="docutils literal notranslate"><span class="pre">from_dict</span></code>,
+<code class="docutils literal notranslate"><span class="pre">from_checkpoint</span></code>, or around an existing <a class="reference internal" href="api/workflow.html#DMDO.MDO" title="DMDO.MDO"><code class="xref py py-class docutils literal notranslate"><span class="pre">MDO</span></code></a>), drives the loop (<code class="docutils literal notranslate"><span class="pre">run</span></code>, <code class="docutils literal notranslate"><span class="pre">step</span></code>, <code class="docutils literal notranslate"><span class="pre">ask</span></code>/<code class="docutils literal notranslate"><span class="pre">tell</span></code>,
+<code class="docutils literal notranslate"><span class="pre">request_stop</span></code>) and reports a <a class="reference internal" href="api/session.html#DMDO.RunResult" title="DMDO.RunResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">RunResult</span></code></a> whose <code class="docutils literal notranslate"><span class="pre">to_dict()</span></code> is JSON-ready. <code class="docutils literal notranslate"><span class="pre">main({...})</span></code> and the
+YAML workflow of earlier releases are thin layers over the same building blocks (<a class="reference internal" href="api/session.html#DMDO.load_setup" title="DMDO.load_setup"><code class="xref py py-func docutils literal notranslate"><span class="pre">load_setup()</span></code></a>,
+<a class="reference internal" href="api/session.html#DMDO.build_mdo" title="DMDO.build_mdo"><code class="xref py py-func docutils literal notranslate"><span class="pre">build_mdo()</span></code></a>).</p>
+</section>
+<section id="coordination-policies">
+<h2>Coordination policies<a class="headerlink" href="#coordination-policies" title="Link to this heading">#</a></h2>
+<p>The ADMM coordinator owns the arithmetic of the multiplier update. <em>How</em> each update is scaled is a separate strategy,
+a coordination policy, chosen per coordinator by the <code class="docutils literal notranslate"><span class="pre">adaptation_policy</span></code> option. The built-in <code class="docutils literal notranslate"><span class="pre">none</span></code> policy
+applies the update of <a class="reference internal" href="background.html"><span class="doc">Background</span></a> unchanged. A custom policy subclasses
+<a class="reference internal" href="api/extension.html#DMDO.CoordinationPolicy" title="DMDO.CoordinationPolicy"><code class="xref py py-class docutils literal notranslate"><span class="pre">CoordinationPolicy</span></code></a> and returns, for each outer iteration, scale factors for the penalty growth
+<span class="math notranslate nohighlight">\(\beta\)</span>, the stall threshold <span class="math notranslate nohighlight">\(\gamma\)</span> and the inner budget; it is registered under a name in
+<code class="docutils literal notranslate"><span class="pre">DMDO.policies</span></code>.</p>
+</section>
+<section id="service-layer">
+<h2>Service layer<a class="headerlink" href="#service-layer" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">DMDO.service</span></code> exposes sessions over HTTP and distributes subproblem solves to remote workers. It uses only the
+Python standard library.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>client (any language)  ── HTTP/JSON ──▶  DMDOService ── sessions (Session + EventLog observer)
+                                              │
+                                              └── TaskQueue ◀── claim / result ── dmdo worker --tags aero
+                                                     ▲                     └──────── dmdo worker --tags structures
+                                      RemoteExecutor │
+                                 (placement: subproblem → tag)
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><a class="reference internal" href="api/service.html#DMDO.service.DMDOService" title="DMDO.service.DMDOService"><code class="xref py py-class docutils literal notranslate"><span class="pre">DMDOService</span></code></a> holds the sessions and a <a class="reference internal" href="api/service.html#DMDO.service.TaskQueue" title="DMDO.service.TaskQueue"><code class="xref py py-class docutils literal notranslate"><span class="pre">TaskQueue</span></code></a>; each session runs
+in a background thread, and an event-log observer feeds the server-sent event stream of the session.</p></li>
+<li><p><a class="reference internal" href="api/service.html#DMDO.service.RemoteExecutor" title="DMDO.service.RemoteExecutor"><code class="xref py py-class docutils literal notranslate"><span class="pre">RemoteExecutor</span></code></a> turns each subproblem task into a job on the queue. <code class="docutils literal notranslate"><span class="pre">placement</span></code> pins
+subproblems to workers with a given tag, so each subproblem runs on the machine that holds its analysis code.
+Workers that disappear can be covered by a lease: an unanswered job is offered again after <code class="docutils literal notranslate"><span class="pre">--lease</span></code> seconds.</p></li>
+<li><p>Workers are plain loops (<a class="reference internal" href="api/service.html#DMDO.service.run_worker" title="DMDO.service.run_worker"><code class="xref py py-func docutils literal notranslate"><span class="pre">run_worker()</span></code></a>): claim a job, call <code class="docutils literal notranslate"><span class="pre">solve_task</span></code>, post the result.</p></li>
+</ul>
+<p>Jobs and results are pickled, so the service, its workers and every client holding the token must trust each other.
+The service listens on <code class="docutils literal notranslate"><span class="pre">127.0.0.1</span></code> by default and refuses other interfaces without a token; put a TLS-terminating
+reverse proxy in front of it when traffic leaves a trusted network.</p>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="background.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Background</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="benchmarking.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Benchmarking</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2022-2026, Ahmed H. Bayoumy.
+      <br/>
+    
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.1.
+  </p>
+</div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

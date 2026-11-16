@@ -1,827 +1,377 @@
 Background
-####################
+##########
 
-Engineering systems are often intrinsically decomposable such that they can be developed following a decomposition paradigm. The system decomposed components can be severally developed. This allows optimal system design problem to be decomposed into subproblems, each of which is associated with a system component. Solving these optimization subproblems autonomously requires a coordination scheme to account for systems interaction and to ensure the consistency and optimality of a system-level design.
+Engineering systems are often decomposable: an aircraft is designed by aerodynamics, structures, propulsion and
+performance teams, each with its own analysis codes and expertise. Optimizing the system as a whole requires
+accounting for the interactions between these disciplines (:numref:`F-mdo`) while letting each of them work with its
+own models, tools and design freedom. Distributed multidisciplinary design optimization (MDO) does this by
+decomposing the system design problem into subproblems, one per discipline or component, and coordinating their
+solutions so that the subproblem designs agree and are optimal for the system.
 
-.. _F0:
-.. figure:: Figures/MDO.png
-   :width: 700
-   :align: center 
-
-   Interdisciplinary interactions
-
-Coordination methods used for distributed multidisciplinary design optimization (MDO) include penalty-based decomposition :cite:p:`demiguel2006local, demiguel2008decomposition`, bilevel integrated system synthesis :cite:p:`sobieszczanski2000bilevel, sobieszczanski2003bilevel`, collaborative optimization :cite:p:`braun1996collaborative, braun1997collaborative, lin2004analysis, roth2008enhanced`, quasi-separable decomposition :cite:p:`haftka2005multidisciplinary` and alternating directions method of multipliers (ADMM) :cite:p:`tosserams2007augmented, tosserams2008augmented, tosserams2009block`. We will focus on the analytical target cascading (ATC) method, which, according to the classification in :cite:p:`tosserams2009classification`, is an alternating method with closed design constraints and open consistency constraints.   
-
-ATC was motivated by translating system-level design targets to design specifications for the subsystems (components) that constitute the system :cite:p:`michelena1999system, kim2003target`. Design targets are cascaded using a hierarchical problem decomposition such that subproblems, associated with the components of the system, not only determine targets for their children, but also compute responses to targets they receive and communicate these back to their parents, as depicted in :numref:`F1`. The objective of a subproblem is to minimize the deviations between the target-response pairs while maintaining feasibility with respect to its local design constraints :cite:p:`tosserams2010nonhierarchical`. 
-
-.. _F1:
-.. figure:: Figures/t_r.png
-   :width: 150
+.. _F-mdo:
+.. figure:: media/figures/MDO.png
+   :width: 640
    :align: center
 
-   Target-response coupling between the parent subproblem :math:`p_{i}` and its child subproblem :math:`p_{j}`.   
+   Interactions between the disciplines of a multidisciplinary system.
 
-The conventional ATC formulation uses a hierarchical problem decomposition paradigm to decompose the problem into subproblems. The term hierarchical here refers to the functional dependency among system components; responses of high-level components in the hierarchy depend on responses of low-level components in the hierarchy, but not the converse, see :numref:`F2` (a). However, that might won't work for coordinating subproblems that do not have a hierarchical decomposition structure. For example, MDO problems are often composed of subproblems governed by analyses that have no hierarchical pattern, see :numref:`F2` (b). On top of that, the functions of decomposed optimal system design subproblems might depend on variables of more than one subproblem, as shown in :numref:`F2` (c). Such coupling functions usually represent a system attribute such as mass, cost, volume, or power. Coordinating system-wide requirements using the hierarchical ATC formulation requires the introduction of at least as many target-response pairs as there are subproblems.
+Architectures for MDO
+=====================
 
+MDO architectures are commonly divided into monolithic and distributed ones :cite:p:`martins2013multidisciplinary`.
+Monolithic architectures solve a single optimization problem: the multidisciplinary feasible (MDF) architecture
+converges a multidisciplinary analysis (MDA) at every design point, and the individual discipline feasible (IDF)
+architecture adds the coupling variables to the optimization and enforces their consistency as equality constraints.
+Distributed architectures split the problem into subproblems that are solved separately and coordinated. Coordination
+methods include penalty-based decomposition :cite:p:`demiguel2006local,demiguel2008decomposition`, bilevel integrated
+system synthesis :cite:p:`sobieszczanski2000bilevel,sobieszczanski2003bilevel`, collaborative optimization
+:cite:p:`braun1996collaborative,braun1997collaborative,lin2004analysis,roth2008enhanced`, quasi-separable decomposition
+:cite:p:`haftka2005multidisciplinary`, and augmented Lagrangian coordination with the alternating direction method of
+multipliers (ADMM) :cite:p:`tosserams2007augmented,tosserams2008augmented,tosserams2009block`.
 
-
-.. _F2:
-.. figure:: Figures/ATC_FD.png
-   :width: 700
-   :align: center
-
-   Functional dependence structure of the original and proposed ATC formulations: The arrows indicate the flow of subproblem responses; the shaded boxes are used to represent the dependence of system-wide functions on subproblem variables.
-
-
-Nonhierarchical analytical target cascading (NHATC) is an extension to ATC that aims to include nonhierarchical target-response coupling among subproblems so that functional dependencies in nonhierarchical problem decomposition can be handled by the ATC process while preserving the unique target-response coupling structure that distinguishes ATC from other coordination methods. 
-
-Introduction
-============
-
-As the complexity of engineering systems grows, the engineering design task becomes more challenging due to distributed design processes that mostly rely on big historical data and/or experts opinion. Multidisciplinary design optimization (MDO) aims at leveraging system's performance that relies on the evaluated design criteria of several disciplines and processes. MDO is critical to coordinating concurrent analysis and design activities in order to account for and exploit the interactions of multiple physics-based engineering disciplines such as aerodynamics, structures, thermodynamics, etc., as well as the disciplines pertinent to life-cycle aspects. For instance, :numref:`F3` shows the coupling relationships among various interacting disciplines in the design process of the supersonic business jet system that includes recursive workflows, which usually don't converge, and shared design variables.
-
-.. _F3:
-.. figure:: Figures/realistic_MDO.png
-   :width: 450
-   :align: center
-
-   Data dependencies for business jet problem. Single arrows indicate direction of response flow, and double arrows indicate shared variables.
+DMDO implements **analytical target cascading (ATC)** in its nonhierarchical form (NHATC). According to the
+classification of :cite:t:`tosserams2009classification`, ATC is an alternating method with closed design constraints
+and open consistency constraints: every subproblem satisfies its own constraints at every iteration, while the
+consistency between subproblems is reached only at convergence of the coordination.
 
 When to use DMDO
 ================
 
-Solving one large MDO problem all-in-one works great if the multidisciplinary (system) analysis (MDA) converges, so the following checklist will help you to decide whether using DMDO is a recommended choice.
+Solving one large MDO problem all-in-one works well when the MDA converges reliably and a single optimizer suits
+every discipline. A distributed approach such as DMDO is preferable when one or more of the following holds:
 
-* For single- and multi-objective studies, use DMDO if you deal with any of the following situations
+* the MDA does not converge, or converges only slowly, for example because the disciplines are tightly coupled;
+* the disciplines are developed by different teams, with different codes or on different machines, and should keep
+  their autonomy;
+* different disciplines call for different optimizers: derivative-free search for noisy or non-smooth simulations,
+  gradient-based methods for smooth analytical models;
+* the all-in-one design space is too large for the optimizer that would have to handle it;
+* subproblems can be solved in parallel, which a single sequential optimization cannot exploit.
 
-  * If the MDA process doesn't converge (MDA typically does not converge for tightly-coupled systems)
-  * If the optimization algorithm used cannot exploit available disciplinary knowledge (if any)
-  * If the optimization algorithm cannot handle large-diemnsional design space
+Analytical target cascading
+===========================
 
+ATC was introduced to translate system-level design targets into design specifications for the subsystems
+(components) that make up the system :cite:p:`michelena1999system,kim2003target`. Targets are cascaded through a
+hierarchical decomposition: a subproblem sets targets for its children and computes responses to the targets it
+receives from its parent (:numref:`F-tr`). Each subproblem minimizes the deviations between its target-response
+pairs while satisfying its local design constraints :cite:p:`tosserams2010nonhierarchical`.
 
-* For multi-objective studies, use DMDO if you deal with any of the following situations
-
-  * If the optimization algorithm cannot deal with large-dimensional functions space
-  * If the unrealistic designs dominate the Pareto plot
-
-
-ATC formulation
-=================
-
-Before we move ahead to NHATC formulation, let us give a glimpse to the ATC formulation. We start with the following definitions of design targets and responses
-
-
-
-.. Important:: Target and response variables
-   
-   Let the subproblem :math:`\mathcal{p}_{ij}` at the level :math:`i` be the parent subproblem for its children subproblems :math:`\mathcal{p}_{(i+1)k} | k \in \mathcal{C}_{ij}`. The design targets :math:`{\bf t}_{(i+1)k}` are computed by :math:`\mathcal{p}_{ij}` and translated to its children :math:`\mathcal{p}_{(i+1)k}`; in turn, the children :math:`\mathcal{p}_{(i+1)k}` compute responses :math:`{\bf r}_{(i+1)k}` and return them back to :math:`\mathcal{p}_{ij}`.
-   
-
-Responses of higher-level components are functions of responses of lower-level components, hierarchical ATC aims at minimizing the gap between what is required by higher-level components and what is achievable by lower-level components. The hierarchical augmented Lagrangian ATC subproblem can now be formulated as
-
-
-.. math::
-   
-   \begin{align*}
-        \left\{
-        \begin{array}{l}
-        \text{min} \,\, f_{ij}(\bar{{\bf x}}_{ij}) + \phi({\bf t}_{ij}-{\bf r}_{ij}) + \sum_{k \in \mathcal{C}_{ij}} \phi({\bf t}_{(i+1)k}-{\bf r}_{(i+1)k}), \\
-        \text{w.r.t}\,\, \bar{{\bf x}}_{ij}, \\
-        \text{s.t.}\,\, {\bf g}_{ij}(\bar{{\bf x}}_{ij}) \leq {\bf 0}, \\
-        \,\,\,\,\,\,\,\,\, {\bf h}_{ij}(\bar{{\bf x}}_{ij}) = {\bf 0}, \\
-        \text{with}\,\, {\bf r}_{ij}={\bf a}_{ij}({\bf x}_{ij}, {\bf t}_{(i+1)k_{1}}, ..., {\bf t}_{(i+1)k_{c_{ij}}}), \\
-        \,\,\,\,\,\,\,\,\,\,\, \bar{{\bf x}}_{ij} = [{\bf x}_{ij}, {\bf r}_{ij}, {\bf t}_{(i+1)k_{1}}, ..., {\bf t}_{(i+1)k_{c_{ij}}}],
-        \end{array}
-        \right.
-   \tag{$\mathcal{p}_{ij}$}
-   \end{align*}
-
-where :math:`\bar{{\bf x}}_{ij}` are the optimization variables for subproblem :math:`j` at level :math:`i`, :math:`{\bf x}_{ij}` are local design variables, and :math:`{\bf r}_{ij}` are response variables related to the targets :math:`{\bf t}_{ij}` computed by the parent of subproblem :math:`j`. Subproblem :math:`j`` computes targets :math:`{\bf t}_{(i+1)k}` for the set of its children :math:`\mathcal{{C}_{ij}}`; in turn, the children compute responses :math:`{\bf r}_{(i+1)k}` and return them to the parent. The function :math:`f_{ij}` is the local objective, and vector functions :math:`{\bf g}_{ij}` and :math:`{\bf h}_{ij}` represent local inequality and equality constraints, respectively. 
-
-.. note::
-  A local objective function and local constraints are not required for the ATC process. 
-
-Functions :math:`{\bf a}_{ij}` represent the analyses required to compute responses :math:`{\bf r}_{ij}`. The augmented Lagrangian function :math:`\phi` relaxes the consistency equality constraints :math:`{\bf c}_{ij}={\bf t}_{ij}-{\bf r}_{ij}={\bf 0}` as follows:
-
-.. math::
-
-  \phi({\bf t}_{ij}-{\bf r}_{ij}) = {\bf v}^{T}_{ij}({\bf t}_{ij}-{\bf r}_{ij}) + ||{\bf w}^{T}_{ij}\circ  ({\bf t}_{ij}-{\bf r}_{ij})||^{2}_{2}
-
-
-where :math:`{\bf v}_{ij}` and :math:`{\bf w}_{ij}` are penalty parameters selected by an external mechanism. The symbol :math:`\circ` represents the Hadamard product: an entry-wise multiplication of two vectors, such that :math:`{\bf a}\circ{\bf b}=[a_{1},...,a_{n}]^{T}\circ[b_{1},...,b_{n}]^{T}=[a_{1}b_{1},...,a_{n}b_{n}]^{T}`.
-
-.. note::
-
-  The hierarchical ATC formulation allows negotiation only between parents and children. NHATC formulation allows that subproblems can send and receive targets to and from, respectively, any other subproblem. In this formulation, subproblems have *neighbors* among which targets and responses are communicated.
-
-
-NHATC formulation
-=================
-
-NHATC formulation is nonhierarchical, so the index :math:`i` can be dropped. However, we do maintain a double index notation, which now denotes the direction of communication between subproblem :math:`j` and its neighbor :math:`n`. The first index denotes the sending subproblem and the second index denotes the receiving subproblem.
-
-.. important:: Subproblem and neighbors
-
-  let :math:`\mathcal{T}_{j}` be the set of neighbors for which subproblem :math:`j` sets targets, and let :math:`\mathcal{R}_{j}=\cup^{M}_{n=1}{j|j\in\mathcal{T}_{n}}` be the set of neighbors from which subproblem :math:`j` receives targets (i.e., the set of neighbors for which subproblem :math:`j` computes responses). Define :math:`{\bf t}_{nj}` the targets that subproblem :math:`{j}` receives from its neighbor :math:`n`. Define :math:`{\bf r}_{jn}` are the responses computed by subproblem :math:`j` to match the targets from neighbor :math:`n`.
-
-Furthermore, :numref:`F4` illustrates the target-response pairs between subproblem :math:`j` and both types of neighbors. 
-
-.. _F4:
-.. figure:: Figures/neighbors.png
-   :width: 250
+.. _F-tr:
+.. figure:: media/figures/t_r.png
+   :width: 150
    :align: center
 
-   Nonhierarchical target and response flow between subproblem :math:`j` and its neighbors
+   Target-response coupling between a parent subproblem :math:`p_{i}` and its child :math:`p_{j}`.
 
-We have two sets of consistency constraints related to subproblem :math:`j`:
+.. prf:definition:: Targets and responses
+   :label: def-targets
+
+   Let the subproblem :math:`p_{ij}` at level :math:`i` be the parent of the subproblems
+   :math:`p_{(i+1)k},\ k \in \mathcal{C}_{ij}`. The design targets :math:`\mathbf{t}_{(i+1)k}` are computed by
+   :math:`p_{ij}` and sent to its children; in turn, the children compute responses :math:`\mathbf{r}_{(i+1)k}` and
+   return them to :math:`p_{ij}`.
+
+Responses of higher-level components depend on responses of lower-level components, and ATC minimizes the gap
+between what higher levels require and what lower levels can achieve. With the consistency constraints
+:math:`\mathbf{c}_{ij} = \mathbf{t}_{ij} - \mathbf{r}_{ij} = \mathbf{0}` relaxed by a penalty function :math:`\phi`,
+the hierarchical ATC subproblem reads
 
 .. math::
-  {\bf c}_{nj} = {\bf t}_{nj}-{\bf r}_{jn} = {\bf 0}, \,\,\,\, n\in \mathcal{R}_{j} \\
-  {\bf c}_{jm} = {\bf t}_{nj}-{\bf r}_{jn} = {\bf 0}, \,\,\,\, m\in \mathcal{T}_{j}
+   :label: eq-atc
 
+   \begin{array}{ll}
+   \min_{\bar{\mathbf{x}}_{ij}} & f_{ij}(\bar{\mathbf{x}}_{ij}) + \phi(\mathbf{t}_{ij}-\mathbf{r}_{ij})
+       + \sum_{k \in \mathcal{C}_{ij}} \phi(\mathbf{t}_{(i+1)k}-\mathbf{r}_{(i+1)k}) \\[4pt]
+   \text{s.t.} & \mathbf{g}_{ij}(\bar{\mathbf{x}}_{ij}) \le \mathbf{0}, \qquad
+                 \mathbf{h}_{ij}(\bar{\mathbf{x}}_{ij}) = \mathbf{0}, \\[2pt]
+   \text{with} & \mathbf{r}_{ij} = \mathbf{a}_{ij}(\mathbf{x}_{ij}, \mathbf{t}_{(i+1)k_1}, \dots,
+                 \mathbf{t}_{(i+1)k_{c_{ij}}}), \qquad
+                 \bar{\mathbf{x}}_{ij} = [\mathbf{x}_{ij}, \mathbf{r}_{ij}, \mathbf{t}_{(i+1)k_1}, \dots,
+                 \mathbf{t}_{(i+1)k_{c_{ij}}}],
+   \end{array}
 
-The NHATC subproblem formulation is
+where :math:`\mathbf{x}_{ij}` are the local design variables, :math:`f_{ij}` the local objective,
+:math:`\mathbf{g}_{ij}` and :math:`\mathbf{h}_{ij}` the local constraints and :math:`\mathbf{a}_{ij}` the analyses
+that compute the responses. A local objective and local constraints are not required by the ATC process.
+
+The hierarchical formulation allows negotiation only between parents and children. Many MDO problems have no such
+hierarchy: their analyses exchange data in loops, and system-wide quantities such as mass, cost or power depend on
+the variables of several subproblems (:numref:`F-fd`). Coordinating them with hierarchical ATC requires at least as
+many artificial target-response pairs as there are subproblems.
+
+.. _F-fd:
+.. figure:: media/figures/ATC_FD.png
+   :width: 660
+   :align: center
+
+   Functional dependence of the hierarchical and nonhierarchical formulations. Arrows show the flow of responses;
+   shaded boxes show system-wide functions that depend on the variables of several subproblems.
+
+Nonhierarchical ATC
+===================
+
+NHATC :cite:p:`tosserams2010nonhierarchical` lets any subproblem send targets to, and receive targets from, any other
+subproblem, its *neighbors*. The level index is dropped and the two indices of a quantity denote the sender and the
+receiver.
+
+.. prf:definition:: Neighbors
+   :label: def-neighbors
+
+   Let :math:`\mathcal{T}_{j}` be the set of neighbors for which subproblem :math:`j` sets targets, and
+   :math:`\mathcal{R}_{j} = \{ n : j \in \mathcal{T}_{n} \}` the set of neighbors from which it receives targets,
+   that is, for which it computes responses. :math:`\mathbf{t}_{nj}` are the targets that :math:`j` receives from
+   :math:`n`, and :math:`\mathbf{r}_{jn}` the responses that :math:`j` computes to match them.
+
+.. _F-neighbors:
+.. figure:: media/figures/neighbors.png
+   :width: 260
+   :align: center
+
+   Nonhierarchical target and response flow between subproblem :math:`j` and its neighbors.
+
+Subproblem :math:`j` has two sets of consistency constraints, :math:`\mathbf{c}_{nj} = \mathbf{t}_{nj} -
+\mathbf{r}_{jn} = \mathbf{0}` for :math:`n \in \mathcal{R}_{j}`, and :math:`\mathbf{c}_{jm} = \mathbf{t}_{jm} -
+\mathbf{r}_{mj} = \mathbf{0}` for :math:`m \in \mathcal{T}_{j}`. The NHATC subproblem is
 
 .. math::
-   
-   \begin{align*}
-        \left\{
-        \begin{array}{l}
-        \text{min} \,\, f_{j}(\bar{{\bf x}}_{j}) + \phi({\bf t}_{nj}-{\bf r}_{jn}) + \sum_{m \in \mathcal{R}_{j}} \phi({\bf t}_{jm}-{\bf r}_{mj}), \\
-        \text{w.r.t}\,\, \bar{{\bf x}}_{j}, \\
-        \text{s.t.}\,\, {\bf g}_{j}(\bar{{\bf x}}_{j}) \leq {\bf 0}, \\
-        \,\,\,\,\,\,\,\,\, {\bf h}_{j}(\bar{{\bf x}}_{j}) = {\bf 0}, \\
-        \text{with}\,\, {\bf r}_{jn}={\bf S}_{jn}{\bf a}_{j}({\bf x}_{j}, {\bf t}_{jm}|m \in \mathcal{T}_{j}),\,\,\, n\in \mathcal{R}_{j} \\
-        \,\,\,\,\,\,\,\,\,\,\, \bar{{\bf x}}_{j} = [{\bf x}_{j}, {\bf r}_{jn}|n\in\mathcal{R}_{j}, {\bf t}_{jm}|m \in \mathcal{T}_{j}],
-        \end{array}
-        \right.
-   \tag{$\mathcal{p}_{j}$}
-   \end{align*}
+   :label: eq-nhatc
 
+   \begin{array}{ll}
+   \min_{\bar{\mathbf{x}}_{j}} & f_{j}(\bar{\mathbf{x}}_{j})
+       + \sum_{n \in \mathcal{R}_{j}} \phi(\mathbf{t}_{nj}-\mathbf{r}_{jn})
+       + \sum_{m \in \mathcal{T}_{j}} \phi(\mathbf{t}_{jm}-\mathbf{r}_{mj}) \\[4pt]
+   \text{s.t.} & \mathbf{g}_{j}(\bar{\mathbf{x}}_{j}) \le \mathbf{0}, \qquad
+                 \mathbf{h}_{j}(\bar{\mathbf{x}}_{j}) = \mathbf{0}, \\[2pt]
+   \text{with} & \mathbf{r}_{jn} = \mathbf{S}_{jn}\,\mathbf{a}_{j}(\mathbf{x}_{j}, \mathbf{t}_{jm} \mid
+                 m \in \mathcal{T}_{j}),\ n \in \mathcal{R}_{j}, \\[2pt]
+               & \bar{\mathbf{x}}_{j} = [\mathbf{x}_{j},\ \mathbf{r}_{jn} \mid n \in \mathcal{R}_{j},\
+                 \mathbf{t}_{jm} \mid m \in \mathcal{T}_{j}],
+   \end{array}
 
-ADMM coordinator
-=================
-Now we explain how the ADMM algorithm works and how it penalizes violated inconsistency open constraints.
+where :math:`\mathbf{S}_{jn}` selects the components of the analysis outputs that are sent to neighbor :math:`n`.
 
-Defining inconsistencies
-------------------------
+In DMDO terms, every shared or coupling quantity has one **copy** per subproblem that uses it (a row of the
+``variables`` table, see :doc:`getting_started`), and each pair of linked copies forms a target-response pair.
 
-The scaled inconsistencies between each pair of linked variables are concatenated in the vector :math:`{\bf q} \in {\bf R}^{n_{q}}`.
+Augmented Lagrangian coordination
+=================================
 
-We use both :math:`{\bf L}` and :math:`{\bf J}` attributes to build the linking map :math:`{\bf N}_{j} = [\bar{{\bf I}}_{j}, \underline{{\bf I}}_{j}]` among variables of the MDO problem. In DMDO, the function responsible on building the linker matrix called `set_pair` which is one of the `SubProblem` class methods. :numref:`A1` shows how the linker matrix is built in DMDO.
+Inconsistencies
+---------------
 
-.. _A1:
+The links between copies are collected in a linker matrix whose columns pair the index of a copy with the index of
+the copy it is linked to (:numref:`A-linker`). For every link :math:`l` between copies :math:`i` and :math:`j`, the
+scaled inconsistency is
+
+.. math::
+   :label: eq-q
+
+   q_{l} = \bar{\sigma}_{l}\,(x_{i} - x_{j}), \qquad \bar{\sigma}_{l} = \tfrac{1}{2}(\sigma_{i} + \sigma_{j}),
+
+with one entry per component for vector-valued variables, and :math:`q_{l} \in \{0, 1\}` (equal or not) for
+categorical ones. By default the scale factors are :math:`\sigma_{i} = 0.1 / (u_{i} - \ell_{i})`, from the bounds of
+each copy, so that couplings of very different magnitudes weigh comparably; a single constant can be given instead.
+The inconsistencies of all links form the vector :math:`\mathbf{q} \in \mathbb{R}^{n_q}`.
+
+.. _A-linker:
 .. pcode::
    :linenos:
 
     \begin{algorithm}
-    \caption{Linker matrix}
+    \caption{Linker matrix of subproblem $i$}
     \begin{algorithmic}
-    \STATE{Given ${\bf L}_{j}$, ${\bf D}_{j}$, ${\bf C}_{j}$, ${\bf N}_{j}$, $i$}
+    \STATE{Given the copies $\mathbf{x}$, their subproblems $\mathbf{D}$, links $\mathbf{L}$, coupling types $\mathbf{C}$ and names $\mathbf{N}$}
     \PROCEDURE{Build-linker-matrix}{}
-        \STATE{$\bar{\bf l}_{j}=\{\}$ and $\underline{\bf l}_{j}=\{\}$}
-        \FOR{$k \gets 1$ \textbf{to} $n_{\bf x}$}
-          \IF{${\bf D}_{j}[k] = i \land  {\bf C}_{j}[k] \neq 0 \land {\bf L}_{j}[k] \notin \bar{\bf l}_{j}$}
-            \STATE{$\bar{\bf l}_{j}[k] = {\bf D}_{j}[k]$}
-            \FOR{$r \gets 1$ \textbf{to} $n_{\bf x}$}
-              \IF{${\bf D}_{j}[r] \neq i \land {\bf L}_{j}[r] \notin \underline{\bf l}_{j} \land {\bf N}_{j}[i] = {\bf N}_{j}[r]$}
-                \STATE{$\underline{\bf l}_{j}[r] = {\bf L}_{j}[r]$}
+        \STATE{$\bar{\mathbf{l}} \gets \{\}$, $\underline{\mathbf{l}} \gets \{\}$}
+        \FOR{$k \gets 1$ \textbf{to} $n_{\mathbf{x}}$}
+          \IF{($\mathbf{D}[k] = i$ \textbf{or} $\mathbf{C}[k] \neq$ uncoupled) \textbf{and} $\mathbf{L}[k]$ is set \textbf{and} $k \notin \underline{\mathbf{l}}$}
+            \FOR{$r \gets 1$ \textbf{to} $n_{\mathbf{x}}$}
+              \IF{$\mathbf{D}[r] = \mathbf{L}[k]$ \textbf{and} $\mathbf{N}[r] = \mathbf{N}[k]$}
+                \STATE{append $k$ to $\bar{\mathbf{l}}$ and $r$ to $\underline{\mathbf{l}}$}
               \ENDIF
             \ENDFOR
           \ENDIF
         \ENDFOR
+        \RETURN{$[\bar{\mathbf{l}};\ \underline{\mathbf{l}}]$}
     \ENDPROCEDURE
     \end{algorithmic}
     \end{algorithm}
 
-We also need to build a scaling vector :math:`\mathbf{s} \in \mathbb{R}^{n_{x}}_{+} \forall i \in \{1...n_{x}\}` where
+Penalty function
+----------------
+
+The consistency constraints :math:`\mathbf{q} = \mathbf{0}` are relaxed with the augmented Lagrangian penalty
 
 .. math::
-   
-  \begin{align*}
-      {\bf s}[i]  =
-      \left\{
-      \begin{array}{l}
-      1 && \text{if} \,\,\, \bar{{\bf x}}[i]-\underline{{\bf x}}[i]\in \{0, \infty\}\\
-      \bar{{\bf x}}[i]-\underline{{\bf x}}[i] && \text{otherwise.}
-      \end{array}
-      \right.
-  \end{align*}
+   :label: eq-phi
 
+   \phi(\mathbf{q}) = \mathbf{v}^{\mathsf T}\mathbf{q} + \|\mathbf{w}\circ\mathbf{q}\|_{2}^{2},
 
-If one of the variables is not bounded, then scaling cannot be applied. Now we can define the inconsistency vector
+where :math:`\mathbf{v}` are the Lagrange multiplier estimates, :math:`\mathbf{w}` the penalty weights and
+:math:`\circ` the entrywise (Hadamard) product. When subproblem :math:`j` is solved, the penalty is summed over the
+links that involve its copies, and the subproblem minimizes
 
 .. math::
+   :label: eq-sp
 
-   \begin{align*}
-          \begin{array}{l}
-          \mathbf{q}(x) = (\mathbf{x}[\bar{\mathbf{I}}]-\mathbf{x}[\underline{\mathbf{I}}]) \oslash \frac{\mathbf{s}[\bar{\mathbf{I}}]+\mathbf{s}[\underline{\mathbf{I}}]}{2},
-          \end{array}
-   \end{align*}
+   f_{j}(\bar{\mathbf{x}}_{j}) + \sum_{l \in \mathcal{L}_{j}} \left( v_{l}\, q_{l} + w_{l}^{2}\, q_{l}^{2} \right)
 
-:math:`\mathbf{q} \in \mathbb{R}^{n_{q}}`. Now, we need to define the single penalty function :cite:p:`tosserams2010nonhierarchical`
+subject to its local constraints, with the copies held by the other subproblems fixed at their latest values. The
+subproblem that holds the system objective is the **master** subproblem; the others usually have no local objective.
 
-.. math::
+Method of multipliers
+---------------------
 
-  \begin{align*}
-          \begin{array}{l}
-          \phi(\mathbf{q}) = \mathbf{v}_{t}\mathbf{q} + ||\mathbf{w}_{t}\circ\mathbf{q}||^{2}_{2}
-          \end{array}
-  \end{align*}
-
-
-The penalty parameters :math:`\mathbf{v}_{t} \in \mathbb{R}^{n_{q}}` and :math:`\mathbf{w}_{t} \in \mathbb{R}^{n_{q}}` are initialized as
+The coordinator updates the penalty parameters after each outer iteration :math:`t`, following the method of
+multipliers :cite:p:`bertsekas1982constrained`:
 
 .. math::
-  
-  \begin{align*}
-          \begin{array}{l}
-          \mathbf{v}_{t} = [0,0,...,0]
-          \end{array}
-  \end{align*}
+   :label: eq-v
+
+   \mathbf{v}^{t+1} = \mathbf{v}^{t} + 2\,\mathbf{w}^{t}\circ\mathbf{w}^{t}\circ\mathbf{q}^{t},
+
+and grows the penalty weights of the links that do not make enough progress:
 
 .. math::
-  
-  \begin{align*}
-          \begin{array}{l}
-          \mathbf{w}_{t} = [1,1,...,1]
-          \end{array}
-  \end{align*}
+   :label: eq-w
 
-These parameters are updated at the end of the coordination loop using the method of multipliers scheme
+   w^{t+1}_{l} =
+   \begin{cases}
+     w^{t}_{l} & \text{if } |q^{t}_{l}| \le \gamma\, |q^{t-1}_{l}|, \\
+     \beta^{\,e_{l}}\, w^{t}_{l} & \text{otherwise,}
+   \end{cases}
+   \qquad \beta > 1,\ 0 \le \gamma < 1,
 
-.. math::
-  
-  \begin{align*}
-          \begin{array}{l}
-          \mathbf{v}_{t+1} = \mathbf{v}_{t} + 2 \mathbf{w}_{t} \circ \mathbf{w}_{t}\mathbf{q}_{t}
-          \end{array}
-  \end{align*}
+where :math:`q^{t-1}` are the inconsistencies at the start of the outer iteration and the exponent :math:`e_{l}`
+depends on the **update scheme** (``M_update_scheme``). Starting values are :math:`\mathbf{v}^{0} = \mathbf{0}` and
+:math:`\mathbf{w}^{0} = \mathbf{1}`.
 
-.. math::
-  
-  \begin{align*}
-          \mathbf{w}_{t+1}[l] =
-          \left\{
-          \begin{array}{l}
-          \mathbf{w}_{t}[l] && \text{if} \,\,\, |\mathbf{q}_{t}[l]| \leq \gamma |\mathbf{q}_{t-1}[l]|\\
-          \beta \mathbf{w}_{t}[l] && \text{otherwise}
-          \end{array} 
-          \right. && \forall l\in \{1...n_{q}\}
-  \end{align*}
+.. list-table:: Penalty-weight update schemes (``M_update_scheme``)
+   :header-rows: 1
+   :widths: 18 82
 
+   * - Scheme
+     - Exponent :math:`e_{l}` for a stalled link :math:`l`
+   * - ``normal``
+     - :math:`1`: every stalled link grows by :math:`\beta`.
+   * - ``median``
+     - :math:`\kappa` if :math:`|q_{l}| \ge \operatorname{median}(|\mathbf{q}|)`, else :math:`0`: only the stalled
+       links with above-median inconsistency grow (:math:`\kappa = 2` by default).
+   * - ``max``
+     - :math:`n_{q}` for the stalled link(s) with the largest inconsistency, else :math:`0`.
+   * - ``rank``
+     - :math:`2\,\rho_{l} / \max_{k} \rho_{k}`, where :math:`\rho_{l}` is the rank of :math:`q_{l}`: larger
+       inconsistencies grow faster.
 
-where :math:`\beta > 1` and :math:`0 \leq \gamma \leq 1` are fixed parameters for the entire ADMM coordinator. 
+Growing the weights only where consistency stalls keeps the penalty small on couplings that converge on their own,
+which preserves the conditioning of the subproblems; the multipliers :math:`\mathbf{v}` let the coordination reach
+consistency without driving the weights to infinity :cite:p:`tosserams2008augmented,boyd2011distributed`.
 
-The coordinator is constructed as shown in the following code block.
-
-
-NHATC main algorithm
+The coordination loop
 =====================
 
-In this section we will demonstrate how each step of the NHATC algorithm, shown in :numref:`A2`, works and how it is implemented in DMDO.
+One **outer iteration** solves every subproblem once (the *inner loop*) and then updates the coordinator. Two sweep
+orders are available:
 
-.. _A2:
+Gauss–Seidel
+   Subproblems are solved one after the other. Each one starts from the copies updated by the previous solves of the
+   same outer iteration, which usually reduces the number of outer iterations.
+Jacobi
+   All subproblems start from the same snapshot of the coordinator, in which the copies of each linked group are
+   first set to their mean. Each subproblem then evaluates its penalty on the inconsistency shifted by
+   :math:`\delta_{l} = -v_{l}/(2w_{l}^{2}) - \bar{q}_{l}`, where :math:`\bar{q}_{l}` is the inconsistency of the
+   averaged snapshot; this is the scaled form of the augmented Lagrangian used by consensus ADMM
+   :cite:p:`boyd2011distributed`. The subproblems can be solved concurrently; their results are then merged in
+   subproblem order, each subproblem contributing the copies it owns, so the outcome does not depend on the order in
+   which the solves finish.
+
+.. _A-nhatc:
 .. pcode::
    :linenos:
 
     \begin{algorithm}
-    \caption{NHATC}
+    \caption{NHATC coordination as implemented in DMDO}
     \begin{algorithmic}
-    \STATE{Given $f : \mathbb{R}^{n} \mapsto  \mathbb{R} \cup \{ \infty \}$, variables declaration, initial values for the ADMM penalties, a starting point $x^{0} \in \Omega$ and extreme barrier function $f_{\Omega}(x)$}
-    \PROCEDURE{MDO-Setup}{}
-        \STATE{Group the variables in a single vector ${\bf x}$ where each variable is an instantiation of a data class that holds defined variables attributes}
-        \STATE{Calculate the scaling vector ${\bf S}$}
-        \STATE{Calculate the pairing/linking matrix using Algorithm 1.}
-        \STATE{Define the disciplinary analyses $[{\bf y}_{j}] \leftarrow A_{j}({\bf x}[{\bf D}_{j}])$.}
-        \STATE{Define the multidisciplinary analysis workflows included in each subproblem $[\mathbf{Y}_{j}] \leftarrow p_{\text{MDA}_{j}}(\mathbf{y}_{j}, \mathbf{x}[\mathbf{D}_{j}])$.}
-        \STATE{Define subproblems $[f_{j}, \mathbf{g}_{j}, \mathbf{h}_{j}, y_{c_{j}}] \leftarrow p_{j}(\mathbf{Y}_{j}, \mathbf{x}[\mathbf{D}_{j}])$.}
-        \STATE{Define the MDO problem.}
-    \ENDPROCEDURE
-    \PROCEDURE{Update}{}
-        \STATE{Update the ADMM penalty parameters ${\bf w}$ and ${\bf v}$ based on the selected update scheme.}
+    \STATE{Given the subproblems $p_1, \dots, p_M$, the copies $\mathbf{x}^{0}$, $\beta$, $\gamma$, the stopping tolerance $\varepsilon$ and the budget $T$}
+    \PROCEDURE{Initialization}{}
+        \STATE{build the linker matrix (Algorithm 1) and the scale factors $\boldsymbol{\sigma}$}
+        \STATE{$\mathbf{v} \gets \mathbf{0}$, $\mathbf{w} \gets \mathbf{1}$, $t \gets 0$}
     \ENDPROCEDURE
     \PROCEDURE{Inner-loop}{}
-        \FOR{$j\leq n_{\text{subproblems}}$}
-            \STATE{Get the linker matrix for the subproblem $p_{j}$}
-            \STATE{Get the target variables ${\bf t}_{jm}$ for the subproblem $p_{j}$}
-            \STATE{Prepare the design vector for $p_{j}$ based on ${\bf t}_{jm}, {\bf r}_{jn}, {\bf x}_{j}$  for the subproblem $p_{j}$}
-            \STATE{Set the solver input parameters and options based on the optimization method selected}
-            \STATE{Solve $p_{j}$ where open inconsistency constraints are calculated and penalized within the evaluator callable under the subproblem class}
+        \FOR{$j \gets 1$ \textbf{to} $M$}
+            \STATE{take the targets of $p_j$ from the latest copies (Gauss--Seidel) or from the common snapshot (Jacobi)}
+            \STATE{solve $\min f_j + \sum_{l \in \mathcal{L}_j} \phi(q_l)$ subject to the local constraints of $p_j$ with its inner solver}
+            \STATE{write the copies owned by $p_j$ back to the coordinator}
         \ENDFOR
     \ENDPROCEDURE
     \PROCEDURE{Coordination-loop}{}
-        \WHILE{\TRUE}
-              \STATE{${\bf x}_{i} \gets {\bf x}_{i+1}$}
-              \STATE{Go to Inner-loop()}
-              \STATE{Update the design point with the best solution found from the inner loop ${\bf x}_{i+1} \gets {\bf x}^{*}$}
-              \STATE{Calculate global inconsistency vector ${\bf q} = ({\bf x}_{i}-{\bf x}_{i+1}) \oslash {\bf S}$}
-              \STATE{Go to Update()}
-              \STATE{Go to Terminate()}
+        \WHILE{$t < T$}
+              \STATE{\textsc{Inner-loop}}
+              \STATE{compute the inconsistencies $\mathbf{q}^{t}$ (Eq. q)}
+              \STATE{update $\mathbf{v}$ and $\mathbf{w}$ (Eqs. v and w)}
+              \IF{$\|\mathbf{q}^{t}\|_{\infty} < \varepsilon$ \textbf{and} $\|\,|\mathbf{q}^{t}| - |\mathbf{q}^{t-1}|\,\|_{\infty} < \varepsilon$}
+                  \STATE{stop: the copies agree}
+              \ENDIF
+              \STATE{$t \gets t + 1$}
         \ENDWHILE
-    \ENDPROCEDURE
-    \PROCEDURE{Terminate}{}
-        \IF{$\text{max}({\bf q}({\bf x})) \geq \epsilon_{stop} \lor i \leq n_{\text{budget}}$}
-            \STATE $i \gets i+1$
-        \ELSE
-            \STATE stop
-        \ENDIF
     \ENDPROCEDURE
     \end{algorithmic}
     \end{algorithm}
 
+The run stops when the maximum inconsistency is below ``inc_stop`` and no longer changes, when the maximum
+inconsistency has not improved for ``noprogress_stop`` outer iterations, or when the outer-iteration budget is
+exhausted.
 
-We will use a simple problem to demonstrate how the algorithm and its implementation work. The problem :math::`\mathcal{P}` is defined as
+.. note::
+
+   In the default configuration DMDO applies the multiplier update :eq:`eq-v`–:eq:`eq-w` twice per outer iteration:
+   once right after the inner loop and once after the iteration has been recorded. Both updates use the
+   inconsistencies of the same inner loop, so a stalled link can grow by up to :math:`\beta^{2e_{l}}` per outer
+   iteration. The benchmark results in :doc:`benchmarking` were obtained with this behavior.
+
+Example: the basic problem
+==========================
+
+The basic problem of :doc:`getting_started`,
 
 .. math::
-  \begin{align*}
-      \left\{
-      \begin{array}{l}
-      \text{min} \,\, u+v+a+b, \\
-      \text{w.r.t}\,\, u,v,w, \\
-      \text{s.t.}\,\, a = \log(u) + \log(v) + \log(b), \\
-      \,\,\,\,\,\,\,\, b = u^{-1} + w^{-1} + a^{-1}, \\
-      \,\,\,\,\,\,\,\, w +b -10 \leq 0, \\
-      \,\,\,\,\,\,\,\, 0 \leq u,v,w,a,b \leq 10.
-      \end{array}
-      \right.
-  \tag{$\mathcal{P}$}
-  \end{align*}
 
-The problem workflow is shown in :numref:`F5` while its partitioned flow is depicted in :numref:`F6`.
+   \begin{array}{ll}
+   \min_{u,v,w} & u + v + a + b \\[2pt]
+   \text{s.t.}  & a = \log_{10} u + \log_{10} v + \log_{10} b, \qquad
+                  b = u^{-1} + w^{-1} + a^{-1}, \\
+                & w + b - 10 \le 0, \qquad 0 \le u, v, w, a, b \le 10,
+   \end{array}
 
-.. _F5:
-.. figure:: Figures/basicMDO.png
-   :width: 250
+has the workflow of :numref:`F-basic` and is partitioned into two subproblems that each keep copies of
+:math:`u`, :math:`a` and :math:`b`:
+
+.. _F-basic:
+.. figure:: media/figures/basicMDO.png
+   :width: 240
    :align: center
 
-   Simple MDO workflow.
-
-.. _F6:
-.. figure:: Figures/basic_partitioned.png
-   :width: 300
-   :align: center
-
-   Partitioned simple MDO problem.
-
-
-The definition of subproblem 1 is
+   Workflow of the basic problem.
 
 .. math::
 
-  \begin{align*}
-          \left\{
-          \begin{array}{l}
-          \text{min} \,\, u_{1} + v + a_{1} + b_{1} + \phi_{u}(u_{1}-u_{2}) + \phi_{a}(a_{1}-a_{2}) + \phi_{b}(b_{1}-b_{2}), \\
-          \text{w.r.t}\,\, u_{1},v,b_{1}, \\
-          \text{s.t.}\,\, a_{1} = \log(u_{1}) + \log(v_{1}) + \log(b_{1}), \\
-          \,\,\,\,\,\,\,\, 0 \leq u_{1},v,a_{1},b_{1} \leq 10,
-          \end{array}
-          \right.
-  \tag{$\mathcal{p}_{1}$}
-  \end{align*}
-
-and subproblem 2 is
+   (p_1)\quad
+   \begin{array}{ll}
+   \min_{u_1, v, b_1} & u_{1} + v + a_{1} + b_{1} + \phi_{u}(u_{1}-u_{2}) + \phi_{a}(a_{1}-a_{2})
+                        + \phi_{b}(b_{1}-b_{2}) \\[2pt]
+   \text{with} & a_{1} = \log_{10} u_{1} + \log_{10} v + \log_{10} b_{1}, \qquad 0 \le u_{1}, v, a_{1}, b_{1} \le 10,
+   \end{array}
 
 .. math::
 
-  \begin{align*}
-          \left\{
-          \begin{array}{l}
-          \text{min} \,\, \phi_{u}(u_{1}-u_{2}) + \phi_{a}(a_{1}-a_{2}) + \phi_{b}(b_{1}-b_{2}), \\
-          \text{w.r.t}\,\, u_{2},w,a_{2}, \\
-          \text{s.t.}\,\, b = u^{-1}_{2} + w^{-1} + a^{-1}_{2}, \\
-          \,\,\,\,\,\,\,\, w +b_{2} -10 \leq 0, \\
-          \,\,\,\,\,\,\,\, 0 \leq u_{2},w,a_{2},b_{2} \leq 10.
-          \end{array}
-          \right.
-  \tag{$\mathcal{p}_{2}$}
-  \end{align*}
-
-
-MDO setup
--------------------
-In this step, we either define the MDO problem setup manually or we introduce a serialized definition from a ``YAML`` input file to DMDO to autobuild the problem. We will start with the manual setup and then will show a sample of the ``YAML`` input file.
-
-Variable declaration
---------------------
-The MDO workflow shown in :numref:`F6` dictates that we have eight variables (after problem decomposition); two local variables :math:`w, v` and six copies of coupling and shared variables :math:`u_{1}, u_{2}, a_{1}, a_{2}, b_{1}, b_{2}.` So we start by regrouping those variables into a single variables vector
-
-.. math::
-
-  \begin{align*}
-          \begin{array}{l}
-          \mathbf{x} = [u_{1}, v, a_{1}, b_{1}, u_{2}, w, b_{2}, b_{2}] \in \mathbb{R}^{n_{x}}.
-          \end{array}
-  \end{align*}
-
-For each variable of :math:`{\bf x}`, we declare the following list of attributes:
-
-* :math:`i`: Variable's index where :math:`i \in \{0,1,  ...,n_{x} \}`
-* :math:`\mathbf{J}`: List of subproblem indices; this list holds the index of the subproblem where the variable :math:`x_{i}` appears in.
-* :math:`\mathbf{N}`: List of variable names (In DMDO, we don't assign the subproblem index to the variable name, so we introduce the variables copy by explicitly duplicating the name)
-* :math:`n_{v}`: List of each variable's dimensions
-* :math:`\mathbf{C}_{t}`: List of coupling types; it holds the coupling type w.r.t to the subproblem index (not w.r.t the linked one)
-  * Shared
-  * Uncoupled
-  * Feedforward
-  * Feedback
-  * Dummy
-* :math:`\mathbf{L}`: List of subproblem links; the index of the subproblem that the variable is linked to; each variable can be assigned to a scalar integer value for a single link or a list of integer values for multiple links
-* :math:`\mathbf{x}_{0}`: The initial design point
-* :math:`\mathbf{S}`: List of scaling factors
-* :math:`\bar{\mathbf{x}}`: Variable's lower bound
-* :math:`\underline{\mathbf{x}}`: Variable's upper bound
-
-Without loss of generality, it is recommended to define scalar variables; however in ``DMDO``, variables can be vectors of any length.
-Let's see how we can declare variables attributes in ``DMDO``:
-
-
-.. code-block:: python
-
-  #  Variables setup
-  x = {}
-  X: List[variableData] = []
-  # Define variable names
-  N = ["u", "v", "a", "b", "u", "w", "a", "b"]
-  nx: int = len(N)
-  # Subproblem indices: Indices should be non-zero
-  J = [1,1,1,1,2,2,2,2]
-  # Subproblems links
-  L = [2, None, 2, 2, 1, None, 1, 1]
-  # Coupling types
-  Ct = [COUPLING_TYPE.SHARED, COUPLING_TYPE.UNCOUPLED, COUPLING_TYPE.FEEDFORWARD,
-  COUPLING_TYPE.FEEDBACK, COUPLING_TYPE.SHARED, COUPLING_TYPE.UNCOUPLED,
-  COUPLING_TYPE.FEEDBACK, COUPLING_TYPE.FEEDFORWARD]
-  # Lower bounds
-  lb = [0.]*8
-  # Upper bounds
-  ub = [10.]*8
-  # Baseline
-  x0 = [1.]*8
-  # Scaling
-  scaling = np.subtract(ub,lb)
-
-  # Inconsistency scaling
-  Qscaling=[]
-  # Create a dictionary for each variable
-  for i in range(nx):
-    x[f"var{i+1}"] = {"index": i+1,
-    "sp_index": J[i],
-    f"name": N[i],
-    "dim": 1,
-    "value": 0.,
-    "coupling_type": Ct[i],
-    "link": L[i],
-    "baseline": x0[i],
-    "scaling": scaling[i],
-    "lb": lb[i],
-    "value": x0[i],
-    "ub": ub[i]}
-    Qscaling.append(1/scaling[i] if 1/scaling[i] != np.inf and 1/scaling[i] != np.nan else 1.)
-
-
-  # Instantiate the variableData class for each variable using its according dictionary
-  for i in range(nx):
-    X.append(variableData(**x[f"var{i+1}"]))
-
-
-Disciplinary analyses
----------------------
-
-After constructing the list of the ``variablesData`` class instantiations, then we can instantiate the ``process`` class of each disciplinary analysis (DA). For the sake of simplicity, we use callable functions to execute the analysis.
-
-.. code-block:: python
-
-  def A1(x):
-    LAMBDA = 0.0
-    for i in range(len(x)):
-      if x[i] == 0.:
-        x[i] = 1e-12
-    return math.log(x[0]+LAMBDA) + math.log(x[1]+LAMBDA) + math.log(x[2]+LAMBDA)
-
-  def A2(x):
-    LAMBDA = 0.0
-    for i in range(len(x)):
-      if x[i] == 0.:
-        x[i] = 1e-12
-    return np.divide(1., (x[0]+LAMBDA)) + np.divide(1., (x[1]+LAMBDA)) + np.divide(1., (x[2]+LAMBDA))
-
-
-We introduce the ``variableData`` along with the analysis callable functions to the DA ``process`` class instantiations:
-
-.. math::
-
-  \begin{align*}
-          \begin{array}{l}
-          [\mathbf{y}_{j}] \leftarrow A_{j}(\mathbf{x}[\mathbf{D}_{j}]).
-          \end{array}
-  \end{align*}
-
-.. code-block:: python
-
-  # Analyses setup; construct disciplinary analyses
-  DA1: process = DA(inputs=[X[0], X[1], X[3]],
-  outputs=[X[2]],
-  blackbox=A1,
-  links=2,
-  coupling_type=COUPLING_TYPE.FEEDFORWARD
-  )
-
-  DA2: process = DA(inputs=[X[4], X[5], X[6]],
-  outputs=[X[7]],
-  blackbox=A2,
-  links=1,
-  coupling_type=COUPLING_TYPE.FEEDFORWARD
-  )
-
-
-Multidisciplinary analysis
---------------------------
-
-The response outputs of :math:`A_{j}(\mathbf{x}[\mathbf{D}_{j}])` will be used to evaluate the MDA processes of each MDO subproblem.
-
-.. math::
-
-  \begin{align*}
-          \begin{array}{l}
-          [\mathbf{Y}_{j}] \leftarrow p_{\text{MDA}_{j}}(\mathbf{y}_{j}, \mathbf{x}[\mathbf{D}_{j}]).
-          \end{array}
-  \end{align*}
-
-.. code-block:: python
-
-  # MDA setup; construct subproblems MDA
-  sp1_MDA: process = MDA(nAnalyses=1, analyses = [DA1], variables=[X[0], X[1], X[3]], responses=[X[2]])
-  sp2_MDA: process = MDA(nAnalyses=1, analyses = [DA2], variables=[X[4], X[5], X[6]], responses=[X[7]])
-
-The vector :math:`\mathbf{Y}_{j}` should include all the dependent design variables including the coupling variables of the subproblem :math:`j` in the same order of the MDA process returned outputs.
-
-
-ADMM coordinator
-----------------
-
-The coordinator object is constructed as shown in the following code block:
-
-.. code-block:: python
-
-   # Construct the coordinator
-  coord = ADMM(beta = 1.3,
-  nsp=2,
-  budget = 50,
-  index_of_master_SP=1,
-  display = True,
-  scaling = Qscaling,
-  mode = "serial",
-  M_update_scheme= w_scheme.MEDIAN,
-  store_q_io=True
-  )
-
-Subproblem `j`
--------------------
-
-Now we can formulate the optimization subproblem :math:`j` at iteration :math:`i` as follows
-
-.. math::
-
-  \begin{align*}
-          \left\{
-          \begin{array}{l}
-          \text{min} \,\, f_{j} + \phi_{t}(\mathbf{q}(\mathbf{x})) \\
-          \text{w.r.t}\,\, \mathbf{x}[\mathbf{D}_{j}] \\
-          \text{s.t.}\,\, \underline{\mathbf{x}}[\mathbf{D}_{j}] \leq \mathbf{x}[\mathbf{D}_{j}] \leq \bar{\mathbf{x}}[\mathbf{D}_{j}]\\
-          \mathbf{g}_{j} \leq 0\\
-          \mathbf{h}_{j} = 0\\
-          \text{where} \,\,\,\, \mathbf{x}[\mathbf{C}_{j}] \leftarrow \mathbf{y}_{j}\\
-          [\mathbf{Y}_{j}] \leftarrow p_{\text{MDA}_{j}}(\mathbf{y}_{j}, \mathbf{x}[\mathbf{D}_{j}])\\
-          [f_{j}, \mathbf{g}_{j}, \mathbf{h}_{j}, y_{c_{j}}] \leftarrow p_{\text{MDO}_{j}}(\mathbf{Y}_{j}, \mathbf{x}[\mathbf{D}_{j}]).
-          \end{array}
-          \right.
-  \tag{$\mathcal{{p}_{j}}$}
-  \end{align*}
-
-The following code block shows how to construct the MDO subproblems
-
-.. code-block:: python
-
-  def opt1(x, y):
-    return [sum(x)+y[0], [0.]]
-
-  def opt2(x, y):
-    return [0., [x[1]+y[0]-10.]]
-
-  # Construct subproblems
-  # Construct subproblems
-  sp1 = SubProblem(nv = 3,
-  index = 1,
-  vars = [X[0], X[1], X[3]],
-  resps = [X[2]],
-  is_main=1,
-  analysis= sp1_MDA,
-  coordination=coord,
-  opt=opt1,
-  fmin_nop=np.inf,
-  budget=20,
-  display=False,
-  psize = 1.,
-  pupdate=PSIZE_UPDATE.LAST,
-  freal=2.625)
-
-  sp2 = SubProblem(nv = 3,
-  index = 2,
-  vars = [X[4], X[5], X[6]],
-  resps = [X[7]],
-  is_main=0,
-  analysis= sp2_MDA,
-  coordination=coord,
-  opt=opt2,
-  fmin_nop=np.inf,
-  budget=20,
-  display=False,
-  psize = 1.,
-  pupdate=PSIZE_UPDATE.LAST
-  )
-
-MDO
-----
-
-Finally, we construct the MDAO process as follows:
-
-.. code-block:: python
-
-  # Construct MDO workflow
-  MDAO: MDO = MDO(
-  Architecture = MDO_ARCHITECTURE.IDF,
-  Coordinator = coord,
-  subProblems = [sp1, sp2],
-  variables = X,
-  responses = [X[2], X[7]],
-  fmin = np.inf,
-  hmin = np.inf,
-  display = False,
-  inc_stop = 1E-9,
-  stop = "Iteration budget exhausted",
-  tab_inc = [],
-  noprogress_stop = 100
-  )
-
-  coord2 = copy.deepcopy(coord)
-  coord2.budget = 100
-  sp_12 = copy.deepcopy(sp1)
-  sp_12.budget = 10
-  sp_12.coord = coord2
-  sp_22 = copy.deepcopy(sp2)
-  sp_22.coord = coord2
-
-  sp_22.budget = 10
-  MDAO2 = copy.deepcopy(MDAO)
-  MDAO2.subProblems = [sp_12, sp_22]
-  MDAO2.Coordinator = coord2
-  MDAO2.display = True
-  MDAO2.run()
-  # Run the MDO problem
-  out = MDAO.run()
-
-Results display
----------------
-
-.. code-block::
-
-  0 || qmax: 9.57399606704712e-08 || Obj: 1.9999990426003933 || dx: 1.7320508075691419 || max(w): 1.0
-  Highest inconsistency : u_2 to u_1
-  1 || qmax: 9.765662252902985e-05 || Obj: 1.9990234337747097 || dx: 1.7320510828730173 || max(w): 1.6900000000000002
-  Highest inconsistency : u_2 to u_1
-  2 || qmax: 0.1 || Obj: 1.0 || dx: 2.0 || max(w): 2.8561000000000005
-  Highest inconsistency : u_2 to u_1
-  3 || qmax: 0.1 || Obj: 1.0 || dx: 2.0 || max(w): 4.826809000000002
-  Highest inconsistency : u_2 to u_1
-  4 || qmax: 0.050097656250000004 || Obj: 1.4990234375 || dx: 1.803046731555873 || max(w): 8.157307210000004
-  Highest inconsistency : u_2 to u_1
-  5 || qmax: 0.012402343750000001 || Obj: 2.1240234375 || dx: 1.7364854773505354 || max(w): 13.785849184900009
-  Highest inconsistency : b_2 to b_1
-  6 || qmax: 0.0016601562500000002 || Obj: 1.9833984375 || dx: 1.732130368037418 || max(w): 23.298085122481016
-  Highest inconsistency : u_2 to u_1
-  7 || qmax: 0.0 || Obj: 2.0 || dx: 1.7320508075688772 || max(w): 39.37376385699292
-  Highest inconsistency : u_2 to u_1
-  Stop: qmax = 0.0 < 1e-09
-  Stop: qmax = 4.656612873077393e-10 < 1e-09
-
-
-Multipliers update
-------------------
-
-.. code-block:: python
-
-  def update_multipliers(self):
-    self.v = np.add(self.v, np.multiply(
-            np.multiply(np.multiply(2, self.w), self.w), self.q))
-    self.calc_inconsistency_old()
-    self.q_stall = np.greater(np.abs(self.q), self.gamma*np.abs(self.qold))
-    increase_w = []
-    if self.M_update_scheme == w_scheme.MEDIAN:
-      for i in range(self.q_stall.shape[0]):
-        increase_w.append(2. * ((self.q_stall[i]) and (np.greater_equal(np.abs(self.q[i]), np.median(np.abs(self.q))))))
-    elif self.M_update_scheme == w_scheme.MAX:
-      tc = np.greater_equal(np.abs(self.q), np.max(np.abs(self.q)))
-      for i in range(self.q_stall.shape[0]):
-        increase_w.append(self.q.shape[0] * (self.q_stall[i] and tc[i]))
-    elif self.M_update_scheme == w_scheme.NORMAL:
-      increase_w = self.q_stall
-    elif self.M_update_scheme == w_scheme.RANK:
-      temp = self.q.argsort()
-      rank = np.empty_like(temp)
-      rank[temp] = np.arange(len(self.q))
-      increase_w = np.multiply(np.multiply(2, self.q_stall), np.divide(rank, np.max(rank)))
-    else:
-      raise Exception(IOError, "Multipliers update scheme is not recognized!")
-
-    for i in range(len(self.w)):
-      self.w[i] = copy.deepcopy(np.multiply(self.w[i], np.power(self.beta, increase_w[i])))
-
-    self.w
-
-Inner loop
-----------
-
-.. code-block:: python
-
-  """ ADMM inner loop """
-  for s in range(len(self.subProblems)):
-    if iter == 0:
-      self.subProblems[s].coord = copy.deepcopy(self.Coordinator)
-      self.subProblems[s].set_pair()
-      self.xavg = self.subProblems[s].coord._linker
-      self.Coordinator.v = [0.] * len(self.subProblems[s].coord._linker[0])
-      self.Coordinator.w = [1.] * len(self.subProblems[s].coord._linker[0])
-    else:
-      self.subProblems[s].coord.master_vars = copy.deepcopy(self.Coordinator.master_vars)
-
-    out_sp = self.subProblems[s].solve(self.Coordinator.v, self.Coordinator.w)
-    self.Coordinator = copy.deepcopy(self.subProblems[s].coord)
-    if self.subProblems[s].index == self.Coordinator.index_of_master_SP:
-      self.fmin = self.subProblems[s].fmin_nop
-      if self.subProblems[s].solver == "OMADS":
-        self.hmin = out_sp["hmin"]
-      else:
-        self.hmin = [0.]
-
-Coordination-loop
------------------
-
-.. code-block:: python
-
-  def run(self):
-    global eps_fio, eps_qio
-    # Note: once you run MDAO, the data stored in eps_fio and eps_qio shall be deleted. It is recommended to store such data to a different variable before running another MDAO
-    eps_fio = []
-    eps_qio = []
-    """ Run the MDO process """
-    #  COMPLETE: fix the setup of the local (associated with SP) and global (associated with MDO) coordinators
-    for iter in range(self.Coordinator.budget):
-      if iter > 0:
-        self.Coordinator.master_vars_old = copy.deepcopy(self.Coordinator.master_vars)
-      else:
-        self.Coordinator.master_vars_old = copy.deepcopy(self.variables)
-        self.Coordinator.master_vars = copy.deepcopy(self.variables)
-
-      """ ADMM inner loop """
-      for s in range(len(self.subProblems)):
-        if iter == 0:
-          self.subProblems[s].coord = copy.deepcopy(self.Coordinator)
-          self.subProblems[s].set_pair()
-          self.xavg = self.subProblems[s].coord._linker
-          self.Coordinator.v = [0.] * len(self.subProblems[s].coord._linker[0])
-          self.Coordinator.w = [1.] * len(self.subProblems[s].coord._linker[0])
-        else:
-          self.subProblems[s].coord.master_vars = copy.deepcopy(self.Coordinator.master_vars)
-
-        out_sp = self.subProblems[s].solve(self.Coordinator.v, self.Coordinator.w)
-        self.Coordinator = copy.deepcopy(self.subProblems[s].coord)
-        if self.subProblems[s].index == self.Coordinator.index_of_master_SP:
-          self.fmin = self.subProblems[s].fmin_nop
-          if self.subProblems[s].solver == "OMADS":
-            self.hmin = out_sp["hmin"]
-          else:
-            self.hmin = [0.]
-
-      """ Display convergence """
-      dx = self.get_master_vars_difference()
-      if self.display:
-        print(f'{iter} || qmax: {np.max(np.abs(self.Coordinator.q))} || Obj: {self.fmin} || dx: {dx} || max(w): {np.max(self.Coordinator.w)}')
-        index = np.argmax(self.Coordinator.q)
-        print(f'Highest inconsistency : {self.Coordinator.master_vars[self.Coordinator._linker[0,index]-1].name}_'
-          f'{self.Coordinator.master_vars[self.Coordinator._linker[0,index]-1].link} to '
-            f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].name}_'
-          f'{self.Coordinator.master_vars[self.Coordinator._linker[1,index]-1].link}')
-      """ Update LM and PM """
-      self.Coordinator.update_multipliers()
-
-      """ Stopping criteria """
-      self.tab_inc.append(np.max(np.abs(self.Coordinator.q)))
-      stop: bool = self.check_termination_critt(iter)
-
-      if stop:
-        break
-      self.eps_qio = copy.deepcopy(eps_qio)
-      self.eps_fio = copy.deepcopy(eps_fio)
-    return self.Coordinator.q
+   (p_2)\quad
+   \begin{array}{ll}
+   \min_{u_2, w, a_2} & \phi_{u}(u_{1}-u_{2}) + \phi_{a}(a_{1}-a_{2}) + \phi_{b}(b_{1}-b_{2}) \\[2pt]
+   \text{s.t.} & w + b_{2} - 10 \le 0, \\[2pt]
+   \text{with} & b_{2} = u_{2}^{-1} + w^{-1} + a_{2}^{-1}, \qquad 0 \le u_{2}, w, a_{2}, b_{2} \le 10.
+   \end{array}
+
+Subproblem 1 holds the system objective (it is the master subproblem). Subproblem 2 has no local objective: it only
+tries to match the targets of subproblem 1 while satisfying its constraint. As the penalty weights grow on the links
+that stall, the copies are pushed together and the two subproblems converge to a consistent design.

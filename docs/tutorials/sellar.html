@@ -1,0 +1,931 @@
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" data-theme="light">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>The Sellar problem &#8212; DMDO 2612.0</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/proof.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=6a604523" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=1819abab" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
+
+    <script src="../_static/documentation_options.js?v=d587bd99"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=fd10adb8"></script>
+    <script data-sd-tabs-storage-prefix="sphinx-design-tab-id-" src="../_static/design-tabs.js?v=fcb327ea"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.js"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/sellar';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="The Session API" href="session.html" />
+    <link rel="prev" title="The basic problem from YAML" href="basic.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="2612.0" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="light">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+    
+    <img src="../_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.0 - Home"/>
+    <img src="../_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.0 - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../getting_started.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../background.html">
+    Background
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../implementation.html">
+    Implementation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../benchmarking.html">
+    Benchmarking
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../user_guide/problem_definition.html">
+    Problem definition
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../user_guide/outputs.html">
+    Outputs
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../api/index.html">
+    API reference
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../references.html">
+    References
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Ahmed-Bayoumy/DMDO" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../getting_started.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../background.html">
+    Background
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../implementation.html">
+    Implementation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../benchmarking.html">
+    Benchmarking
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../user_guide/problem_definition.html">
+    Problem definition
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../user_guide/outputs.html">
+    Outputs
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api/index.html">
+    API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../references.html">
+    References
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Ahmed-Bayoumy/DMDO" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="basic.html">The basic problem from YAML</a></li>
+<li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">The Sellar problem</a></li>
+<li class="toctree-l1"><a class="reference internal" href="session.html">The Session API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="parallel.html">Serial, parallel and custom execution</a></li>
+<li class="toctree-l1"><a class="reference internal" href="extending.html">Extending DMDO</a></li>
+<li class="toctree-l1"><a class="reference internal" href="service.html">The HTTP service and remote workers</a></li>
+</ul>
+</div>
+</nav></div>
+        <div class="sidebar-primary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-problem">The problem</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#the-analyses-and-objectives">The analyses and objectives</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#building-the-problem-with-the-python-api">Building the problem with the Python API</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#results-with-three-inner-solvers">Results with three inner solvers</a></li>
+</ul>
+  </nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-house"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Tutorials</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">The Sellar problem</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="the-sellar-problem">
+<h1>The Sellar problem<a class="headerlink" href="#the-sellar-problem" title="Link to this heading">#</a></h1>
+<p>The Sellar problem <span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id18" title="R. S. Sellar, S. M. Batill, and J. E. Renaud. Response surface based, concurrent subspace optimization for multidisciplinary system design. In 34th AIAA Aerospace Sciences Meeting and Exhibit. 1996. AIAA 96-0714.">Sellar <em>et al.</em>, 1996</a>]</span> is the classic two-discipline test of MDO architectures. Its optimum
+is known, <span class="math notranslate nohighlight">\(f^\ast = 3.18339\)</span>, which makes it a direct measure of how well a coordination method works. This
+tutorial builds it with DMDO’s Python API (the same objects the YAML builder creates) and compares three inner
+solvers.</p>
+<section id="the-problem">
+<h2>The problem<a class="headerlink" href="#the-problem" title="Link to this heading">#</a></h2>
+<div class="math notranslate nohighlight">
+\[\begin{split}\begin{array}{ll}
+\min_{x, z_1, z_2} &amp; x^2 + z_2 + y_1 + e^{-y_2} \\[2pt]
+\text{s.t.} &amp; 3.16 - y_1 \le 0, \qquad y_2 - 24 \le 0, \\[2pt]
+\text{with} &amp; y_1 = z_1^2 + x + z_2 - 0.2\,y_2, \qquad y_2 = \sqrt{y_1} + z_1 + z_2, \\[2pt]
+            &amp; 0 \le x \le 10,\quad -10 \le z_1 \le 10,\quad 0 \le z_2 \le 10.
+\end{array}\end{split}\]</div>
+<div class="sd-container-fluid sd-sphinx-override sd-mb-4 docutils">
+<div class="sd-row sd-row-cols-1 sd-row-cols-xs-1 sd-row-cols-sm-2 sd-row-cols-md-2 sd-row-cols-lg-2 sd-g-2 sd-g-xs-2 sd-g-sm-2 sd-g-md-2 sd-g-lg-2 docutils">
+<div class="sd-col sd-d-flex-column docutils">
+<figure class="align-center" id="id2">
+<a class="reference internal image-reference" href="../_images/Sellar_Wflow.png"><img alt="../_images/Sellar_Wflow.png" src="../_images/Sellar_Wflow.png" style="width: 95%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Figure 11 </span><span class="caption-text">Data flow between the two disciplines.</span><a class="headerlink" href="#id2" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+</div>
+<div class="sd-col sd-d-flex-column docutils">
+<figure class="align-center" id="id3">
+<a class="reference internal image-reference" href="../_images/sellar_xdsm.png"><img alt="../_images/sellar_xdsm.png" src="../_images/sellar_xdsm.png" style="width: 100%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Figure 12 </span><span class="caption-text">The Sellar problem partitioned into two subproblems.</span><a class="headerlink" href="#id3" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+</div>
+</div>
+</div>
+<p>The two analyses form a loop: <span class="math notranslate nohighlight">\(y_1\)</span> depends on <span class="math notranslate nohighlight">\(y_2\)</span> and <span class="math notranslate nohighlight">\(y_2\)</span> on <span class="math notranslate nohighlight">\(y_1\)</span>, and both depend on
+the shared variables <span class="math notranslate nohighlight">\(z_1, z_2\)</span>. DMDO splits the problem into two subproblems that each keep a copy of
+<span class="math notranslate nohighlight">\(z_1\)</span>, <span class="math notranslate nohighlight">\(z_2\)</span>, <span class="math notranslate nohighlight">\(y_1\)</span> and <span class="math notranslate nohighlight">\(y_2\)</span>:</p>
+<div class="math notranslate nohighlight">
+\[\begin{split}(p_1)\quad
+\begin{array}{ll}
+\min_{x, z_{1,1}, z_{2,1}, y_{2,1}} &amp; x^2 + z_{2,1} + y_{1,1} + e^{-y_{2,1}}
+    + \phi_{z_1} + \phi_{z_2} + \phi_{y_1} + \phi_{y_2} \\[2pt]
+\text{s.t.} &amp; 3.16 - y_{1,1} \le 0, \qquad y_{1,1} = x + z_{1,1}^2 + z_{2,1} - 0.2\, y_{2,1},
+\end{array}\end{split}\]</div>
+<div class="math notranslate nohighlight">
+\[\begin{split}(p_2)\quad
+\begin{array}{ll}
+\min_{z_{1,2}, z_{2,2}, y_{1,2}} &amp; \phi_{z_1} + \phi_{z_2} + \phi_{y_1} + \phi_{y_2} \\[2pt]
+\text{s.t.} &amp; y_{2,2} - 24 \le 0, \qquad y_{2,2} = \sqrt{y_{1,2}} + z_{1,2} + z_{2,2},
+\end{array}\end{split}\]</div>
+<p>where <span class="math notranslate nohighlight">\(\phi_{z_1} = \phi(z_{1,1} - z_{1,2})\)</span> and so on (<a class="reference internal" href="../background.html#equation-eq-phi">(5)</a> in <a class="reference internal" href="../background.html"><span class="doc">Background</span></a>). Subproblem 1
+holds the objective, so it is the master subproblem.</p>
+</section>
+<section id="the-analyses-and-objectives">
+<h2>The analyses and objectives<a class="headerlink" href="#the-analyses-and-objectives" title="Link to this heading">#</a></h2>
+<p>Analyses take their inputs as a list and return a list of outputs; objectives take the subproblem’s design vector
+<code class="docutils literal notranslate"><span class="pre">x</span></code> and analysis outputs <code class="docutils literal notranslate"><span class="pre">y</span></code> and return <code class="docutils literal notranslate"><span class="pre">[f,</span> <span class="pre">[g1,</span> <span class="pre">...]]</span></code> with constraints <span class="math notranslate nohighlight">\(g \le 0\)</span>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">Sellar_A1</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+  <span class="k">return</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.2</span><span class="o">*</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]]</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">Sellar_A2</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+  <span class="k">return</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">])]</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">Sellar_opt1</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+  <span class="k">return</span> <span class="p">[</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">]),</span> <span class="p">[</span><span class="mf">3.16</span><span class="o">-</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]]]</span>
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">Sellar_opt2</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+  <span class="k">return</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="p">[</span><span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="mf">24.</span><span class="p">]]</span>
+</pre></div>
+</div>
+</section>
+<section id="building-the-problem-with-the-python-api">
+<h2>Building the problem with the Python API<a class="headerlink" href="#building-the-problem-with-the-python-api" title="Link to this heading">#</a></h2>
+<p>The Python API mirrors the sections of a YAML definition:</p>
+<ol class="arabic simple">
+<li><p>one <a class="reference internal" href="../api/problem.html#DMDO.variableData" title="DMDO.variableData"><code class="xref py py-class docutils literal notranslate"><span class="pre">variableData</span></code></a> per variable copy (name, subproblem, link, coupling type, bounds, baseline);</p></li>
+<li><p>one <a class="reference internal" href="../api/problem.html#DMDO.DA" title="DMDO.DA"><code class="xref py py-class docutils literal notranslate"><span class="pre">DA</span></code></a> per analysis and one <a class="reference internal" href="../api/problem.html#DMDO.MDA" title="DMDO.MDA"><code class="xref py py-class docutils literal notranslate"><span class="pre">MDA</span></code></a> per subproblem, listing the variables they read
+and the responses they compute;</p></li>
+<li><p>the <a class="reference internal" href="../api/problem.html#DMDO.ADMM" title="DMDO.ADMM"><code class="xref py py-class docutils literal notranslate"><span class="pre">ADMM</span></code></a> coordinator (penalty growth <span class="math notranslate nohighlight">\(\beta\)</span>, stall threshold <span class="math notranslate nohighlight">\(\gamma\)</span>, update scheme,
+outer budget);</p></li>
+<li><p>one <a class="reference internal" href="../api/problem.html#DMDO.SubProblem" title="DMDO.SubProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">SubProblem</span></code></a> per subproblem, with its variables, responses, objective and inner solver;</p></li>
+<li><p>the <a class="reference internal" href="../api/workflow.html#DMDO.MDO" title="DMDO.MDO"><code class="xref py py-class docutils literal notranslate"><span class="pre">MDO</span></code></a> process that ties them together and runs the coordination.</p></li>
+</ol>
+<p>The complete setup used by the regression suite, with SciPy’s SLSQP as the inner solver:</p>
+<details class="sd-sphinx-override sd-dropdown sd-card sd-mb-3" open="open">
+<summary class="sd-summary-title sd-card-header">
+<span class="sd-summary-text"><code class="docutils literal notranslate"><span class="pre">Sellar_scipy()</span></code> from <code class="docutils literal notranslate"><span class="pre">tests/test_basic.py</span></code></span><span class="sd-summary-state-marker sd-summary-chevron-right"><svg version="1.1" width="1.5em" height="1.5em" class="sd-octicon sd-octicon-chevron-right" viewBox="0 0 24 24" aria-hidden="true"><path d="M8.72 18.78a.75.75 0 0 1 0-1.06L14.44 12 8.72 6.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z"></path></svg></span></summary><div class="sd-summary-content sd-card-body docutils">
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">Sellar_scipy</span><span class="p">():</span>
+  <span class="c1">#  Sellar - Two discipline problem with IDF</span>
+
+  <span class="c1">#  Variables grouping and problem setup</span>
+  <span class="n">x</span> <span class="o">=</span> <span class="p">{}</span>
+  <span class="n">X</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">variableData</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+  <span class="c1"># Define variable names</span>
+  <span class="n">N</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"x"</span><span class="p">,</span> <span class="s2">"z1"</span><span class="p">,</span> <span class="s2">"z2"</span><span class="p">,</span> <span class="s2">"y1"</span><span class="p">,</span> <span class="s2">"y2"</span><span class="p">,</span> <span class="s2">"z1"</span><span class="p">,</span> <span class="s2">"z2"</span><span class="p">,</span> <span class="s2">"y1"</span><span class="p">,</span> <span class="s2">"y2"</span><span class="p">]</span>
+  <span class="n">nx</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">N</span><span class="p">)</span>
+  <span class="c1"># Subproblem indices: Indices should be non-zero</span>
+  <span class="n">J</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">]</span>
+  <span class="c1"># Subproblems links</span>
+  <span class="n">L</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+  <span class="c1"># Coupling types</span>
+  <span class="n">Ct</span> <span class="o">=</span> <span class="p">[</span><span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">UNCOUPLED</span><span class="p">,</span> 
+        <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">SHARED</span><span class="p">,</span> 
+        <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">SHARED</span><span class="p">,</span>
+        <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDFORWARD</span><span class="p">,</span> 
+        <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDBACK</span><span class="p">,</span> 
+        <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">SHARED</span><span class="p">,</span>
+        <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">SHARED</span><span class="p">,</span> 
+        <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDBACK</span><span class="p">,</span>
+        <span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDFORWARD</span><span class="p">]</span>
+  <span class="c1"># Realistic lower bounds</span>
+  <span class="n">lb</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">3.16</span><span class="p">,</span> <span class="mf">1.77763888346</span><span class="p">,</span> <span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">3.16</span><span class="p">,</span> <span class="mf">1.77763888346</span><span class="p">]</span>
+  <span class="c1"># Realistic upper bounds</span>
+  <span class="n">ub</span> <span class="o">=</span> <span class="p">[</span><span class="mf">10.</span><span class="p">,</span><span class="mf">10.</span><span class="p">,</span><span class="mf">10.</span><span class="p">,</span> <span class="mf">115.2</span><span class="p">,</span> <span class="mf">24.</span><span class="p">,</span> <span class="mf">10.</span><span class="p">,</span><span class="mf">10.</span><span class="p">,</span> <span class="mf">115.2</span><span class="p">,</span> <span class="mf">24.</span><span class="p">]</span>
+
+  <span class="c1"># # Artificial lower bounds</span>
+  <span class="c1"># lb = [0, -10, 0, 2., 1.5, -10, 0, 2., 1.5]</span>
+  <span class="c1"># # Artificial upper bounds</span>
+  <span class="c1"># ub = [10.,10.,10., 50., 50, 10.,10., 50., 50]</span>
+
+  <span class="c1"># Bad artificial lower bounds</span>
+  <span class="c1"># lb = [0, -10, 0, 0., 0., -10, 0, 0., 0.]</span>
+  <span class="c1"># Bad artificial upper bounds</span>
+  <span class="c1"># ub = [10.]*9</span>
+
+  <span class="c1"># Baseline</span>
+  <span class="n">x0</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">5.</span><span class="p">,</span> <span class="mf">2.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">5.</span><span class="p">,</span> <span class="mf">2.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">]</span>
+  <span class="c1"># Scaling</span>
+  <span class="n">scaling</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">subtract</span><span class="p">(</span><span class="n">ub</span><span class="p">,</span><span class="n">lb</span><span class="p">)</span>
+  <span class="n">Qscaling</span> <span class="o">=</span> <span class="p">[]</span>
+  <span class="c1"># Create a dictionary for each variable</span>
+  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nx</span><span class="p">):</span>
+    <span class="n">x</span><span class="p">[</span><span class="sa">f</span><span class="s2">"var</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"index"</span><span class="p">:</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span>
+    <span class="s2">"sp_index"</span><span class="p">:</span> <span class="n">J</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+    <span class="s2">"name"</span><span class="p">:</span> <span class="n">N</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+    <span class="s2">"dim"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">"coupling_type"</span><span class="p">:</span> <span class="n">Ct</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+    <span class="s2">"link"</span><span class="p">:</span> <span class="n">L</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+    <span class="s2">"baseline"</span><span class="p">:</span> <span class="n">x0</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+    <span class="s2">"scaling"</span><span class="p">:</span> <span class="n">scaling</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+    <span class="s2">"lb"</span><span class="p">:</span> <span class="n">lb</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+    <span class="s2">"value"</span><span class="p">:</span> <span class="n">x0</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+    <span class="s2">"ub"</span><span class="p">:</span> <span class="n">ub</span><span class="p">[</span><span class="n">i</span><span class="p">],</span>
+    <span class="s2">"type"</span><span class="p">:</span> <span class="s2">"REAL"</span><span class="p">}</span>
+    <span class="n">Qscaling</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="n">scaling</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">if</span> <span class="mf">1.</span><span class="o">/</span><span class="n">scaling</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span> <span class="ow">and</span> <span class="mf">1.</span><span class="o">/</span><span class="n">scaling</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="k">else</span> <span class="mf">1.</span><span class="p">)</span>
+
+  <span class="c1"># Instantiate the variableData class for each variable using its according dictionary</span>
+  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nx</span><span class="p">):</span>
+    <span class="n">X</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">variableData</span><span class="p">(</span><span class="o">**</span><span class="n">x</span><span class="p">[</span><span class="sa">f</span><span class="s2">"var</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">"</span><span class="p">]))</span>
+
+
+  <span class="c1"># Analyses setup; construct disciplinary analyses</span>
+  <span class="n">DA1</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">DA</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">4</span><span class="p">]],</span>
+  <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">3</span><span class="p">]],</span>
+  <span class="n">blackbox</span><span class="o">=</span><span class="n">Sellar_A1</span><span class="p">,</span>
+  <span class="n">links</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+  <span class="n">coupling_type</span><span class="o">=</span><span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDFORWARD</span>
+  <span class="p">)</span>
+
+  <span class="n">DA2</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">DA</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">7</span><span class="p">]],</span>
+  <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">8</span><span class="p">]],</span>
+  <span class="n">blackbox</span><span class="o">=</span><span class="n">Sellar_A2</span><span class="p">,</span>
+  <span class="n">links</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+  <span class="n">coupling_type</span><span class="o">=</span><span class="n">COUPLING_TYPE</span><span class="o">.</span><span class="n">FEEDFORWARD</span>
+  <span class="p">)</span>
+
+  <span class="n">sp1_MDA</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">MDA</span><span class="p">(</span><span class="n">nAnalyses</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">analyses</span> <span class="o">=</span> <span class="p">[</span><span class="n">DA1</span><span class="p">],</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">4</span><span class="p">]],</span> <span class="n">responses</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">3</span><span class="p">]])</span>
+  <span class="n">sp2_MDA</span><span class="p">:</span> <span class="n">process</span> <span class="o">=</span> <span class="n">MDA</span><span class="p">(</span><span class="n">nAnalyses</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">analyses</span> <span class="o">=</span> <span class="p">[</span><span class="n">DA2</span><span class="p">],</span> <span class="n">variables</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">7</span><span class="p">]],</span> <span class="n">responses</span><span class="o">=</span><span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">8</span><span class="p">]])</span>
+
+
+  <span class="c1"># Construct the coordinator</span>
+  <span class="n">coord</span> <span class="o">=</span> <span class="n">ADMM</span><span class="p">(</span><span class="n">beta</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span><span class="n">gamma</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+  <span class="n">nsp</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+  <span class="n">budget</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+  <span class="n">index_of_master_SP</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+  <span class="n">display</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+  <span class="n">scaling</span> <span class="o">=</span> <span class="n">Qscaling</span><span class="p">,</span>
+  <span class="n">mode</span> <span class="o">=</span> <span class="s2">"serial"</span><span class="p">,</span>
+  <span class="n">M_update_scheme</span><span class="o">=</span> <span class="n">w_scheme</span><span class="o">.</span><span class="n">MEDIAN</span><span class="p">,</span>
+  <span class="n">store_q_io</span><span class="o">=</span><span class="kc">True</span>
+  <span class="p">)</span>
+
+  <span class="c1"># Construct subproblems</span>
+  <span class="n">sp1</span> <span class="o">=</span> <span class="n">SubProblem</span><span class="p">(</span><span class="n">nv</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+  <span class="n">index</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+  <span class="nb">vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">4</span><span class="p">]],</span>
+  <span class="n">resps</span> <span class="o">=</span> <span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">3</span><span class="p">]],</span>
+  <span class="n">is_main</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+  <span class="n">analysis</span><span class="o">=</span> <span class="n">sp1_MDA</span><span class="p">,</span>
+  <span class="n">coordination</span><span class="o">=</span><span class="n">coord</span><span class="p">,</span>
+  <span class="n">opt</span><span class="o">=</span><span class="n">Sellar_opt1</span><span class="p">,</span>
+  <span class="n">fmin_nop</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+  <span class="n">budget</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span>
+  <span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+  <span class="n">psize</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span>
+  <span class="n">pupdate</span><span class="o">=</span><span class="n">PSIZE_UPDATE</span><span class="o">.</span><span class="n">LAST</span><span class="p">,</span>
+  <span class="n">freal</span><span class="o">=</span><span class="mf">3.160</span><span class="p">,</span>
+  <span class="n">solver</span><span class="o">=</span><span class="s2">"scipy"</span><span class="p">,</span>
+  <span class="n">scipy</span><span class="o">=</span><span class="p">{</span><span class="s2">"method"</span><span class="p">:</span> <span class="s1">'SLSQP'</span><span class="p">,</span>
+          <span class="s2">"options"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"disp"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                      <span class="s2">"verbose"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+          <span class="s2">"is_con"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+          <span class="s2">"tol"</span><span class="p">:</span> <span class="mf">1E-8</span><span class="p">})</span>
+
+  <span class="n">sp2</span> <span class="o">=</span> <span class="n">SubProblem</span><span class="p">(</span><span class="n">nv</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+  <span class="n">index</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+  <span class="nb">vars</span> <span class="o">=</span> <span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">7</span><span class="p">]],</span>
+  <span class="n">resps</span> <span class="o">=</span> <span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">8</span><span class="p">]],</span>
+  <span class="n">is_main</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+  <span class="n">analysis</span><span class="o">=</span> <span class="n">sp2_MDA</span><span class="p">,</span>
+  <span class="n">coordination</span><span class="o">=</span><span class="n">coord</span><span class="p">,</span>
+  <span class="n">opt</span><span class="o">=</span><span class="n">Sellar_opt2</span><span class="p">,</span>
+  <span class="n">fmin_nop</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+  <span class="n">budget</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span>
+  <span class="n">display</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+  <span class="n">psize</span> <span class="o">=</span> <span class="mf">1.</span><span class="p">,</span>
+  <span class="n">pupdate</span><span class="o">=</span><span class="n">PSIZE_UPDATE</span><span class="o">.</span><span class="n">LAST</span><span class="p">,</span>
+  <span class="n">solver</span><span class="o">=</span><span class="s2">"scipy"</span><span class="p">,</span>
+  <span class="n">scipy</span><span class="o">=</span><span class="p">{</span><span class="s2">"method"</span><span class="p">:</span> <span class="s1">'SLSQP'</span><span class="p">,</span>
+          <span class="s2">"options"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"disp"</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                      <span class="s2">"verbose"</span><span class="p">:</span> <span class="mi">0</span><span class="p">},</span>
+          <span class="s2">"is_con"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+          <span class="s2">"tol"</span><span class="p">:</span> <span class="mf">1E-8</span><span class="p">})</span>
+
+  <span class="n">MDAO</span><span class="p">:</span> <span class="n">MDO</span> <span class="o">=</span> <span class="n">MDO</span><span class="p">(</span>
+  <span class="n">Architecture</span> <span class="o">=</span> <span class="n">MDO_ARCHITECTURE</span><span class="o">.</span><span class="n">IDF</span><span class="p">,</span>
+  <span class="n">Coordinator</span> <span class="o">=</span> <span class="n">coord</span><span class="p">,</span>
+  <span class="n">subProblems</span> <span class="o">=</span> <span class="p">[</span><span class="n">sp1</span><span class="p">,</span> <span class="n">sp2</span><span class="p">],</span>
+  <span class="n">variables</span> <span class="o">=</span> <span class="n">X</span><span class="p">,</span>
+  <span class="n">responses</span> <span class="o">=</span> <span class="p">[</span><span class="n">X</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="mi">8</span><span class="p">]],</span>
+  <span class="n">fmin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+  <span class="n">hmin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+  <span class="n">display</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+  <span class="n">inc_stop</span> <span class="o">=</span> <span class="mf">1E-9</span><span class="p">,</span>
+  <span class="n">stop</span> <span class="o">=</span> <span class="s2">"Iteration budget exhausted"</span><span class="p">,</span>
+  <span class="n">tab_inc</span> <span class="o">=</span> <span class="p">[],</span>
+  <span class="n">noprogress_stop</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span>
+
+  <span class="c1"># Run the MDO problem</span>
+  <span class="n">p_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="s2">"./tests/test_files/Sellar_Scipy.out"</span><span class="p">)</span>
+  <span class="n">MDAO</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">p_file</span><span class="p">)</span>
+
+  <span class="c1"># Print summary output</span>
+  <span class="nb">print</span><span class="p">(</span><span class="s1">'------Run_Summary------'</span><span class="p">)</span>
+  <span class="nb">print</span><span class="p">(</span><span class="n">MDAO</span><span class="o">.</span><span class="n">stop</span><span class="p">)</span>
+  <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'q = </span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">q</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+  <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">master_vars</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'</span><span class="si">{</span><span class="n">i</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">i</span><span class="o">.</span><span class="n">sp_index</span><span class="si">}</span><span class="s1"> = </span><span class="si">{</span><span class="n">i</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+  <span class="n">fmin_main</span> <span class="o">=</span> <span class="mi">0</span>
+  <span class="n">hmax</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+  <span class="n">hmax_main</span> <span class="o">=</span> <span class="n">hmax</span>
+  <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">)):</span>
+    <span class="n">fmin</span> <span class="o">=</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">opt</span><span class="p">([</span><span class="n">s</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">get_design_vars</span><span class="p">()]</span> <span class="p">,</span> \
+                                   <span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">MDA_process</span><span class="o">.</span><span class="n">getOutputs</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">hmax</span> <span class="o">=</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">opt</span><span class="p">([</span><span class="n">s</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">get_design_vars</span><span class="p">()]</span> <span class="p">,</span> \
+                                   <span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">MDA_process</span><span class="o">.</span><span class="n">getOutputs</span><span class="p">())[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'SP_</span><span class="si">{</span><span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="si">}</span><span class="s1">: fmin= </span><span class="si">{</span><span class="n">fmin</span><span class="si">}</span><span class="s1">, hmin= </span><span class="si">{</span><span class="n">hmax</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">MDAO</span><span class="o">.</span><span class="n">subProblems</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">is_main</span><span class="p">:</span>
+      <span class="n">fmin_main</span> <span class="o">=</span> <span class="n">fmin</span>
+      <span class="n">hmax_main</span> <span class="o">=</span> <span class="n">hmax</span>
+
+  <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'P_main: fmin= </span><span class="si">{</span><span class="n">fmin_main</span><span class="si">}</span><span class="s1">, hmax= </span><span class="si">{</span><span class="n">hmax_main</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+  <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">'Final obj value of the main problem: </span><span class="se">\n</span><span class="s1"> </span><span class="si">{</span><span class="n">fmin_main</span><span class="si">}</span><span class="s1">'</span><span class="p">)</span>
+
+  <span class="k">return</span> <span class="n">fmin_main</span><span class="p">,</span> <span class="n">hmax_main</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="n">MDAO</span><span class="o">.</span><span class="n">Coordinator</span><span class="o">.</span><span class="n">q</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</details><p><code class="docutils literal notranslate"><span class="pre">scipy={&quot;method&quot;:</span> <span class="pre">&quot;SLSQP&quot;,</span> <span class="pre">...,</span> <span class="pre">&quot;is_con&quot;:</span> <span class="pre">True}</span></code> passes the subproblem constraints to SLSQP as inequality
+constraints. Replacing <code class="docutils literal notranslate"><span class="pre">solver=&quot;scipy&quot;</span></code> by <code class="docutils literal notranslate"><span class="pre">solver=&quot;poll&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">solver=&quot;mads&quot;</span></code> (and the <code class="docutils literal notranslate"><span class="pre">scipy</span></code> block by an
+OMADS configuration, <code class="docutils literal notranslate"><span class="pre">conf=</span></code>) switches the subproblems to the derivative-free OMADS solvers; <code class="docutils literal notranslate"><span class="pre">Sellar_OMADS_POLL</span></code>
+and <code class="docutils literal notranslate"><span class="pre">Sellar_OMADS_MADS</span></code> in the same file show the complete setups.</p>
+<p>Running the same problem through a <a class="reference internal" href="../api/session.html#DMDO.Session" title="DMDO.Session"><code class="xref py py-class docutils literal notranslate"><span class="pre">Session</span></code></a> instead of <code class="docutils literal notranslate"><span class="pre">MDAO.run</span></code> gives step-by-step control and a
+<a class="reference internal" href="../api/session.html#DMDO.RunResult" title="DMDO.RunResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">RunResult</span></code></a>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">DMDO</span><span class="w"> </span><span class="kn">import</span> <span class="n">Session</span>
+
+<span class="n">session</span> <span class="o">=</span> <span class="n">Session</span><span class="p">(</span><span class="n">MDAO</span><span class="p">)</span>            <span class="c1"># MDAO: the MDO object built above</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">session</span><span class="o">.</span><span class="n">run</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">objective</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">max_inconsistency</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="results-with-three-inner-solvers">
+<h2>Results with three inner solvers<a class="headerlink" href="#results-with-three-inner-solvers" title="Link to this heading">#</a></h2>
+<p>The regression suite records the complete history of the three variants (see <a class="reference internal" href="../benchmarking.html"><span class="doc">Benchmarking</span></a>):</p>
+<div class="pst-scrollable-table-container"><table class="table">
+<colgroup>
+<col style="width: 28.0%" />
+<col style="width: 14.0%" />
+<col style="width: 18.0%" />
+<col style="width: 14.0%" />
+<col style="width: 26.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Inner solver</p></th>
+<th class="head"><p>Outer iterations</p></th>
+<th class="head"><p>Final objective</p></th>
+<th class="head"><p>Gap to <span class="math notranslate nohighlight">\(f^\ast\)</span></p></th>
+<th class="head"><p>Final max. inconsistency</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>SciPy SLSQP</p></td>
+<td><p>100</p></td>
+<td><p>3.60373</p></td>
+<td><p>+13.20 %</p></td>
+<td><p><span class="math notranslate nohighlight">\(9.7\times10^{-6}\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>OMADS <code class="docutils literal notranslate"><span class="pre">poll</span></code></p></td>
+<td><p>150</p></td>
+<td><p>3.52160</p></td>
+<td><p>+10.62 %</p></td>
+<td><p><span class="math notranslate nohighlight">\(6.2\times10^{-6}\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>OMADS <code class="docutils literal notranslate"><span class="pre">mads</span></code></p></td>
+<td><p>150</p></td>
+<td><p>3.20420</p></td>
+<td><p><strong>+0.65 %</strong></p></td>
+<td><p><span class="math notranslate nohighlight">\(1.3\times10^{-6}\)</span></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<figure class="align-center" id="id4">
+<a class="reference internal image-reference" href="../_images/bench_sellar.svg"><img alt="Objective and maximum inconsistency of the Sellar problem with three inner solvers" src="../_images/bench_sellar.svg" style="width: 98%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Figure 13 </span><span class="caption-text">Objective of the master subproblem (left) and maximum inconsistency (right) with the three inner solvers.</span><a class="headerlink" href="#id4" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+<p>All three variants reach consistency to better than <span class="math notranslate nohighlight">\(10^{-5}\)</span>, but only the full MADS algorithm, whose search
+step explores the subproblem design space globally, ends close to the optimum. The gradient-based SLSQP subproblems
+lock in a consistent design within a few outer iterations, before the coordination has found the best one. The
+inner solver is therefore a modeling choice of its own: DMDO lets every subproblem use a different one.</p>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="basic.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">The basic problem from YAML</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="session.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">The Session API</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2022-2026, Ahmed H. Bayoumy.
+      <br/>
+    
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.1.
+  </p>
+</div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

@@ -1,129 +1,883 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
-<head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Benchmarking &mdash; Read the Docs DMDO 1.3.0 documentation</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="_static/proof.css" type="text/css" />
-      <link rel="stylesheet" href="_static/proof.css" type="text/css" />
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.css" type="text/css" />
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
+
+<html lang="en" data-content_root="./" data-theme="light">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Benchmarking &#8212; DMDO 2612.0</title>
   
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/proof.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.11.1/katex.min.js"></script>
-        <script src="_static/debug.js"></script>
-    <script src="_static/js/theme.js"></script>
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="_static/proof.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=6a604523" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.css" />
+    <link rel="stylesheet" type="text/css" href="_static/custom.css?v=1819abab" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
+
+    <script src="_static/documentation_options.js?v=d587bd99"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="_static/copybutton.js?v=fd10adb8"></script>
+    <script data-sd-tabs-storage-prefix="sphinx-design-tab-id-" src="_static/design-tabs.js?v=fcb327ea"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.js"></script>
+    <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'benchmarking';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Tutorials" href="tutorials.html" />
-    <link rel="prev" title="Background" href="background.html" /> 
-</head>
+    <link rel="next" title="Tutorials" href="tutorials/index.html" />
+    <link rel="prev" title="Implementation" href="implementation.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="2612.0" />
+  
+    
+    <script src="_static/searchtools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <script src="searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="light">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
 
-<body class="wy-body-for-nav"> 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
-            <a href="index.html" class="icon icon-home"> Read the Docs DMDO
-          </a>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
 </div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Technical Documentation</span></p>
-<ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="background.html">Background</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Benchmarking</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#results">Results</a></li>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+  
+    
+    
+    
+    <img src="_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.0 - Home"/>
+    <img src="_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.0 - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="getting_started.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="background.html">
+    Background
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="implementation.html">
+    Implementation
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#" aria-current="page">
+    Benchmarking
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="user_guide/problem_definition.html">
+    Problem definition
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="user_guide/outputs.html">
+    Outputs
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="api/index.html">
+    API reference
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="references.html">
+    References
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Ahmed-Bayoumy/DMDO" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="getting_started.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="background.html">
+    Background
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="implementation.html">
+    Implementation
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#" aria-current="page">
+    Benchmarking
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="user_guide/problem_definition.html">
+    Problem definition
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="user_guide/outputs.html">
+    Outputs
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="api/index.html">
+    API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="references.html">
+    References
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Ahmed-Bayoumy/DMDO" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"></div>
+</nav></div>
+        <div class="sidebar-primary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#where-the-numbers-come-from">Where the numbers come from</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#test-problems">Test problems</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#results">Results</a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sellar-the-choice-of-inner-solver">Sellar: the choice of inner solver</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#speed-reducer-geometric-program-and-basic-problem">Speed reducer, geometric program and basic problem</a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#regression-suite">Regression suite</a></li>
 </ul>
-<p class="caption" role="heading"><span class="caption-text">Demo Documentation</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
-</ul>
-<p class="caption" role="heading"><span class="caption-text">Code Documentation</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="DMDO.html">DMDO package</a></li>
-<li class="toctree-l1"><a class="reference internal" href="indicesAndTables.html">Indices and tables</a></li>
-</ul>
-
-        </div>
-      </div>
-    </nav>
-
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">Read the Docs DMDO</a>
-      </nav>
-
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
-  <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
-      <li>Benchmarking</li>
-      <li class="wy-breadcrumbs-aside">
-            <a href="_sources/benchmarking.rst.txt" rel="nofollow"> View page source</a>
-      </li>
-  </ul>
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-             
-  <section id="benchmarking">
-<h1>Benchmarking<a class="headerlink" href="#benchmarking" title="Permalink to this headline"></a></h1>
-<p>This section shows benchmarking results of running <code class="docutils literal notranslate"><span class="pre">DMDO-1.3.0</span></code> on selected problems from the literature.</p>
-<section id="results">
-<h2>Results<a class="headerlink" href="#results" title="Permalink to this headline"></a></h2>
-<p>TBD</p>
-</section>
-</section>
-
-
-           </div>
-          </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="background.html" class="btn btn-neutral float-left" title="Background" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="tutorials.html" class="btn btn-neutral float-right" title="Tutorials" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+  </nav></div>
     </div>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <p>&#169; Copyright Ahmed Bayoumy, Read the Docs, Inc. &amp; contributors.</p>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
   </div>
 
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
 
-</footer>
-        </div>
       </div>
-    </section>
-  </div>
-  <script>
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script> 
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
 
-</body>
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-house"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">Benchmarking</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="benchmarking">
+<h1>Benchmarking<a class="headerlink" href="#benchmarking" title="Link to this heading">#</a></h1>
+<p>This chapter reports how DMDO performs on the classic test problems of distributed MDO, and how the results are
+kept reproducible.</p>
+<section id="where-the-numbers-come-from">
+<h2>Where the numbers come from<a class="headerlink" href="#where-the-numbers-come-from" title="Link to this heading">#</a></h2>
+<p>Every result below comes from the <strong>recorded regression traces</strong> in <code class="docutils literal notranslate"><span class="pre">tests/golden/traces</span></code>. Each trace is the
+complete history of one run (the objective of the master subproblem and the maximum inconsistency at every outer
+iteration, the final multipliers, penalty weights and design), recorded with fixed seeds on Windows with Python 3.12.
+The test suite runs the same problems again and requires the current code to reproduce every trace <strong>bit for bit</strong>,
+so the figures and tables of this chapter describe what the released code computes. They are regenerated from the
+traces, without running any optimization, by:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>docs_src/scripts/plot_benchmarks.py
+</pre></div>
+</div>
+</section>
+<section id="test-problems">
+<h2>Test problems<a class="headerlink" href="#test-problems" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table" id="id3">
+<caption><span class="caption-number">Table 2 </span><span class="caption-text">Problems and settings of the recorded runs</span><a class="headerlink" href="#id3" title="Link to this table">#</a></caption>
+<colgroup>
+<col style="width: 22.0%" />
+<col style="width: 9.0%" />
+<col style="width: 9.0%" />
+<col style="width: 24.0%" />
+<col style="width: 14.0%" />
+<col style="width: 22.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Run</p></th>
+<th class="head"><p>SPs</p></th>
+<th class="head"><p>Copies</p></th>
+<th class="head"><p>Coordinator (<span class="math notranslate nohighlight">\(\beta\)</span>, <span class="math notranslate nohighlight">\(\gamma\)</span>, scheme)</p></th>
+<th class="head"><p>Outer budget</p></th>
+<th class="head"><p>Inner solver (budget)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Basic problem</p></td>
+<td><p>2</p></td>
+<td><p>8</p></td>
+<td><p>1.3, 0.5, <code class="docutils literal notranslate"><span class="pre">normal</span></code></p></td>
+<td><p>50</p></td>
+<td><p>OMADS <code class="docutils literal notranslate"><span class="pre">poll</span></code> (150)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Sellar <span class="bibtex-citation" id="id1">[<a class="reference internal" href="references.html#id18" title="R. S. Sellar, S. M. Batill, and J. E. Renaud. Response surface based, concurrent subspace optimization for multidisciplinary system design. In 34th AIAA Aerospace Sciences Meeting and Exhibit. 1996. AIAA 96-0714.">Sellar <em>et al.</em>, 1996</a>]</span></p></td>
+<td><p>2</p></td>
+<td><p>9</p></td>
+<td><p>2.0, 0.5, <code class="docutils literal notranslate"><span class="pre">median</span></code></p></td>
+<td><p>100</p></td>
+<td><p>SciPy SLSQP (150)</p></td>
+</tr>
+<tr class="row-even"><td><p>Sellar</p></td>
+<td><p>2</p></td>
+<td><p>9</p></td>
+<td><p>1.3, 0.2, <code class="docutils literal notranslate"><span class="pre">median</span></code></p></td>
+<td><p>150</p></td>
+<td><p>OMADS <code class="docutils literal notranslate"><span class="pre">poll</span></code> (500)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Sellar</p></td>
+<td><p>2</p></td>
+<td><p>9</p></td>
+<td><p>1.3, 0.2, <code class="docutils literal notranslate"><span class="pre">median</span></code></p></td>
+<td><p>150</p></td>
+<td><p>OMADS <code class="docutils literal notranslate"><span class="pre">mads</span></code> (500)</p></td>
+</tr>
+<tr class="row-even"><td><p>Speed reducer <span class="bibtex-citation" id="id2">[<a class="reference internal" href="references.html#id19" title="J. Golinski. Optimal synthesis problems solved by means of nonlinear programming and random methods. Journal of Mechanisms, 5(3):287–309, 1970.">Golinski, 1970</a>]</span></p></td>
+<td><p>4</p></td>
+<td><p>20</p></td>
+<td><p>1.3, 0.5, <code class="docutils literal notranslate"><span class="pre">median</span></code></p></td>
+<td><p>50</p></td>
+<td><p>SciPy SLSQP (150)</p></td>
+</tr>
+<tr class="row-odd"><td><p>Geometric programming</p></td>
+<td><p>3</p></td>
+<td><p>17</p></td>
+<td><p>1.3, 0.2, <code class="docutils literal notranslate"><span class="pre">median</span></code></p></td>
+<td><p>100</p></td>
+<td><p>OMADS <code class="docutils literal notranslate"><span class="pre">mads</span></code> (500 / 150 / 150)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p><em>SPs</em> is the number of subproblems and <em>Copies</em> the number of variable copies (rows of the <code class="docutils literal notranslate"><span class="pre">variables</span></code> table). The
+problem statements and their partitions are given in <a class="reference internal" href="tutorials/sellar.html"><span class="doc">The Sellar problem</span></a> and in the test module
+<code class="docutils literal notranslate"><span class="pre">tests/test_basic.py</span></code>. Every run uses its full outer budget (no early stop).</p>
+</section>
+<section id="results">
+<h2>Results<a class="headerlink" href="#results" title="Link to this heading">#</a></h2>
+<div class="pst-scrollable-table-container"><table class="table" id="id4">
+<caption><span class="caption-number">Table 3 </span><span class="caption-text">Final results of the recorded runs</span><a class="headerlink" href="#id4" title="Link to this table">#</a></caption>
+<colgroup>
+<col style="width: 20.0%" />
+<col style="width: 6.0%" />
+<col style="width: 12.0%" />
+<col style="width: 9.0%" />
+<col style="width: 11.0%" />
+<col style="width: 10.0%" />
+<col style="width: 8.0%" />
+<col style="width: 12.0%" />
+<col style="width: 12.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Run</p></th>
+<th class="head"><p>SPs</p></th>
+<th class="head"><p>Inner solver</p></th>
+<th class="head"><p>Outer iterations</p></th>
+<th class="head"><p>Final objective</p></th>
+<th class="head"><p>Known optimum</p></th>
+<th class="head"><p>Gap</p></th>
+<th class="head"><p>Final max. inconsistency</p></th>
+<th class="head"><p>First iteration with max. inconsistency &lt; 1e-3</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Basic, POLL</p></td>
+<td><p>2</p></td>
+<td><p>OMADS poll</p></td>
+<td><p>50</p></td>
+<td><p>5.58977</p></td>
+<td><p>n/a</p></td>
+<td><p>n/a</p></td>
+<td><p>3.05e-07</p></td>
+<td><p>10</p></td>
+</tr>
+<tr class="row-odd"><td><p>Sellar, SLSQP</p></td>
+<td><p>2</p></td>
+<td><p>SciPy SLSQP</p></td>
+<td><p>100</p></td>
+<td><p>3.60373</p></td>
+<td><p>3.18339</p></td>
+<td><p>+13.20 %</p></td>
+<td><p>9.72e-06</p></td>
+<td><p>6</p></td>
+</tr>
+<tr class="row-even"><td><p>Sellar, POLL</p></td>
+<td><p>2</p></td>
+<td><p>OMADS poll</p></td>
+<td><p>150</p></td>
+<td><p>3.5216</p></td>
+<td><p>3.18339</p></td>
+<td><p>+10.62 %</p></td>
+<td><p>6.24e-06</p></td>
+<td><p>11</p></td>
+</tr>
+<tr class="row-odd"><td><p>Sellar, MADS</p></td>
+<td><p>2</p></td>
+<td><p>OMADS MADS</p></td>
+<td><p>150</p></td>
+<td><p>3.2042</p></td>
+<td><p>3.18339</p></td>
+<td><p>+0.65 %</p></td>
+<td><p>1.29e-06</p></td>
+<td><p>9</p></td>
+</tr>
+<tr class="row-even"><td><p>Speed reducer, SLSQP</p></td>
+<td><p>4</p></td>
+<td><p>SciPy SLSQP</p></td>
+<td><p>50</p></td>
+<td><p>2741.41</p></td>
+<td><p>n/a</p></td>
+<td><p>n/a</p></td>
+<td><p>7.40e-04</p></td>
+<td><p>16</p></td>
+</tr>
+<tr class="row-odd"><td><p>Geometric programming, MADS</p></td>
+<td><p>3</p></td>
+<td><p>OMADS MADS</p></td>
+<td><p>100</p></td>
+<td><p>20.2632</p></td>
+<td><p>n/a</p></td>
+<td><p>n/a</p></td>
+<td><p>1.14e-07</p></td>
+<td><p>11</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<figure class="align-center" id="id5">
+<span id="f-bench-consistency"></span><a class="reference internal image-reference" href="_images/bench_consistency.svg"><img alt="Maximum inconsistency versus outer iteration for the six recorded runs" src="_images/bench_consistency.svg" style="width: 95%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Figure 8 </span><span class="caption-text">Maximum inconsistency between the copies of the disciplines at each outer iteration.</span><a class="headerlink" href="#id5" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+<p><strong>Consistency.</strong> In every run the coordinator brings the copies held by different subproblems into agreement
+quickly: the maximum inconsistency falls below <span class="math notranslate nohighlight">\(10^{-3}\)</span> within 6 to 16 outer iterations
+(<a class="reference internal" href="#f-bench-consistency"><span class="std std-numref">Figure 8</span></a>). Five of the six runs end between <span class="math notranslate nohighlight">\(1.1\times10^{-7}\)</span> and
+<span class="math notranslate nohighlight">\(9.7\times10^{-6}\)</span>; the speed reducer, which has the most copies (20 across 4 subproblems) and the shortest
+budget (50 iterations), ends at <span class="math notranslate nohighlight">\(7.4\times10^{-4}\)</span>.</p>
+<section id="sellar-the-choice-of-inner-solver">
+<h3>Sellar: the choice of inner solver<a class="headerlink" href="#sellar-the-choice-of-inner-solver" title="Link to this heading">#</a></h3>
+<figure class="align-center" id="id6">
+<span id="f-bench-sellar"></span><a class="reference internal image-reference" href="_images/bench_sellar.svg"><img alt="Objective and maximum inconsistency of the Sellar problem with three inner solvers" src="_images/bench_sellar.svg" style="width: 98%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Figure 9 </span><span class="caption-text">Sellar problem with three inner solvers: objective of the master subproblem (left) and maximum inconsistency
+(right). The dashed line is the known optimum <span class="math notranslate nohighlight">\(f^\ast = 3.18339\)</span>.</span><a class="headerlink" href="#id6" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+<p>The Sellar problem has a known optimum, <span class="math notranslate nohighlight">\(f^\ast = 3.18339\)</span>, which makes it a direct test of the coordination.
+With derivative-free <strong>MADS</strong> subproblems, DMDO ends at <span class="math notranslate nohighlight">\(f = 3.2042\)</span>, <strong>0.65 % above the optimum</strong>, with the
+disciplines consistent to <span class="math notranslate nohighlight">\(1.3\times10^{-6}\)</span>. With the <strong>poll</strong> step alone and with <strong>SLSQP</strong>, the coordination
+also reaches consistency (<span class="math notranslate nohighlight">\(6.2\times10^{-6}\)</span> and <span class="math notranslate nohighlight">\(9.7\times10^{-6}\)</span>) but settles on designs 10.6 % and
+13.2 % above the optimum.</p>
+<p>In <a class="reference internal" href="#f-bench-sellar"><span class="std std-numref">Figure 9</span></a>, the SLSQP objective stays within 0.5 % of its final value from the sixth outer
+iteration on, while the penalty weights of the stalled links keep growing (to <span class="math notranslate nohighlight">\(6\times10^{110}\)</span> by the end of
+that run): once the consistency penalty dominates the subproblem objectives, the shared variables stop moving. The
+MADS run keeps improving until about the thirteenth iteration. A likely explanation is that the global search step of
+MADS keeps exploring the subproblem design space while the weights are still moderate, whereas a local
+gradient-based solve stays near its previous point. Choosing the inner solver per subproblem, and limiting how fast
+the weights grow (<span class="math notranslate nohighlight">\(\beta\)</span>, <span class="math notranslate nohighlight">\(\gamma\)</span> and the update scheme, see <a class="reference internal" href="background.html"><span class="doc">Background</span></a>), therefore matters as
+much as the coordination itself.</p>
+</section>
+<section id="speed-reducer-geometric-program-and-basic-problem">
+<h3>Speed reducer, geometric program and basic problem<a class="headerlink" href="#speed-reducer-geometric-program-and-basic-problem" title="Link to this heading">#</a></h3>
+<figure class="align-center" id="id7">
+<span id="f-bench-objectives"></span><a class="reference internal image-reference" href="_images/bench_objectives.svg"><img alt="Objective of the master subproblem for the basic problem, the speed reducer and the geometric program" src="_images/bench_objectives.svg" style="width: 98%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Figure 10 </span><span class="caption-text">Objective of the master subproblem along the outer iterations.</span><a class="headerlink" href="#id7" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+<p>These three runs have no known optimum of the decomposed problem in the regression suite; the suite instead checks
+the final objective, constraint violation and consistency against acceptance bands (next section).
+<a class="reference internal" href="#f-bench-objectives"><span class="std std-numref">Figure 10</span></a> shows the objectives settling early: they stay within 0.5 % of their final values from
+outer iteration 7 (geometric program), 9 (speed reducer) and 10 (basic problem) on, about when the inconsistency
+drops below <span class="math notranslate nohighlight">\(10^{-3}\)</span>.</p>
+<ul class="simple">
+<li><p><strong>Speed reducer</strong> (Golinski’s gear-box design, 7 design variables and 11 constraints split over 4 subproblems):
+final objective 2741.41, within 1.0 % of the suite’s reference value 2713.66, with the subproblem constraints met
+to the suite’s tolerance <span class="math notranslate nohighlight">\(h \le 0.06\)</span> (the all-in-one problem’s feasible optimum is 2994.47).</p></li>
+<li><p><strong>Geometric programming</strong> (14 variables, 4 coupling equalities and 6 inequalities over 3 subproblems): final
+objective 20.2632 with zero constraint violation and the tightest final consistency of all runs,
+<span class="math notranslate nohighlight">\(1.1\times10^{-7}\)</span>.</p></li>
+<li><p><strong>Basic problem</strong>: final objective 5.58977 and consistency <span class="math notranslate nohighlight">\(3.1\times10^{-7}\)</span> after 50 iterations of the
+poll-step solver.</p></li>
+</ul>
+</section>
+</section>
+<section id="regression-suite">
+<h2>Regression suite<a class="headerlink" href="#regression-suite" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">tests/test_basic.py</span></code> runs on Linux, Windows and macOS in continuous integration. Each problem must reach the
+following targets within its budget; <code class="docutils literal notranslate"><span class="pre">f</span></code> is the objective of the master subproblem, <code class="docutils literal notranslate"><span class="pre">h</span></code> the largest constraint
+violation and <code class="docutils literal notranslate"><span class="pre">q</span></code> the final maximum inconsistency.</p>
+<div class="pst-scrollable-table-container"><table class="table" id="id8">
+<caption><span class="caption-number">Table 4 </span><span class="caption-text">Acceptance criteria of the regression suite</span><a class="headerlink" href="#id8" title="Link to this table">#</a></caption>
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Problem and solver</p></th>
+<th class="head"><p>Targets</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Sellar, SciPy SLSQP</p></td>
+<td><p><span class="math notranslate nohighlight">\(|f - 3.18339| / 3.18339 \le 0.22\)</span>, <span class="math notranslate nohighlight">\(h \le 10^{-3}\)</span>, <span class="math notranslate nohighlight">\(q \le 10^{-4}\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>Sellar, OMADS <code class="docutils literal notranslate"><span class="pre">poll</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(|f - 3.18339| / 3.18339 \le 0.6\)</span>, <span class="math notranslate nohighlight">\(h \le 10^{-3}\)</span>, <span class="math notranslate nohighlight">\(q \le 6\times10^{-4}\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>Sellar, OMADS <code class="docutils literal notranslate"><span class="pre">mads</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(|f - 3.18339| / 3.18339 \le 0.3\)</span>, <span class="math notranslate nohighlight">\(h \le 10^{-3}\)</span>, <span class="math notranslate nohighlight">\(q \le 5\times10^{-3}\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>Speed reducer, SciPy SLSQP</p></td>
+<td><p><span class="math notranslate nohighlight">\(|f - 2713.66| / 2713.66 \le 0.05\)</span>, <span class="math notranslate nohighlight">\(h \le 0.06\)</span>, <span class="math notranslate nohighlight">\(q \le 2\times10^{-3}\)</span></p></td>
+</tr>
+<tr class="row-even"><td><p>Speed reducer, OMADS</p></td>
+<td><p><span class="math notranslate nohighlight">\(|f - 2713.66| / 2713.66 \le 0.07\)</span>, <span class="math notranslate nohighlight">\(h \le 10^{-4}\)</span>, <span class="math notranslate nohighlight">\(q \le 8\times10^{-3}\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>Geometric programming, OMADS <code class="docutils literal notranslate"><span class="pre">mads</span></code></p></td>
+<td><p><span class="math notranslate nohighlight">\(|f - 15| / 15 \le 2\)</span>, <span class="math notranslate nohighlight">\(h = 0\)</span>, <span class="math notranslate nohighlight">\(q \le 10^{-4}\)</span></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Besides these targets, the suite checks behavior that a distributed method has to guarantee:</p>
+<ul class="simple">
+<li><p><strong>Bit-for-bit regression.</strong> With <code class="docutils literal notranslate"><span class="pre">DMDO_GOLDEN=1</span></code>, the six runs above (and the basic problem) are repeated and
+must reproduce their recorded traces exactly.</p></li>
+<li><p><strong>Order-independent parallel sweeps.</strong> The Jacobi sweep gives identical results when its subproblems are solved
+in process, in reversed order, with results returned out of order, and in a pool of worker processes.</p></li>
+<li><p><strong>Exact resume.</strong> A run interrupted after a few outer iterations and resumed from its checkpoint ends with the
+same result as an uninterrupted run.</p></li>
+<li><p><strong>Identical drivers.</strong> <code class="docutils literal notranslate"><span class="pre">run()</span></code>, <code class="docutils literal notranslate"><span class="pre">step()</span></code> and <code class="docutils literal notranslate"><span class="pre">ask()</span></code>/<code class="docutils literal notranslate"><span class="pre">tell()</span></code> produce the same results, as do runs
+driven over the HTTP service with remote workers.</p></li>
+</ul>
+<p>Run the suite locally with:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+<span class="gp">$ </span>pytest<span class="w"> </span>tests<span class="w">                         </span><span class="c1"># the regression suite (about 45 minutes)</span>
+<span class="gp">$ </span><span class="nv">DMDO_GOLDEN</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>pytest<span class="w"> </span>tests/golden<span class="w">    </span><span class="c1"># bit-for-bit comparison with the recorded traces</span>
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>The traces were recorded on Windows; other platforms may differ in the last digits, which is why the bit-for-bit
+comparison is opt-in. The acceptance criteria above are platform independent.</p>
+</div>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="implementation.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Implementation</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="tutorials/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Tutorials</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2022-2026, Ahmed H. Bayoumy.
+      <br/>
+    
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.1.
+  </p>
+</div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
 </html>
