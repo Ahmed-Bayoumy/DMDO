@@ -86,7 +86,7 @@ coord:
     store_q_io: True
     is_AI_regularizer: True
     spike_influence_on_multipliers: False
-    AI_spike_policy: "L1_Predictive"
+    AI_spike_policy: "L1_Conservative"
     spike_w_damp_scale: 1.35 #1.45 1.15
     spike_w_amplify_scale: 1.01
     spike_gamma_scale: 0.01

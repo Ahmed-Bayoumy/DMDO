@@ -50,6 +50,52 @@ After installing the `DMDO` package using the `pip` command, the functions and c
 from DMDO import *
 ```
 
+## Extending DMDO and connecting other packages
+
+DMDO talks to analyses and optimizers through small, framework-neutral interfaces (`DMDO.ports`). Nothing in DMDO
+depends on a specific external package; an adapter only has to satisfy the interface.
+
+**Disciplines.** Any object with a `compute(inputs: dict) -> dict` method (inputs and outputs keyed by variable name)
+can be used wherever a blackbox callable is accepted, e.g. a wrapper around an OpenMDAO `Problem` or a GEMSEO
+discipline:
+
+```python
+class MyDiscipline:
+    def compute(self, inputs):
+        return {"y1": inputs["x1"] ** 2}
+```
+
+**Naming blackboxes from YAML.** `blackbox:` / `opt:` names in a problem definition are resolved, in order, from the
+`blackboxes` mapping passed to `main`, from the global registry, or as an import path:
+
+```python
+from DMDO import main, register_blackbox
+register_blackbox("A1", my_analysis)                      # global registry
+main({"setup_file": "problem.yaml", "mdo_name": "run", "working_dir": ".",
+      "blackboxes": {"opt1": my_objective}})              # per-run mapping
+# YAML: blackbox: "my_package.analyses:aero"             # import path
+```
+
+**Subproblem solvers.** Built-in strategies are `mads` (alias `OMADS`), `poll`, `search` and `scipy`. A new solver
+subclasses `DMDO.BaseSolver`, implements `solve(request: SolverRequest) -> SolverOutcome`, and is registered either
+in code or as a plugin through the `dmdo.solvers` entry-point group:
+
+```python
+from DMDO import BaseSolver, SolverOutcome, solvers
+
+@solvers.register("my_solver")
+class MySolver(BaseSolver):
+    def solve(self, request):
+        ...  # minimise request.objective(x) within request.lb/request.ub
+        return SolverOutcome(x=x_best, fmin=f_best, hmin=h_best)
+```
+
+```toml
+# pyproject.toml of a plugin package
+[project.entry-points."dmdo.solvers"]
+my_solver = "my_pkg.solvers:MySolver"
+```
+
 ## How to run DMDO from terminal
 After installing the libraries listed in the `requirements.txt`, `DMDO/DMDO.py` can be called directly from a 
 terminal window under the src directory. The path of the JSON template, which contains the problem input parameters, should be entered as an input argument to the `DMDO.py` call. 

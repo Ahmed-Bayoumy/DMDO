@@ -42,6 +42,8 @@ from .coordinator import ADMM
 from ._protocols import coordinator
 from ._protocols import process
 from .variables import variableData
+from .ports import Discipline
+from .registry import blackboxes as _blackbox_registry
 
 # Optional coordinator keys (YAML coord.<id>) that tune the detector and the adaptation.
 _AI_OPTION_KEYS = (
@@ -106,6 +108,9 @@ class problemSetup:
   userData: USER = USER()
   Sets: Dict = None
   log: logger = None
+  #: Optional name -> callable/Discipline mapping used to resolve ``blackbox:`` / ``opt:`` names of the problem
+  #: definition (looked up before the global :data:`DMDO.registry.blackboxes` registry).
+  blackboxes: Dict[str, Any] = None
 
   def get_varSets(self):
     if "sets" in self.data or "Sets" in self.data:
@@ -315,9 +320,25 @@ class problemSetup:
         return k
     return k
   
+  def resolve_callable(self, bb: Any) -> Any:
+    """Resolve a ``callable`` blackbox reference.
+
+    Order: an object that is already callable / a :class:`DMDO.ports.Discipline`; the ``blackboxes`` mapping given to
+    the setup; the global :data:`DMDO.registry.blackboxes` registry (registered names, ``dmdo.blackboxes`` plugins,
+    ``"package.module:function"`` import paths). An unresolved name is returned unchanged so it can still be bound
+    after the build, as in earlier DMDO versions.
+    """
+    if callable(bb) or isinstance(bb, Discipline) or not isinstance(bb, str):
+      return bb
+    if self.blackboxes and bb in self.blackboxes:
+      return self.blackboxes[bb]
+    if bb in _blackbox_registry:
+      return _blackbox_registry.get(bb)
+    return bb
+
   def setBlackboxes(self, bb:str, bb_type: str, copts: str = None):
     if bb_type == "callable":
-      return bb
+      return self.resolve_callable(bb)
     else:
       isWin = platform.platform().split('-')[0] == 'Windows'
       #  Check if the file is executable

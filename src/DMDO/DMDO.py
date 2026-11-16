@@ -170,8 +170,6 @@ def create_directory_if_not_exists(path: str):
     except Exception as e:
         print(f"Failed to create directory {path}: {e}")
 
-# Example usage
-create_directory_if_not_exists("data/logs/2025/04/05")
 
 # TODO: MDO setup will be simplified when the N2 chart UI is implemented
 def main(*args) -> Dict[str, Any]:  # noqa: C901
@@ -181,12 +179,14 @@ def main(*args) -> Dict[str, Any]:  # noqa: C901
     run_mode: str = "run"
     is_resume: bool = False
     log: logger = None
-    inputs = ["setup_file", "run_mode", "is_resume", "restart_file", "exec_mode", "mdo_name", "working_dir"]
+    inputs = ["setup_file", "run_mode", "is_resume", "restart_file", "exec_mode", "mdo_name", "working_dir",
+              "blackboxes"]
     
     # Initialize variables
     setup_file = None
     working_dir = None
     mdo_name = None
+    blackbox_map = None
     
     # Validate input type
     if not isinstance(args[0], dict):
@@ -219,6 +219,11 @@ def main(*args) -> Dict[str, Any]:  # noqa: C901
                     raise IOError(f"Invalid YAML file path: {arg}")
                 setup_file = arg
                 
+            elif key == "blackboxes":
+                if arg is not None and not isinstance(arg, dict):
+                    raise TypeError("blackboxes must be a dict mapping names to callables or disciplines")
+                blackbox_map = arg
+
             elif key == "mdo_name":
                 if not isinstance(arg, str):
                     raise TypeError("mdo_name must be a string")
@@ -328,7 +333,7 @@ def main(*args) -> Dict[str, Any]:  # noqa: C901
       
       log.log_msg(msg="--------------------------------------------------\n",
                   msg_type=MSG_TYPE.INFO.value)
-      MDAO= problemSetup(data=data, log = log).autoProbSetup()
+      MDAO= problemSetup(data=data, log = log, blackboxes=blackbox_map).autoProbSetup()
       MDAO.log = log
 
       if run_mode != "run" and run_mode != "build":

@@ -34,6 +34,9 @@ from .MDA import MDA, MDA_data
 from .DA import DA, DA_Data
 from .preprocess import problemSetup, optimizationData
 from .dashboard import main as dmdo_dash
+from .ports import Discipline, SubproblemSolver, SolverRequest, SolverOutcome
+from .registry import Registry, blackboxes, register_blackbox, solvers
+from .solvers import BaseSolver
 
 __all__: list[str] = [
   'USER', 
@@ -67,5 +70,14 @@ __all__: list[str] = [
   'problemSetup', 
   'main',
   'logger',
-  'dmdo_dash'
+  'dmdo_dash',
+  'Discipline',
+  'SubproblemSolver',
+  'SolverRequest',
+  'SolverOutcome',
+  'BaseSolver',
+  'Registry',
+  'solvers',
+  'blackboxes',
+  'register_blackbox',
   ]

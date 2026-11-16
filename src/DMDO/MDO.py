@@ -468,6 +468,15 @@ class MDO(MDO_data):
     
     return
 
+  def _record_subproblem_solve(self, s: int) -> None:
+    """Record the constraint violation (and, for the master subproblem, the objective) of a finished solve."""
+    sp = self.subProblems[s]
+    hmin = sp.reported_hmin()
+    self.hmin_dict[sp.index] = hmin
+    if sp.index == self.Coordinator.index_of_master_SP:
+      self.fmin = sp.fmin_nop
+      self.hmin = hmin
+
   def solve_subproblem(self, s: int):
     self.prepare_SP_jobs(s=s)
     # if iter > 1:
@@ -591,35 +600,8 @@ class MDO(MDO_data):
             self.subProblems[s].coord = self.Coordinator
           out_sp, sp = self.solve_subproblem(s)
           self.subProblems[s] = copy.deepcopy(sp)
-          # Collect hmin value for this SP
-          sp_index = self.subProblems[s].index
-          if (
-            self.subProblems[s].solver == "OMADS"
-            or self.subProblems[s].solver == "mads"
-            or self.subProblems[s].solver == "poll"
-            or self.subProblems[s].solver == "search"
-          ):
-            self.hmin_dict[sp_index] = out_sp["hmin"]
-          elif self.subProblems[s].solver == "scipy":
-            # Recorded by SP.solve with the same measure as OMADS (sum of squared violations).
-            self.hmin_dict[sp_index] = [float(getattr(self.subProblems[s], "hmin", 0.0))]
-          else:
-            self.hmin_dict[sp_index] = [0.]
-          if self.subProblems[s].index == self.Coordinator.index_of_master_SP:
-            self.fmin = self.subProblems[s].fmin_nop
-            if self.subProblems[s].solver == "OMADS":
-              self.hmin = out_sp["hmin"]
-            else:
-              self.hmin = [0.]
-          # self.subProblems[s].coord.calc_inconsistency()
-          
+          self._record_subproblem_solve(s)
           self.Coordinator = copy.deepcopy(self.subProblems[s].coord)
-          if self.subProblems[s].index == self.Coordinator.index_of_master_SP:
-            self.fmin = self.subProblems[s].fmin_nop
-            if self.subProblems[s].solver == "OMADS":
-              self.hmin = out_sp["hmin"]
-            else:
-              self.hmin = [0.]
         self.Coordinator.calc_inconsistency()
         if self.Coordinator.is_AI_regularizer:
           self._update_detector_outer_iteration(self.iter)
@@ -637,27 +619,10 @@ class MDO(MDO_data):
             s = future_to_index[future]
             out_sp, sp = future.result()
             self.subProblems[s] = copy.deepcopy(sp)
-            # Collect hmin value for this SP
-            sp_index = self.subProblems[s].index
-            if self.subProblems[s].solver == "OMADS":
-              self.hmin_dict[sp_index] = out_sp["hmin"]
-            else:
-              self.hmin_dict[sp_index] = [0.]
-            if self.subProblems[s].index == self.Coordinator.index_of_master_SP:
-              self.fmin = self.subProblems[s].fmin_nop
-              if self.subProblems[s].solver == "OMADS":
-                self.hmin = out_sp["hmin"]
-              else:
-                self.hmin = [0.]
+            self._record_subproblem_solve(s)
             self.subProblems[s].coord.calc_inconsistency()
             self.subProblems[s].coord.update_multipliers(self.iter)
             self.Coordinator = copy.deepcopy(self.subProblems[s].coord)
-            if self.subProblems[s].index == self.Coordinator.index_of_master_SP:
-              self.fmin = self.subProblems[s].fmin_nop
-              if self.subProblems[s].solver == "OMADS":
-                self.hmin = out_sp["hmin"]
-              else:
-                self.hmin = [0.]
       """ Display convergence """
       
       dx = self.get_master_vars_difference()

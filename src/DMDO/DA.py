@@ -30,6 +30,7 @@ from typing import Any, List, Callable, Optional, Dict
 import numpy as np
 
 from .variables import variableData
+from .ports import Discipline
 from dataclasses import dataclass, field
 
 import inspect
@@ -107,7 +108,9 @@ class DA(DA_Data):
   
 
   def run(self):
-    if callable(self.blackbox):
+    if isinstance(self.blackbox, Discipline):
+      outs = self._run_discipline()
+    elif callable(self.blackbox):
       input_type_analysis = analyze_and_validate_types(self.blackbox)
       if len(input_type_analysis) > 0 and input_type_analysis[list(input_type_analysis.keys())[0]] == "dict":
         outs = self.blackbox(self.getInputsDict())
@@ -127,6 +130,16 @@ class DA(DA_Data):
       #   logging.error(f'Timeout for {self.blackbox} ({self.timeout}s) expired!')
     self.setOutputsValue(outs)
     return outs
+
+  def _run_discipline(self):
+    """Evaluate a :class:`DMDO.ports.Discipline` and order its outputs like ``self.outputs``."""
+    results = self.blackbox.compute(self.getInputsDict())
+    missing = [o.name for o in self.outputs if o.name not in results]
+    if missing:
+      raise KeyError(f"Discipline {self.blackbox!r} of DA{self.index} did not return the outputs {missing}")
+    if len(self.outputs) == 1 and self.outputs[0].dim > 1:
+      return list(np.ravel(results[self.outputs[0].name]))
+    return [results[o.name] for o in self.outputs]
 
   def validation(self, vType: int):
     self.validation_status = []

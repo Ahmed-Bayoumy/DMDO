@@ -28,15 +28,9 @@ from dataclasses import dataclass
 import hashlib
 from logging import warning
 import os
-import platform
-import random
 import time
 from typing import Any, Callable, Dict, List
-import OMADS
 import numpy as np
-import torch
-# import pandas as pd
-from scipy.optimize import minimize, Bounds, NonlinearConstraint, BFGS
 
 from ._common import MSG_TYPE, logger
 from ._globals import COUPLING_TYPE, PSIZE_UPDATE, VAR_TYPE, eps_fio
@@ -46,31 +40,18 @@ from .variables import variableData
 import pandas as pd
 from ._detector import HybridAnomalyDetector, latest_detector_metrics
 from .DA import analyze_and_validate_types
+from ._rng import seed_all_rngs as _seed_all_rngs  # noqa: F401  (backward-compatible alias)
+from .ports import SolverRequest
+from .registry import solvers
+from .solvers import DEFAULT_SOLVER, create_solver
 
 
-# Default floor of the carried-over GMESH frame size (OMADS frame units, i.e. fractions of each variable's range
-# since DMDO passes scaling=1): 1e-4 * min(range, 100). Override with CONFIG.<name>.frame_floor for wide bounds.
-_PSIZE_FLOOR_REL = 1e-4
-_PSIZE_FLOOR_SPAN_CAP = 100.0
+# Kept for backward compatibility; the values live with the OMADS strategy.
+from .solvers.omads_solver import PSIZE_FLOOR_REL as _PSIZE_FLOOR_REL, PSIZE_FLOOR_SPAN_CAP as _PSIZE_FLOOR_SPAN_CAP  # noqa: E402,F401
 
 
 def _is_number(a) -> bool:
   return isinstance(a, (int, float, np.number)) and not isinstance(a, bool)
-
-
-def _seed_all_rngs(seed: int) -> None:
-  seed_value = int(seed)
-  random.seed(seed_value)
-  np.random.seed(seed_value)
-  torch.manual_seed(seed_value)
-
-  if torch.cuda.is_available():
-    torch.cuda.manual_seed(seed_value)
-    torch.cuda.manual_seed_all(seed_value)
-
-  if hasattr(torch.backends, "cudnn"):
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
 
 
 def _bool_from_value(value: Any, default: bool = False) -> bool:
@@ -144,7 +125,6 @@ class SubProblem(partitionedProblemData):
     self.MDA_process = analysis
     self.coord = coordination
     self.opt = opt
-    self.optimizer = OMADS.mads.main 
     self.fmin_nop = fmin_nop
     self.budget=budget
     self.display = display
@@ -188,37 +168,30 @@ class SubProblem(partitionedProblemData):
       self._tweak_df = None
     if log is not None:
       self.log = log
-    if solver == 'mads':
-      self.scipy = None
-      self.optimizer = OMADS.mads.main
-    elif solver == 'poll':
-      self.scipy = None
-      self.optimizer = OMADS.poll.main
-    elif solver == 'search':
-      self.scipy = None
-      self.optimizer = OMADS.search.main
-    elif solver == 'scipy':
-      self.scipy = scipy
-    else:
-      msg = f'Inappropriate solver method definition for subproblem # {self.index}! OMADS will be used.'
-      if self.log is not None and self.log.log is not None:
-        self.log.log_msg(msg=msg, msg_type=MSG_TYPE.WARNING.value)
-      warning(msg)
-      self.solver = 'mads'
     self.sets = sets
     self.conf = conf
+    canonical = solvers.canonical_name(solver) if isinstance(solver, str) else None
+    if canonical is None and isinstance(solver, str) and solver in solvers:
+      canonical = solver  # "package.module:SolverClass" import path
+    if canonical is None:
+      self._warn(f'Inappropriate solver method definition for subproblem # {self.index}! OMADS will be used.')
+      canonical = DEFAULT_SOLVER
+    self.solver = canonical
+    self.scipy = self._solver_impl().prepare_settings(scipy, self.index, self._warn)
 
-    if (self.solver == 'scipy' and (scipy is None or "options" not in self.scipy or "method" not in self.scipy)):
-      msg = f'Inappropriate definition of the scipy settings for subproblem # {self.index}! '
-      'scipy default settings shall be used!'
-      if self.log is not None:
-        self.log.log_msg(msg=msg, msg_type=MSG_TYPE.WARNING.value)
-      warning(msg)
-      self.scipy: Dict = {}
-      self.scipy["options"] = {'disp': False}
-      self.scipy["method"] = 'SLSQP'
-      self.scipy["is_con"] = False
-      self.scipy["tol"] = 1E-4
+  def _warn(self, msg: str) -> None:
+    log = getattr(self, "log", None)
+    if log is not None and getattr(log, "log", None) is not None:
+      log.log_msg(msg=msg, msg_type=MSG_TYPE.WARNING.value)
+    warning(msg)
+
+  def _solver_impl(self):
+    """The solver strategy for the current ``self.solver`` name (resolved through :data:`DMDO.registry.solvers`)."""
+    cached = self.__dict__.get("_solver_cache")
+    if cached is None or cached[0] != self.solver:
+      cached = (self.solver, create_solver(self.solver))
+      self.__dict__["_solver_cache"] = cached
+    return cached[1]
 
   def _get_base_seed(self, conf: Dict) -> int:
     if isinstance(conf, dict):
@@ -236,6 +209,8 @@ class SubProblem(partitionedProblemData):
     # Example: remove or replace RLock
     if '_lock' in state:
         del state['_lock']
+    # Solver strategies are re-resolved from the registry by name after unpickling.
+    state.pop('_solver_cache', None)
     # Or replace with a placeholder
     # state['_lock'] = None
     return state
@@ -721,7 +696,7 @@ class SubProblem(partitionedProblemData):
     self._append_cache_row(fun[0], self.coord.phi, vlist, self.MDA_process.getOutputs())
     # if self.realistic_objective:
     #   fun[0] =(y[0]-self.frealistic)
-    if self.solver == "scipy":
+    if self._solver_impl().objective_form == "scalar":
       if self.scipy["is_con"]:
         if is_conOnly:
           return con
@@ -734,11 +709,98 @@ class SubProblem(partitionedProblemData):
     else:
       return [fun[0]+self.coord.phi, con]
 
-  def solve(self, v, w, file: str = None, iter: int = None):  # noqa: C901
+  def _budget_scale(self, iter: int) -> float:  # noqa: C901
+    """Inner-budget multiplier for this solve (AI regularizer: budget expansion after an attributed spike)."""
+    budget_scale = 1
+    configured_budget_scale = float(getattr(self.coord, "budget_scale", 6))
+    # Intensity-modulated value computed by the coordinator at the previous outer iteration.
+    spike_budget_scale = float(getattr(self.coord, "_effective_budget_scale", configured_budget_scale))
+
+    # Budget expansion only follows a detected spike attributed to this subproblem.
+    if not self.coord.is_AI_regularizer:
+      return budget_scale
+    min_iter = getattr(self.coord, "budget_min_iter", None)
+    min_iter = int(self.coord.refit_every if min_iter is None else min_iter)
+    if iter > min_iter and getattr(self.coord, "last_spike_detected", False) and getattr(self.coord, "adapt_budget", True):
+      last_location = int(getattr(self.coord, "last_spike_location", 0))
+      improving = getattr(self.coord, "_sp_late_improving", None)
+      causal = str(getattr(self.coord, "spike_response", "accelerate")) == "causal"
+      if causal and getattr(self.coord, "budget_neutral", False) and improving and spike_budget_scale > 1.0:
+        # Recipients: subproblems still improving when their last budget ran out. Donors: those that had
+        # settled. The total stays nsp * budget; no reallocation when every subproblem is in the same state.
+        n_rec = sum(1 for v in improving.values() if v)
+        n_don = len(improving) - n_rec
+        if n_rec > 0 and n_don > 0:
+          floor = float(getattr(self.coord, "budget_floor", 0.25))
+          gain = min(spike_budget_scale, 1.0 + n_don * (1.0 - floor) / n_rec)
+          budget_scale = gain if improving.get(self.index, False) else max(floor, 1.0 - (gain - 1.0) * n_rec / n_don)
+      elif getattr(self.coord, "budget_neutral", False) and last_location > 0 and spike_budget_scale > 1.0:
+        # Move evaluations to the attributed subproblem; the total over all subproblems stays nsp * budget.
+        nsp = max(int(getattr(self.coord, "nsp", 1)), 1)
+        floor = float(getattr(self.coord, "budget_floor", 0.25))
+        if nsp > 1:
+          gain = min(spike_budget_scale, 1.0 + (nsp - 1) * (1.0 - floor))
+          budget_scale = gain if last_location == self.index else max(floor, (nsp - gain) / (nsp - 1))
+      elif last_location == self.index:
+        budget_scale = spike_budget_scale
+    if budget_scale > 1.0 and getattr(self.coord, "budget_feasible_only", False):
+      # Expand only a subproblem whose previous solve ended feasible; extra evaluations on an infeasible one
+      # tend to trade its own constraints for objective and penalty terms.
+      last_h = np.ravel(np.asarray(getattr(self, "hmin", [0.0]), dtype=float))
+      last_h = last_h[np.isfinite(last_h)]
+      if last_h.size and float(np.max(last_h)) > 1e-6:
+        budget_scale = 1.0
+    return budget_scale
+
+  def _apply_tweaks(self) -> None:
+    """Per-iteration overrides (solver, budget, gamma, beta) from the optional ``tweak_csv`` schedule."""
+    if self._tweak_df is None or (self.iter+1) not in self._tweak_df['iteration'].values:
+      return
+    row = self._tweak_df.query(f'iteration == {self.iter+1}')
+    name = row['solver'].iloc[0]
+    canonical = solvers.canonical_name(name)
+    if canonical is None:
+      raise ValueError(f"tweak_csv selects unknown solver '{name}' for subproblem #{self.index}")
+    self.solver = canonical
+    self.budget = row['budget'].iloc[0]
+    self.coord.gamma = row['gamma'].iloc[0]
+    self.coord.beta = row['beta'].iloc[0]
+
+  def _build_solver_request(self, impl, x0, budget: int, budget_scale: float, iter: int) -> SolverRequest:
+    design = self.get_design_vars()
+    return SolverRequest(
+      name=f"SP_{self.index}",
+      objective=self.evaluate,
+      constraints=self.get_con,
+      x0=x0,
+      lb=self.get_list_vars_lb(design),
+      ub=self.get_list_vars_ub(design),
+      var_names=self.get_list_vars_names(design),
+      var_types=self.get_vars_types(design),
+      var_sets=self.sets,
+      constants=self.get_list_constant_updates(design),
+      constants_names=self.get_list_const_names(design),
+      budget=budget,
+      budget_scale=budget_scale,
+      seed=int(self.RANDOM_SEED + int(iter)),
+      iteration=int(iter) if iter is not None else 0,
+      tol=self.tol,
+      display=self.display,
+      post_dir=getattr(self, "postDir", None),
+      config=impl.select_config(self.conf, self.scipy),
+      warm_start={"psize": self.psize, "psize_policy": self.psize_init},
+    )
+
+  def solve(self, v, w, file: str = None, iter: int = None):
+    """Solve this subproblem for the given multipliers ``v`` and penalty weights ``w``.
+
+    The optimization itself is delegated to the solver strategy registered under ``self.solver``
+    (see :mod:`DMDO.solvers`). Returns the strategy's raw output (OMADS output dict / scipy ``x``).
+    """
     if file is not None:
       self.iter = iter
       self.prepare_post(file)
-    if self.solver == "poll" and self.is_main:
+    if self._solver_impl().refresh_dependent_baseline and self.is_main:
       self.set_dependent_baseline(self.coord.master_vars)
     self.cache = self._create_cache_frame()
     self.coord.v = copy.deepcopy(v)
@@ -750,340 +812,52 @@ class SubProblem(partitionedProblemData):
     ubs = self.get_list_vars_ub(self.get_design_vars())
     bl = [min(max(x, lo), hi) if _is_number(x) and _is_number(lo) and _is_number(hi) else x
           for x, lo, hi in zip(bl, lbs, ubs)]
-    if not(hasattr(self, "xmin_old")):
-        self.xmin_old = copy.deepcopy(bl)
-    res = None
-    
-    # if self._AI_regularizer.window <= self.iter:
-    #   forecast = self._AI_regularizer.update()
-    
-    # if any(self._AI_regularizer.spike_flags):
-    #   self.coord.M_update_scheme = w_scheme.MAX
-    # elif self.index == 1:
-    self.coord.ai_spike_objective_jump = False # Initialize it to False at the start of each solve
+    if not hasattr(self, "xmin_old"):
+      self.xmin_old = copy.deepcopy(bl)
+    if not hasattr(self, "fmin_old"):
+      self.fmin_old = np.inf
+    self.coord.ai_spike_objective_jump = False  # Initialize it to False at the start of each solve
 
-    budget_scale = 1
-    configured_budget_scale = float(getattr(self.coord, "budget_scale", 6))
-    # Intensity-modulated value computed by the coordinator at the previous outer iteration.
-    spike_budget_scale = float(getattr(self.coord, "_effective_budget_scale", configured_budget_scale))
-
-    # Budget expansion only follows a detected spike attributed to this subproblem.
-    if self.coord.is_AI_regularizer:
-      min_iter = getattr(self.coord, "budget_min_iter", None)
-      min_iter = int(self.coord.refit_every if min_iter is None else min_iter)
-      if iter > min_iter and getattr(self.coord, "last_spike_detected", False) and getattr(self.coord, "adapt_budget", True):
-        last_location = int(getattr(self.coord, "last_spike_location", 0))
-        improving = getattr(self.coord, "_sp_late_improving", None)
-        causal = str(getattr(self.coord, "spike_response", "accelerate")) == "causal"
-        if causal and getattr(self.coord, "budget_neutral", False) and improving and spike_budget_scale > 1.0:
-          # Recipients: subproblems still improving when their last budget ran out. Donors: those that had
-          # settled. The total stays nsp * budget; no reallocation when every subproblem is in the same state.
-          n_rec = sum(1 for v in improving.values() if v)
-          n_don = len(improving) - n_rec
-          if n_rec > 0 and n_don > 0:
-            floor = float(getattr(self.coord, "budget_floor", 0.25))
-            gain = min(spike_budget_scale, 1.0 + n_don * (1.0 - floor) / n_rec)
-            budget_scale = gain if improving.get(self.index, False) else max(floor, 1.0 - (gain - 1.0) * n_rec / n_don)
-        elif getattr(self.coord, "budget_neutral", False) and last_location > 0 and spike_budget_scale > 1.0:
-          # Move evaluations to the attributed subproblem; the total over all subproblems stays nsp * budget.
-          nsp = max(int(getattr(self.coord, "nsp", 1)), 1)
-          floor = float(getattr(self.coord, "budget_floor", 0.25))
-          if nsp > 1:
-            gain = min(spike_budget_scale, 1.0 + (nsp - 1) * (1.0 - floor))
-            budget_scale = gain if last_location == self.index else max(floor, (nsp - gain) / (nsp - 1))
-        elif last_location == self.index:
-          budget_scale = spike_budget_scale
-      if budget_scale > 1.0 and getattr(self.coord, "budget_feasible_only", False):
-        # Expand only a subproblem whose previous solve ended feasible; extra evaluations on an infeasible one
-        # tend to trade its own constraints for objective and penalty terms.
-        last_h = np.ravel(np.asarray(getattr(self, "hmin", [0.0]), dtype=float))
-        last_h = last_h[np.isfinite(last_h)]
-        if last_h.size and float(np.max(last_h)) > 1e-6:
-          budget_scale = 1.0
-
+    budget_scale = self._budget_scale(iter)
     effective_budget = max(1, int(round(float(self.budget) * float(budget_scale))))
 
     self.log.log_msg(msg=f"Coordination iteration # {iter}: running subproblem {self.index}", msg_type=MSG_TYPE.INFO.value)
-    if self._tweak_df is not None and (self.iter+1) in self._tweak_df['iteration'].values:
-      self.solver = self._tweak_df.query(f'iteration == {self.iter+1}')['solver'].iloc[0]
-      if self.solver == "mads":
-        self.optimizer = OMADS.mads.main
-      if self.solver == "poll":
-        self.optimizer = OMADS.poll.main
-      if self.solver == "search":
-        self.optimizer = OMADS.search.main
-        
-      self.budget = self._tweak_df.query(f'iteration == {self.iter+1}')['budget'].iloc[0]
-      self.coord.gamma = self._tweak_df.query(f'iteration == {self.iter+1}')['gamma'].iloc[0]
-      self.coord.beta = self._tweak_df.query(f'iteration == {self.iter+1}')['beta'].iloc[0]
+    # A tweak's budget takes effect from the next solve (effective_budget is already fixed above).
+    self._apply_tweaks()
 
-    
-    if self.solver == 'OMADS' or self.solver == 'mads' or self.solver == 'omads' or self.solver != 'scipy':
-      eval = {"blackbox": self.evaluate}
-      # if self.sets is None:
-      #   self.sets = {}
-      # param = {"baseline": bl,
-      #             "lb": self.get_list_vars_lb(self.get_design_vars()),
-      #             "ub": self.get_list_vars_ub(self.get_design_vars()),
-      #             "var_names": self.get_list_vars_names(self.get_design_vars()),
-      #             "var_type": self.get_vars_types(self.get_design_vars()),
-      #             "var_sets": self.sets,
-      #             "scaling": self.get_design_vars_scaling(self.get_design_vars()),
-      #             "mesh_type": "gmesh",
-      #             # "post_dir": "./post",
-      #             "constants": self.get_list_constant_updates(self.get_design_vars()),
-      #             "constants_name": self.get_list_const_names(self.get_design_vars()),
-      #             "name": f"SP_{self.index}",
-      #             "post_dir": self.postDir,
-      #             "constraints_type": ["PB"]*100}
-      is_mac = platform.platform().split('-')[0] == 'macOS'
-      param = {"baseline": bl,
-                  "lb": self.get_list_vars_lb(self.get_design_vars()),
-                  "ub": self.get_list_vars_ub(self.get_design_vars()),
-                  "var_names": self.get_list_vars_names(self.get_design_vars()),
-                  "var_type": self.get_vars_types(self.get_design_vars()),
-                  "var_sets": self.sets,
-                  "scaling": [1]*len(self.get_list_vars_lb(self.get_design_vars())),
-                  # "post_dir": "./post",
-                  "constants": self.get_list_constant_updates(self.get_design_vars()),
-                  "constants_name": self.get_list_const_names(self.get_design_vars()),
-                  "name": f"SP_{self.index}",
-                  "mesh_type": self.conf["mesh_type"] \
-                  if self.conf is not None \
-                  and isinstance(self.conf, dict) \
-                  and "mesh_type" in self.conf \
-                  and self.conf["mesh_type"] in ["GMESH", "OMESH"] \
-                  else "GMESH",
-                  "post_dir": self.postDir,
-                  "constraints_type": ["PB"]*100
-           }
-      pinit = min(max(self.tol, max(self.psize) if isinstance(self.psize, list) else self.psize), 1)
-      # GMESH ignores psize_init: warm-start it with the per-variable frame size of the previous solve, floored
-      # relative to the variable range so a later solve can still move after the penalties change.
-      carried = list(np.ravel(self.psize)) if np.ndim(self.psize) > 0 else []
-      first_frame = self.conf.get("initial_frame_size") if isinstance(self.conf, dict) else None
-      if param["mesh_type"] == "GMESH" and not carried and first_frame is not None:
-        # First solve: optional CONFIG.<name>.initial_frame_size (scalar or per-variable, in fractions of the range)
-        # instead of OMADS's default, which is far too coarse for very wide bounds.
-        n_var = len(param["lb"])
-        param["initial_frame_size"] = [float(v) for v in np.broadcast_to(np.asarray(first_frame, dtype=float), (n_var,))]
-      if param["mesh_type"] == "GMESH" and self.psize_init != PSIZE_UPDATE.DEFAULT and len(carried) == len(param["lb"]):
-        span = np.subtract(param["ub"], param["lb"])
-        user_floor = self.conf.get("frame_floor") if isinstance(self.conf, dict) else None
-        floors = ([float(user_floor)] * len(span) if user_floor is not None
-                  else [_PSIZE_FLOOR_REL * min(s, _PSIZE_FLOOR_SPAN_CAP) for s in span])
-        frames = [float(max(p, f)) for p, f in zip(carried, floors)]
-        cap = self.conf.get("frame_cap") if isinstance(self.conf, dict) else None
-        if cap is not None:
-          # Optional cap (fraction of range): a frame grown by successful polls would otherwise start the next solve
-          # with steps across most of the range.
-          frames = [min(fr, float(cap)) for fr in frames]
-        param["initial_frame_size"] = frames
-      if self.conf is not None and "options" in self.conf and self.conf["options"] is not None:
-        options = copy.deepcopy(self.conf["options"])
-        options["budget"] = effective_budget
-        options["seed"] = int(self.RANDOM_SEED + int(iter))
-        # Carry the poll size over from the previous solve unless the user asked for a reset.
-        if self.psize_init != PSIZE_UPDATE.DEFAULT:
-          options["psize_init"] = pinit
-        options.setdefault("check_cache", True)
-        options.setdefault("store_cache", True)
-        # if not is_mac:
-        #   options["precision"] = "medium"
-      else:
-        options = {
-          "seed": int(self.RANDOM_SEED + int(iter)),
-          "budget": effective_budget,
-          "tol": self.tol,
-          "psize_init": pinit,
-          "display": self.display,
-          "opportunistic": False,
-          "check_cache": True,
-          "store_cache": True,
-          "collect_y": False,
-          "rich_direction": True,
-          "precision": "high" if is_mac else "medium",
-          "save_results": False,
-          "save_coordinates": False,
-          "save_all_best": False,
-          "parallel_mode": False
+    impl = self._solver_impl()
+    request = self._build_solver_request(impl, bl, effective_budget, budget_scale, iter)
+    log_copy = self.log
+    # Some solvers evaluate trial points they fail to snap onto the bounds; reject them in evaluate() so they can
+    # never become the next poll center (which OMADS refuses with "lb <= x^mesh <= ub").
+    self._omads_bounds = (request.lb, request.ub) if impl.rejects_out_of_bounds else None
+    try:
+      outcome = impl.solve(request)
+    finally:
+      self._omads_bounds = None
+    self.log = log_copy
+    self.fmin = outcome.fmin
+    self.hmin = outcome.hmin
+    if "psize" in outcome.warm_start:
+      self.psize = outcome.warm_start["psize"]
 
-        }
-      # isWin = platform.platform().split('-')[0] == 'Windows'
-      # options["precision"] = "high" if isWin else "medium"
-      if self.conf is not None and "search" in self.conf and self.conf["search"] is not None:
-        # Copy so a budget expansion does not compound into every later solve.
-        search = copy.deepcopy(self.conf["search"])
-        search["ns"] = int(search["ns"] * budget_scale) if "ns" in search and search["ns"] is not None else 5*budget_scale
-        # if (search is not None 
-        #     and "ns" in search 
-        #     and search["ns"] is not None):
-        #   search_budget_ratio = search["ns"]/self.budget
-        #   search["ns"] = int(search_budget_ratio * effective_budget)
-          # if ("s_method" in search 
-          #     and search["s_method"] is not None
-          #     and switch_to_inactive_learning):
-            # search["s_method"] = "HALTON"
-      else:
-        search = {
-                    "type": "LHS",
-                    "s_method": "ACTIVE",
-                    "ns": 10*budget_scale,
-                    "visualize": False,
-                    "criterion": None
-                  }
-
-      if self.conf is not None and "constraintsHandling" in self.conf and self.conf["constraintsHandling"] is not None:
-        if "Barriers" in self.conf["constraintsHandling"] and self.conf["constraintsHandling"]["Barriers"] is not None:
-          param["constraints_type"] = copy.deepcopy(self.conf["constraintsHandling"]["Barriers"])
-        if "rho" in self.conf["constraintsHandling"] and self.conf["constraintsHandling"]["rho"] is not None:
-          param["rho"] = self.conf["constraintsHandling"]["rho"]
-        if "h_max" in self.conf["constraintsHandling"] and self.conf["constraintsHandling"]["h_max"] is not None:
-          param["h_max"] = self.conf["constraintsHandling"]["h_max"]
-        if "lambda_multipliers" in self.conf["constraintsHandling"] and \
-          self.conf["constraintsHandling"]["lambda_multipliers"] is not None:
-          param["lambda_multipliers"] = self.conf["constraintsHandling"]["lambda_multipliers"]
-        if "barriers" in self.conf["constraintsHandling"] and \
-          self.conf["constraintsHandling"]["barriers"] is not None:
-          if self.conf["constraintsHandling"]["barriers"] == "PB_all":
-            param["constraints_type"] = ["PB"]*100
-          elif self.conf["constraintsHandling"]["barriers"] == "EB_all":
-            param["constraints_type"] = ["EB"]*100
-          else:
-            param["constraints_type"] = self.conf["constraintsHandling"]["barriers"]
-      
-      data = {"evaluator": eval, "param": param, "options":options, "search": search}
-
-      # Keep all stochastic components reproducible under the configured YAML seed.
-      _seed_all_rngs(int(options["seed"]))
-
-      out = {}
-      pinit = self.psize
-      log_copy = self.log
-      # self.log.switch_handler(f"SP{self.index}")
-      if not hasattr(self, "fmin_old"):
-        self.fmin_old = np.inf
-      # OMADS evaluates trial points it fails to snap onto the bounds; reject them in evaluate() so they can
-      # never become the next poll center (which OMADS refuses with "lb <= x^mesh <= ub").
-      self._omads_bounds = (param["lb"], param["ub"])
-      try:
-        if self.solver == 'OMADS' or self.solver == 'MADS' or self.solver == 'mads' or self.solver == 'omads':
-          try:
-            out, _, _ = self.optimizer(data)
-          except Exception as exc:
-            # OMADS cache can occasionally desync its center index; retry once with cache disabled.
-            is_index_error = isinstance(exc, IndexError) or exc.__class__.__name__ == "IndexError"
-            cache_enabled = options.get("check_cache", True) or options.get("store_cache", True)
-            if is_index_error and "list index out of range" in str(exc) and cache_enabled:
-              options["check_cache"] = False
-              options["store_cache"] = False
-              data["options"] = options
-              out, _, _ = self.optimizer(data)
-            else:
-              raise
-
-        else:
-          out, _ = self.optimizer(data)
-      finally:
-        self._omads_bounds = None
-      self.log = log_copy
-      # self.log.switch_handler("DMDO")
-      self.fmin = out["fmin"]
-      self.hmin = out["hmin"]
-      
-      # if self.conf is not None and "constraintsHandling" in self.conf:
-      #   self.conf["constraintsHandling"]["h_max"] = copy.deepcopy(out["hmin"])
-      # else:
-      #   self.conf = {}
-      #   self.conf["constraintsHandling"] = {}
-      #   self.conf["constraintsHandling"]["h_max"] = copy.deepcopy(out["hmin"])
-      if self.psize_init == PSIZE_UPDATE.DEFAULT:
-        self.psize = 1.
-      elif self.psize_init == PSIZE_UPDATE.SUCCESS:
-        self.psize = out["psuccess"]
-      elif self.psize_init == PSIZE_UPDATE.MAX:
-        maxpsize = max(out["psize"]) if isinstance(out["psize"],list) else out["psize"]
-        psuccess = max(out["psuccess"]) if isinstance(out["psuccess"],list) else out["psuccess"]
-        self.psize = max(maxpsize, psuccess)
-      elif self.psize_init == PSIZE_UPDATE.LAST:
-        self.psize = out["psize"]
-      else:
-        self.psize = 1.
-      
-      
-      # COMPLETE: Coordinator forgets q after calling the optimizer, possible remedy is to 
-      # update the subproblem variables from the optimizer output and the master variables too
-      # then at the end of each outer loop iteration we can calculate q of that subproblem before updating penalty parameters
-
-      #  We need this extra evaluation step to update inconsistincies and the master_variables vector
-      eval_out = out["xmin"] if len(out["xmin"]) > 0 else bl
-      
-
-      self.evaluate(eval_out, self.get_list_constant_updates(self.get_design_vars()))
-      if self.fmin_nop < self.fmin_old:
-        self.xmin_old = copy.deepcopy(eval_out)
-        self.fmin_old = copy.deepcopy(self.fmin_nop)
-        self.psize_old = out["psuccess"]
-    elif self.solver == 'scipy':
-      if self.scipy is not None and isinstance(self.scipy, dict):
-        opts = copy.deepcopy(self.scipy["options"])
-        # The inner budget (and the AI's budget expansion) acts on the iteration limit.
-        # Only trust-constr accepts 'verbose'; other methods emit OptimizeWarning for it.
-        if str(self.scipy["method"]).lower() != "trust-constr":
-          opts.pop("verbose", None)
-        if "maxiter" in opts:
-          opts["maxiter"] = max(1, int(round(float(opts["maxiter"]) * float(budget_scale))))
-        lb = np.asarray(self.get_list_vars_lb(self.get_design_vars()), dtype=float)
-        ub = np.asarray(self.get_list_vars_ub(self.get_design_vars()), dtype=float)
-        if self.scipy.get("normalize", False):
-          # Optimise z in [0, 1] with x = lb + z (ub - lb): finite-difference gradients on comparable scales.
-          span = np.where(ub > lb, ub - lb, 1.0)
-          to_x = lambda z: list(lb + np.clip(z, 0.0, 1.0) * span)  # noqa: E731
-          obj_fun = lambda z, *a: self.evaluate(to_x(z), *a)  # noqa: E731
-          con_fun = lambda z: self.get_con(x=to_x(z))  # noqa: E731
-          bnds = Bounds(lb=np.zeros_like(lb), ub=np.ones_like(ub))
-          x0 = np.clip((np.asarray(bl, dtype=float) - lb) / span, 0.0, 1.0)
-        else:
-          to_x = lambda z: list(z)  # noqa: E731
-          obj_fun = self.evaluate
-          con_fun = lambda x: self.get_con(x=x)  # noqa: E731
-          bnds, x0 = Bounds(lb=lb, ub=ub), bl
-
-        if self.scipy["is_con"]:
-          if str(self.scipy["method"]).upper() == "SLSQP":
-            # SLSQP takes dict constraints (fun >= 0).
-            cons = [{"type": "ineq", "fun": lambda z: -np.asarray(con_fun(z), dtype=float)}]
-          else:
-            cons = [NonlinearConstraint(fun=con_fun, lb=-np.inf, ub=0.0, keep_feasible=False, jac='2-point', hess=BFGS())]
-          res = minimize(obj_fun, method=self.scipy["method"], x0=x0, options=opts, tol=self.scipy["tol"], bounds=bnds,
-                         constraints=cons)
-        else:
-          res = minimize(obj_fun, method=self.scipy["method"], x0=x0, options=opts, tol=self.scipy["tol"], bounds=bnds)
-        x_best = np.asarray(to_x(res.x), dtype=float)
-        self.fmin = res.fun
-        # Same violation measure as OMADS's progressive barrier: h = sum(max(0, g)^2).
-        g = np.asarray(self.get_con(x=list(x_best)), dtype=float) if self.scipy["is_con"] else np.zeros(1)
-        self.hmin = float(np.sum(np.maximum(g, 0.0) ** 2))
-        res.x = x_best
-        out = copy.deepcopy(res.x)
-        self.evaluate(out)
-        
-      else:
-        msg = 'Scipy solver is selected but its dictionary settings is inappropriately defined!'
-        self.log.log_msg(msg=msg, msg_type=MSG_TYPE.ERROR.value)
-        raise IOError(msg)
-      out = copy.deepcopy(res.x)
-      self.evaluate(out)
-    else:
-      self.log.log_msg(msg=f"Unknown solver is assigned to subproblem #{self.index}", msg_type=MSG_TYPE.ERROR.value)
+    # Commit evaluation at the solution: updates the inconsistencies and the master vector from this solve.
+    x_best = outcome.x if len(outcome.x) > 0 else bl
+    self.evaluate(x_best, self.get_list_constant_updates(self.get_design_vars()))
+    if self.fmin_nop < self.fmin_old:
+      self.xmin_old = copy.deepcopy(x_best)
+      self.fmin_old = copy.deepcopy(self.fmin_nop)
+      if "psuccess" in outcome.warm_start:
+        self.psize_old = outcome.warm_start["psuccess"]
 
     if getattr(self.coord, "is_AI_regularizer", False):
       self._update_ai_regularizer()
     self.log.log_msg(msg=f"Coordination iteration # {iter}: completed subproblem {self.index}", msg_type=MSG_TYPE.INFO.value)
+    return outcome.raw
 
-    
-
-    return out
+  def reported_hmin(self):
+    """Constraint violation of the last solve in the form the coordination loop records."""
+    return self._solver_impl().report_hmin(self.hmin)
 
   def get_coupling_vars_diff(self, con):
     # TODO: Add categorical coupling difference
