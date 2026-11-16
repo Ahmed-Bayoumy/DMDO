@@ -1,7 +1,7 @@
 """Ports: the framework-neutral interfaces DMDO's core talks to.
 
 Anything that satisfies one of these protocols can be plugged into DMDO, whether it comes from DMDO itself, from
-user code, or from another package (an OpenMDAO model, a GEMSEO discipline, a remote service client, ...). DMDO never
+user code, or from another package (another framework's model, a remote service client, ...). DMDO never
 imports those packages; an adapter only has to satisfy the protocol.
 
 * :class:`Discipline` - a disciplinary analysis: named inputs in, named outputs out.
@@ -29,16 +29,16 @@ class Discipline(Protocol):
   contains every output variable of the analysis, keyed by name. Implementations may also expose
   ``input_names`` / ``output_names`` sequences for validation, but they are not required.
 
-  Example adapter for an external framework (kept in user code, not in DMDO)::
+  Example adapter around a model from another framework (kept in user code, not in DMDO)::
 
-    class OpenMDAODiscipline:
-      def __init__(self, prob, inputs, outputs):
-        self.prob, self.input_names, self.output_names = prob, inputs, outputs
+    class ExternalModelDiscipline:
+      def __init__(self, model, inputs, outputs):
+        self.model, self.input_names, self.output_names = model, inputs, outputs
       def compute(self, inputs):
         for name in self.input_names:
-          self.prob.set_val(name, inputs[name])
-        self.prob.run_model()
-        return {name: self.prob.get_val(name) for name in self.output_names}
+          self.model.set_input(name, inputs[name])   # whatever the framework's API is
+        self.model.evaluate()
+        return {name: self.model.get_output(name) for name in self.output_names}
   """
 
   def compute(self, inputs: Mapping[str, Any]) -> Mapping[str, Any]:

@@ -76,17 +76,18 @@ result.to_dict()                                  # JSON-ready
 ```
 
 `Session.from_yaml(path, ...)` and `Session.from_checkpoint("coord_chk.pkl")` are the other constructors; `mode`,
-`sweep`, `executor` and `observers` are accepted as keyword options. The `examples/` folder has runnable scripts and
-adapter sketches for OpenMDAO and GEMSEO in both directions (their model inside DMDO, and DMDO inside their model).
+`sweep`, `executor` and `observers` are accepted as keyword options. The `examples/` folder has runnable scripts.
 
 ## Extending DMDO and connecting other packages
 
 DMDO talks to analyses and optimizers through small, framework-neutral interfaces (`DMDO.ports`). Nothing in DMDO
-depends on a specific external package; an adapter only has to satisfy the interface.
+depends on a specific external package, and DMDO does not ship adapters for other frameworks; an adapter written in
+user code only has to satisfy the interface. Examples of frameworks whose models could be wrapped this way, or that
+could drive DMDO through the `Session` API, are OpenMDAO [1] and GEMSEO [2]; neither is required by or bundled with
+DMDO.
 
 **Disciplines.** Any object with a `compute(inputs: dict) -> dict` method (inputs and outputs keyed by variable name)
-can be used wherever a blackbox callable is accepted, e.g. a wrapper around an OpenMDAO `Problem` or a GEMSEO
-discipline:
+can be used wherever a blackbox callable is accepted, e.g. a wrapper around a model from another framework:
 
 ```python
 class MyDiscipline:
@@ -202,6 +203,19 @@ results do not depend on which worker finishes first. `python -m DMDO.service` w
 **Security.** Jobs and results are pickled, so the service, its workers and every client that holds the token must
 trust each other. The service listens on `127.0.0.1` by default and refuses other interfaces without a token. Put TLS
 (a reverse proxy) in front of it when traffic leaves a trusted network.
+
+## References to related frameworks
+
+DMDO is independent of the frameworks below; they are cited only as examples of tools that can be connected to it
+through its generic interfaces.
+
+1. J. S. Gray, J. T. Hwang, J. R. R. A. Martins, K. T. Moore and B. A. Naylor, "OpenMDAO: an open-source framework
+   for multidisciplinary design, analysis, and optimization", *Structural and Multidisciplinary Optimization*, 59(4),
+   1075–1104, 2019. https://doi.org/10.1007/s00158-019-02211-z — https://openmdao.org
+2. F. Gallard, C. Vanaret, D. Guénot, V. Gachelin, R. Lafage, B. Pauwels, P.-J. Barjhoux and A. Gazaix, "GEMS: a
+   Python library for automation of multidisciplinary design optimization process generation", *AIAA SciTech Forum,
+   2018 AIAA/ASCE/AHS/ASC Structures, Structural Dynamics, and Materials Conference*, AIAA 2018-0657.
+   https://doi.org/10.2514/6.2018-0657 — https://gemseo.org
 
 ## How to run DMDO from terminal
 After installing the libraries listed in the `requirements.txt`, `DMDO/DMDO.py` can be called directly from a 

@@ -32,6 +32,8 @@ CHANGELOG*
 !README.md
 !examples/README.md
 examples/_runs
+# Local-only adapters for third-party frameworks (not released)
+examples/adapters/
 remote_config.json
 *.log
 *.tex
