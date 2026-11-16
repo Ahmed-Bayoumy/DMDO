@@ -382,6 +382,8 @@ if __name__ == "__main__":
   #TODO: Feature: Import RAF and SML libraries once they are published on PYPI.com
   #COMPLETED: Bug: Add user and technical documentation 
   #FIXME: Bug: Enable the output report generation that summarizes the MDO history and final results
+  from ..utils._encoding import fix_encoding
+  fix_encoding()
   p_file: str = ""
 
   """ Check if an input argument is provided"""

@@ -68,7 +68,7 @@ class InProcessExecutor:
 def _init_worker() -> None:
   """Worker-process setup: UTF-8 stdout/stderr on Windows, where a worker's redirected streams default to the ANSI
   code page and the OMADS progress bar (block characters) would raise UnicodeEncodeError."""
-  from ..utils.fix_windows_encoding import fix_encoding
+  from ..utils._encoding import fix_encoding
   fix_encoding()
 
 

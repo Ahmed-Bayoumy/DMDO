@@ -13,7 +13,6 @@ LEGACY = {
   "DMDO.variables": "DMDO.core.variables",
   "DMDO._protocols": "DMDO.core.protocols",
   "DMDO._common": "DMDO.utils.log",
-  "DMDO.fix_windows_encoding": "DMDO.utils.fix_windows_encoding",
   "DMDO._decisor": "DMDO.ai.decisor",
   "DMDO._detector": "DMDO.ai.detector",
   "DMDO.coordinator": "DMDO.coordination.admm",
