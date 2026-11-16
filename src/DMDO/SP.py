@@ -25,13 +25,16 @@
 import copy
 import csv
 from dataclasses import dataclass
+import hashlib
 from logging import warning
 import os
 import platform
+import random
 import time
 from typing import Any, Callable, Dict, List
 import OMADS
 import numpy as np
+import torch
 # import pandas as pd
 from scipy.optimize import minimize, Bounds, NonlinearConstraint, BFGS
 
@@ -40,6 +43,50 @@ from ._globals import COUPLING_TYPE, PSIZE_UPDATE, VAR_TYPE, eps_fio
 from ._protocols import process
 from .coordinator import ADMM
 from .variables import variableData
+import pandas as pd
+from ._detector import HybridAnomalyDetector, latest_detector_metrics
+from .DA import analyze_and_validate_types
+
+
+# Default floor of the carried-over GMESH frame size (OMADS frame units, i.e. fractions of each variable's range
+# since DMDO passes scaling=1): 1e-4 * min(range, 100). Override with CONFIG.<name>.frame_floor for wide bounds.
+_PSIZE_FLOOR_REL = 1e-4
+_PSIZE_FLOOR_SPAN_CAP = 100.0
+
+
+def _is_number(a) -> bool:
+  return isinstance(a, (int, float, np.number)) and not isinstance(a, bool)
+
+
+def _seed_all_rngs(seed: int) -> None:
+  seed_value = int(seed)
+  random.seed(seed_value)
+  np.random.seed(seed_value)
+  torch.manual_seed(seed_value)
+
+  if torch.cuda.is_available():
+    torch.cuda.manual_seed(seed_value)
+    torch.cuda.manual_seed_all(seed_value)
+
+  if hasattr(torch.backends, "cudnn"):
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+
+def _bool_from_value(value: Any, default: bool = False) -> bool:
+  if value is None:
+    return default
+  if isinstance(value, bool):
+    return value
+  if isinstance(value, (int, np.integer)):
+    return bool(value)
+  if isinstance(value, str):
+    lowered = value.strip().lower()
+    if lowered in {"1", "true", "yes", "on"}:
+      return True
+    if lowered in {"0", "false", "no", "off"}:
+      return False
+  return default
 
 class partitionedProblemData:
   nv: int
@@ -71,21 +118,24 @@ class partitionedProblemData:
   scipy: Dict
   sets: Dict
   fmin: float
-  cache: List
+  cache: pd.DataFrame
   hmin: float
   log: logger = None
-  RANDOM_SEED: float = 1234
+  RANDOM_SEED: int = 1234
   update_bl: bool = True
   job: Any = None
   allConf: Dict = None 
   bl: List[float] = None
+  tweak_csv: str = None
+  _tweak_df: pd.DataFrame = None
+  _AI_regularizer: HybridAnomalyDetector = None
 
 @dataclass
 class SubProblem(partitionedProblemData):
   # Constructor
   def __init__(self, nv, index, vars, resps, is_main, analysis, coordination, opt, fmin_nop, budget, display, scipy=None, \
                psize=1, pupdate=PSIZE_UPDATE.LAST, freal=None, tol=1E-12, solver='OMADS', sets=None, conf = None, \
-                realistic_objective=False, log: logger=None):
+                realistic_objective=False, log: logger=None, tweak_csv: str=None, wd: str = None):
     self.nv = nv
     self.index = index
     self.vars = copy.deepcopy(vars)
@@ -106,8 +156,36 @@ class SubProblem(partitionedProblemData):
     self.realistic_objective = realistic_objective
     self.fmin = np.inf
     self.hmin = np.inf
-    self.cache = []
+    self.cache = self._create_cache_frame()
     self.eval_ID = 0
+    self.tweak_csv = tweak_csv
+    self.RANDOM_SEED = self._get_base_seed(conf)
+    if self.coord.is_AI_regularizer:
+      history_file = os.path.join(wd, 'Coordination_history.out') if wd is not None else None
+      warm_start_history = _bool_from_value(
+        getattr(self.coord, "detector_warm_start_from_history", False),
+        default=False,
+      )
+      if not warm_start_history and isinstance(conf, dict):
+        options = conf.get("options")
+        if isinstance(options, dict):
+          warm_start_history = _bool_from_value(options.get("detector_warm_start_from_history"), default=False)
+      existing_regularizer = getattr(self.coord, "ai_regularizer", None)
+      if existing_regularizer is None:
+        self.coord.ai_regularizer = HybridAnomalyDetector(
+          data_file=history_file if warm_start_history else None,
+          window=int(getattr(self.coord, "detector_window", 8)),
+          min_history=int(getattr(self.coord, "detector_min_history", 5)),
+          seed=self.RANDOM_SEED + int(self.index),
+          refit_every=int(getattr(self.coord, "refit_every", 20)),
+          **dict(getattr(self.coord, "detector_options", None) or {}),
+        )
+      # Keep the legacy SP-local alias for compatibility with older checkpoints.
+      self._AI_regularizer = self.coord.ai_regularizer
+    if self.tweak_csv is not None:
+      self._tweak_df = pd.read_csv(self.tweak_csv)
+    else:
+      self._tweak_df = None
     if log is not None:
       self.log = log
     if solver == 'mads':
@@ -137,10 +215,20 @@ class SubProblem(partitionedProblemData):
         self.log.log_msg(msg=msg, msg_type=MSG_TYPE.WARNING.value)
       warning(msg)
       self.scipy: Dict = {}
-      self.scipy["options"] = {'disp': False, 'verbose': 0}
+      self.scipy["options"] = {'disp': False}
       self.scipy["method"] = 'SLSQP'
       self.scipy["is_con"] = False
       self.scipy["tol"] = 1E-4
+
+  def _get_base_seed(self, conf: Dict) -> int:
+    if isinstance(conf, dict):
+      options = conf.get("options")
+      if isinstance(options, dict) and "seed" in options:
+        try:
+          return int(options["seed"])
+        except (TypeError, ValueError):
+          return int(self.RANDOM_SEED)
+    return int(self.RANDOM_SEED)
 
   def __getstate__(self):
     # Remove or replace non-picklable attributes
@@ -154,9 +242,58 @@ class SubProblem(partitionedProblemData):
 
   def __setstate__(self, state):
       self.__dict__.update(state)
+      if not isinstance(self.cache, pd.DataFrame):
+        self.cache = self._migrate_legacy_cache(self.cache)
       # Reconstruct non-picklable objects if needed
       # self._lock = threading.RLock()
         
+
+  def _create_cache_frame(self) -> pd.DataFrame:
+    cache = pd.DataFrame(columns=["objective", "penalty", "vlist", "outputs"])
+    cache.index.name = "cache_address"
+    return cache
+
+  def _migrate_legacy_cache(self, cache_entries: Any) -> pd.DataFrame:
+    cache = self._create_cache_frame()
+    if not isinstance(cache_entries, list):
+      return cache
+    for entry in cache_entries:
+      if isinstance(entry, list) and len(entry) >= 4:
+        self._append_cache_row(entry[0], entry[1], entry[2], entry[3], cache)
+    return cache
+
+  def _normalize_cache_value(self, value: Any):
+    if isinstance(value, np.ndarray):
+      return self._normalize_cache_value(value.tolist())
+    if isinstance(value, list):
+      return [self._normalize_cache_value(item) for item in value]
+    if isinstance(value, tuple):
+      return tuple(self._normalize_cache_value(item) for item in value)
+    if isinstance(value, (np.integer, np.floating)):
+      return value.item()
+    return value
+
+  def get_cache_address(self, vlist: List[Any]) -> int:
+    normalized_vlist = self._normalize_cache_value(vlist)
+    payload = repr(normalized_vlist).encode("utf-8")
+    return int.from_bytes(hashlib.blake2b(payload, digest_size=8).digest(), byteorder="big", signed=False)
+
+  def cache_row(self, cache_address: int) -> pd.Series:
+    return self.cache.loc[cache_address]
+
+  def get_cached_row(self, vlist: List[Any]) -> pd.Series:
+    return self.cache_row(self.get_cache_address(vlist))
+
+  def _append_cache_row(self, objective: float, penalty: float, vlist: List[Any], outputs: Any, cache: pd.DataFrame = None):
+    cache_frame = self.cache if cache is None else cache
+    cache_address = self.get_cache_address(vlist)
+    cache_frame.loc[cache_address, ["objective", "penalty", "vlist", "outputs"]] = [
+      objective,
+      penalty,
+      copy.deepcopy(vlist),
+      copy.deepcopy(outputs),
+    ]
+
 
   def get_minimizer(self):
     v = []
@@ -272,9 +409,10 @@ class SubProblem(partitionedProblemData):
           if check and (self.coord.master_vars[j].name == self.coord.master_vars[i].name):
             sp_link_to.append(self.coord.master_vars[i].link)
             indices2.append(self.coord.master_vars[j].index)
-    
-    # Remove redundant links
     self.coord._linker = copy.deepcopy(np.array([indices1, indices2]))
+    # Keep only paired links when list lengths diverge.
+    # pair_count = min(len(indices1), len(indices2))
+    # self.coord._linker = copy.deepcopy(np.array([indices1[:pair_count], indices2[:pair_count]], dtype=int))
 
   def getLocalIndices(self):
     local_link = []
@@ -325,9 +463,145 @@ class SubProblem(partitionedProblemData):
       writer = csv.DictWriter(csv_file, fieldnames=keys)
       writer.writerow(r)    # add column names in the CSV file
 
+  def _scalarize_hmin(self, value: Any) -> float:
+    array = np.atleast_1d(np.asarray(value, dtype=float))
+    if array.size == 0:
+      return 0.0
+    finite = array[np.isfinite(array)]
+    if finite.size > 0:
+      return float(np.max(finite))
+    if np.any(array > 0.0):
+      return float(np.inf)
+    return 0.0
+
+  def _get_detector_slot(self, raw_index: int, count: int, prefer_one_based: bool = True) -> int:
+    if count <= 0:
+      return 0
+    if prefer_one_based and 1 <= raw_index <= count:
+      return raw_index - 1
+    if 0 <= raw_index < count:
+      return raw_index
+    return min(max(raw_index - 1, 0), count - 1)
+
+  def _get_runtime_hmins_for_detector(self) -> List[float]:
+    count = self.coord.nsp if hasattr(self.coord, "nsp") else 1
+    hmin_values = [0.0] * count
+    history_file = (
+      os.path.join(os.path.dirname(self.postDir), "Coordination_history.out")
+      if hasattr(self, "postDir")
+      else None
+    )
+    prefer_one_based = True
+
+    if history_file is not None and os.path.exists(history_file):
+      try:
+        df = pd.read_csv(history_file, sep=None, engine="python")
+        if not df.empty:
+          columns = []
+          for column in df.columns:
+            label = str(column).strip()
+            if label.startswith("hmin_"):
+              try:
+                columns.append((int(label.split("_")[-1]), column))
+              except ValueError:
+                continue
+          columns.sort(key=lambda item: item[0])
+          if any(idx == 0 for idx, _ in columns):
+            prefer_one_based = False
+          last_row = df.iloc[-1]
+          for idx, column in columns:
+            slot = self._get_detector_slot(idx, len(hmin_values), prefer_one_based)
+            hmin_values[slot] = self._scalarize_hmin(last_row[column])
+      except Exception:
+        pass
+
+    local_index = self._get_detector_slot(self.index, len(hmin_values), prefer_one_based)
+    if 0 <= local_index < len(hmin_values):
+      hmin_values[local_index] = self._scalarize_hmin(self.hmin)
+    elif hmin_values:
+      hmin_values[0] = self._scalarize_hmin(self.hmin)
+
+    return hmin_values
+
+  def _resolve_ai_regularizer(self):
+    if not getattr(self.coord, "is_AI_regularizer", False):
+      return None
+    regularizer = getattr(self.coord, "ai_regularizer", None)
+    if regularizer is None and self._AI_regularizer is not None:
+      regularizer = self._AI_regularizer
+      self.coord.ai_regularizer = regularizer
+    return regularizer
+
+  def _collect_regularizer_metrics(self, regularizer) -> Dict[str, float]:
+    return latest_detector_metrics(regularizer)
+
+  def _apply_regularizer_metrics_to_coord(self, metrics: Dict[str, float]):
+    current_event_strength = float(max(
+      metrics["forecast_prob"],
+      metrics["non_improvement_prob"],
+      metrics["objective_non_improvement_prob"],
+      metrics["constraint_non_improvement_prob"],
+      metrics["spike_prob"],
+    ))
+    best_event_strength = float(getattr(self.coord, "ai_event_strength", -1.0))
+    if current_event_strength < best_event_strength:
+      return
+
+    if hasattr(self.coord, "ai_event_strength"):
+      self.coord.ai_event_strength = current_event_strength
+    if hasattr(self.coord, "qmax_predicted"):
+      self.coord.qmax_predicted = metrics["forecast_prob"]
+    if hasattr(self.coord, "fmin_predicted"):
+      self.coord.fmin_predicted = metrics["objective_non_improvement_prob"]
+    if hasattr(self.coord, "spike_prob"):
+      self.coord.spike_prob = metrics["spike_prob"]
+    if hasattr(self.coord, "forecast_prob"):
+      self.coord.forecast_prob = metrics["forecast_prob"]
+    if hasattr(self.coord, "non_improvement_prob"):
+      self.coord.non_improvement_prob = metrics["non_improvement_prob"]
+    if hasattr(self.coord, "objective_non_improvement_prob"):
+      self.coord.objective_non_improvement_prob = metrics["objective_non_improvement_prob"]
+    if hasattr(self.coord, "constraint_non_improvement_prob"):
+      self.coord.constraint_non_improvement_prob = metrics["constraint_non_improvement_prob"]
+    if hasattr(self.coord, "detector_uncertainty"):
+      self.coord.detector_uncertainty = metrics["detector_uncertainty"]
+    if hasattr(self.coord, "constraint_pressure"):
+      self.coord.constraint_pressure = metrics["constraint_pressure"]
+    if hasattr(self.coord, "spike_location"):
+      self.coord.spike_location = self.index
+
+  def _update_ai_regularizer(self):
+    # With the outer-iteration feed the coordinator updates the detector once per outer iteration.
+    if getattr(self.coord, "detector_per_outer_iteration", True):
+      return
+    regularizer = self._resolve_ai_regularizer()
+    if regularizer is None:
+      return
+
+    inc_value = float(np.max(np.abs(self.coord.q))) if self.coord.q is not None and np.size(self.coord.q) > 0 else 0.0
+    obj_value = self.fmin_nop if np.isfinite(self.fmin_nop) else self.fmin
+    hmin_values = self._get_runtime_hmins_for_detector()
+    # Feed the completed SP-solve trajectory before the coordination-level update
+    sp_file = getattr(self, "Il_file", None)
+    if sp_file is not None:
+        regularizer.update_sp_features(sp_file)
+    alarm = regularizer.update(obj=obj_value, inc=inc_value, hmins=hmin_values)
+    metrics = self._collect_regularizer_metrics(regularizer)
+    self._apply_regularizer_metrics_to_coord(metrics)
+
+    if hasattr(self.coord, "spike_location") and alarm and int(getattr(self.coord, "spike_location", 0)) <= 0:
+      self.coord.spike_location = self.index
+    if hasattr(self.coord, "alarm_detected"):
+      self.coord.alarm_detected = bool(getattr(self.coord, "alarm_detected", False) or alarm)
+
   def get_con(self, x):
     return self.evaluate(x, None, "con_only")
   
+  @staticmethod
+  def _is_out_of_bounds(vlist, lb, ub) -> bool:
+    return any(_is_number(x) and _is_number(lo) and _is_number(hi) and not (lo <= x <= hi)
+               for x, lo, hi in zip(vlist, lb, ub))
+
   def evaluate(self, vlist: List[float]=None, clist: List[float]=None, *argv):  # noqa: C901
     is_conOnly = False
     if argv is not None and len(argv)>0 and argv[0] == "con_only":
@@ -339,7 +613,10 @@ class SubProblem(partitionedProblemData):
     # variables of the current subproblem (might happen during initialization)
     if vlist is None:
       v: List = self.get_design_vars()
-      vlist = self.get_list_vars(v)
+      vlist: list = self.get_list_vars(v)
+    elif getattr(self, "_omads_bounds", None) is not None and self._is_out_of_bounds(vlist, *self._omads_bounds):
+      # Same output OMADS assigns to a failed evaluation.
+      return [np.inf, [np.inf]]
     
     self.set_variables_value(vlist, clist)
     self.MDA_process.setInputs(self.vars)
@@ -355,7 +632,23 @@ class SubProblem(partitionedProblemData):
     else:
       y = None
 
-    fun = self.opt(vlist, y, clist)
+    inputs_type_analysis = analyze_and_validate_types(self.opt)
+    if len(inputs_type_analysis) > 0 :
+      if len(inputs_type_analysis) > 0:
+        if inputs_type_analysis[list(inputs_type_analysis.keys())[0]] == "dict":
+          inp1 = self.get_dict_vars(self.get_design_vars())
+        else:
+          inp1 = vlist
+        
+        if self.MDA_process.responses is not None \
+        and len(inputs_type_analysis) > 1 \
+        and inputs_type_analysis[list(inputs_type_analysis.keys())[1]] == "dict":
+          inp2 = self.get_dict_outputs(self.MDA_process.responses)
+        else:
+          inp2 = y
+        
+        
+    fun = self.opt(inp1, inp2, clist)
     
     self.fmin_nop = fun[0]
     con = fun[1]
@@ -416,7 +709,7 @@ class SubProblem(partitionedProblemData):
     # TODO: Fix the local indices to select from a batched q list
     q_indices: List = self.getLocalIndices()
     self.coord.calc_inconsistency()
-    self.coord.calc_penalty(q_indices)
+    self.coord.calc_penalty(q_indices, self.fmin_nop)
     # TODO: change the name of this routine
     self.coord.update_master_vector_val(self.vars, self.MDA_process.responses, self.sets)
     mvs = self.coord.master_vars
@@ -425,7 +718,7 @@ class SubProblem(partitionedProblemData):
         if mvs[i].index == self.vars[j].index:
           self.vars[j] = copy.deepcopy(mvs[i])
 
-    self.cache.append([fun[0]+self.coord.phi, vlist, self.MDA_process.getOutputs()])
+    self._append_cache_row(fun[0], self.coord.phi, vlist, self.MDA_process.getOutputs())
     # if self.realistic_objective:
     #   fun[0] =(y[0]-self.frealistic)
     if self.solver == "scipy":
@@ -447,12 +740,84 @@ class SubProblem(partitionedProblemData):
       self.prepare_post(file)
     if self.solver == "poll" and self.is_main:
       self.set_dependent_baseline(self.coord.master_vars)
-    self.cache = []
+    self.cache = self._create_cache_frame()
     self.coord.v = copy.deepcopy(v)
     self.coord.w = copy.deepcopy(w)
     bl = self.get_list_vars(self.get_design_vars())
+    # Values carried over from other subproblems can land a round-off outside the bounds, which OMADS rejects
+    # ("mesh center values must satisfy: lb <= x^mesh <= ub"), so clamp the start point onto the box.
+    lbs = self.get_list_vars_lb(self.get_design_vars())
+    ubs = self.get_list_vars_ub(self.get_design_vars())
+    bl = [min(max(x, lo), hi) if _is_number(x) and _is_number(lo) and _is_number(hi) else x
+          for x, lo, hi in zip(bl, lbs, ubs)]
+    if not(hasattr(self, "xmin_old")):
+        self.xmin_old = copy.deepcopy(bl)
     res = None
+    
+    # if self._AI_regularizer.window <= self.iter:
+    #   forecast = self._AI_regularizer.update()
+    
+    # if any(self._AI_regularizer.spike_flags):
+    #   self.coord.M_update_scheme = w_scheme.MAX
+    # elif self.index == 1:
+    self.coord.ai_spike_objective_jump = False # Initialize it to False at the start of each solve
+
+    budget_scale = 1
+    configured_budget_scale = float(getattr(self.coord, "budget_scale", 6))
+    # Intensity-modulated value computed by the coordinator at the previous outer iteration.
+    spike_budget_scale = float(getattr(self.coord, "_effective_budget_scale", configured_budget_scale))
+
+    # Budget expansion only follows a detected spike attributed to this subproblem.
+    if self.coord.is_AI_regularizer:
+      min_iter = getattr(self.coord, "budget_min_iter", None)
+      min_iter = int(self.coord.refit_every if min_iter is None else min_iter)
+      if iter > min_iter and getattr(self.coord, "last_spike_detected", False) and getattr(self.coord, "adapt_budget", True):
+        last_location = int(getattr(self.coord, "last_spike_location", 0))
+        improving = getattr(self.coord, "_sp_late_improving", None)
+        causal = str(getattr(self.coord, "spike_response", "accelerate")) == "causal"
+        if causal and getattr(self.coord, "budget_neutral", False) and improving and spike_budget_scale > 1.0:
+          # Recipients: subproblems still improving when their last budget ran out. Donors: those that had
+          # settled. The total stays nsp * budget; no reallocation when every subproblem is in the same state.
+          n_rec = sum(1 for v in improving.values() if v)
+          n_don = len(improving) - n_rec
+          if n_rec > 0 and n_don > 0:
+            floor = float(getattr(self.coord, "budget_floor", 0.25))
+            gain = min(spike_budget_scale, 1.0 + n_don * (1.0 - floor) / n_rec)
+            budget_scale = gain if improving.get(self.index, False) else max(floor, 1.0 - (gain - 1.0) * n_rec / n_don)
+        elif getattr(self.coord, "budget_neutral", False) and last_location > 0 and spike_budget_scale > 1.0:
+          # Move evaluations to the attributed subproblem; the total over all subproblems stays nsp * budget.
+          nsp = max(int(getattr(self.coord, "nsp", 1)), 1)
+          floor = float(getattr(self.coord, "budget_floor", 0.25))
+          if nsp > 1:
+            gain = min(spike_budget_scale, 1.0 + (nsp - 1) * (1.0 - floor))
+            budget_scale = gain if last_location == self.index else max(floor, (nsp - gain) / (nsp - 1))
+        elif last_location == self.index:
+          budget_scale = spike_budget_scale
+      if budget_scale > 1.0 and getattr(self.coord, "budget_feasible_only", False):
+        # Expand only a subproblem whose previous solve ended feasible; extra evaluations on an infeasible one
+        # tend to trade its own constraints for objective and penalty terms.
+        last_h = np.ravel(np.asarray(getattr(self, "hmin", [0.0]), dtype=float))
+        last_h = last_h[np.isfinite(last_h)]
+        if last_h.size and float(np.max(last_h)) > 1e-6:
+          budget_scale = 1.0
+
+    effective_budget = max(1, int(round(float(self.budget) * float(budget_scale))))
+
     self.log.log_msg(msg=f"Coordination iteration # {iter}: running subproblem {self.index}", msg_type=MSG_TYPE.INFO.value)
+    if self._tweak_df is not None and (self.iter+1) in self._tweak_df['iteration'].values:
+      self.solver = self._tweak_df.query(f'iteration == {self.iter+1}')['solver'].iloc[0]
+      if self.solver == "mads":
+        self.optimizer = OMADS.mads.main
+      if self.solver == "poll":
+        self.optimizer = OMADS.poll.main
+      if self.solver == "search":
+        self.optimizer = OMADS.search.main
+        
+      self.budget = self._tweak_df.query(f'iteration == {self.iter+1}')['budget'].iloc[0]
+      self.coord.gamma = self._tweak_df.query(f'iteration == {self.iter+1}')['gamma'].iloc[0]
+      self.coord.beta = self._tweak_df.query(f'iteration == {self.iter+1}')['beta'].iloc[0]
+
+    
     if self.solver == 'OMADS' or self.solver == 'mads' or self.solver == 'omads' or self.solver != 'scipy':
       eval = {"blackbox": self.evaluate}
       # if self.sets is None:
@@ -490,17 +855,45 @@ class SubProblem(partitionedProblemData):
                   and self.conf["mesh_type"] in ["GMESH", "OMESH"] \
                   else "GMESH",
                   "post_dir": self.postDir,
+                  "constraints_type": ["PB"]*100
            }
       pinit = min(max(self.tol, max(self.psize) if isinstance(self.psize, list) else self.psize), 1)
+      # GMESH ignores psize_init: warm-start it with the per-variable frame size of the previous solve, floored
+      # relative to the variable range so a later solve can still move after the penalties change.
+      carried = list(np.ravel(self.psize)) if np.ndim(self.psize) > 0 else []
+      first_frame = self.conf.get("initial_frame_size") if isinstance(self.conf, dict) else None
+      if param["mesh_type"] == "GMESH" and not carried and first_frame is not None:
+        # First solve: optional CONFIG.<name>.initial_frame_size (scalar or per-variable, in fractions of the range)
+        # instead of OMADS's default, which is far too coarse for very wide bounds.
+        n_var = len(param["lb"])
+        param["initial_frame_size"] = [float(v) for v in np.broadcast_to(np.asarray(first_frame, dtype=float), (n_var,))]
+      if param["mesh_type"] == "GMESH" and self.psize_init != PSIZE_UPDATE.DEFAULT and len(carried) == len(param["lb"]):
+        span = np.subtract(param["ub"], param["lb"])
+        user_floor = self.conf.get("frame_floor") if isinstance(self.conf, dict) else None
+        floors = ([float(user_floor)] * len(span) if user_floor is not None
+                  else [_PSIZE_FLOOR_REL * min(s, _PSIZE_FLOOR_SPAN_CAP) for s in span])
+        frames = [float(max(p, f)) for p, f in zip(carried, floors)]
+        cap = self.conf.get("frame_cap") if isinstance(self.conf, dict) else None
+        if cap is not None:
+          # Optional cap (fraction of range): a frame grown by successful polls would otherwise start the next solve
+          # with steps across most of the range.
+          frames = [min(fr, float(cap)) for fr in frames]
+        param["initial_frame_size"] = frames
       if self.conf is not None and "options" in self.conf and self.conf["options"] is not None:
-        options = self.conf["options"]
-        options["seed"] = self.conf["options"]["seed"] + iter
-        if not is_mac:
-          options["precision"] = "medium"
+        options = copy.deepcopy(self.conf["options"])
+        options["budget"] = effective_budget
+        options["seed"] = int(self.RANDOM_SEED + int(iter))
+        # Carry the poll size over from the previous solve unless the user asked for a reset.
+        if self.psize_init != PSIZE_UPDATE.DEFAULT:
+          options["psize_init"] = pinit
+        options.setdefault("check_cache", True)
+        options.setdefault("store_cache", True)
+        # if not is_mac:
+        #   options["precision"] = "medium"
       else:
         options = {
-          "seed": 10000,
-          "budget": self.budget,
+          "seed": int(self.RANDOM_SEED + int(iter)),
+          "budget": effective_budget,
           "tol": self.tol,
           "psize_init": pinit,
           "display": self.display,
@@ -519,12 +912,23 @@ class SubProblem(partitionedProblemData):
       # isWin = platform.platform().split('-')[0] == 'Windows'
       # options["precision"] = "high" if isWin else "medium"
       if self.conf is not None and "search" in self.conf and self.conf["search"] is not None:
-        search = self.conf["search"]
+        # Copy so a budget expansion does not compound into every later solve.
+        search = copy.deepcopy(self.conf["search"])
+        search["ns"] = int(search["ns"] * budget_scale) if "ns" in search and search["ns"] is not None else 5*budget_scale
+        # if (search is not None 
+        #     and "ns" in search 
+        #     and search["ns"] is not None):
+        #   search_budget_ratio = search["ns"]/self.budget
+        #   search["ns"] = int(search_budget_ratio * effective_budget)
+          # if ("s_method" in search 
+          #     and search["s_method"] is not None
+          #     and switch_to_inactive_learning):
+            # search["s_method"] = "HALTON"
       else:
         search = {
-                    "type": "VNS",
-                    "s_method": "LH",
-                    "ns": 10,
+                    "type": "LHS",
+                    "s_method": "ACTIVE",
+                    "ns": 10*budget_scale,
                     "visualize": False,
                     "criterion": None
                   }
@@ -550,24 +954,49 @@ class SubProblem(partitionedProblemData):
       
       data = {"evaluator": eval, "param": param, "options":options, "search": search}
 
+      # Keep all stochastic components reproducible under the configured YAML seed.
+      _seed_all_rngs(int(options["seed"]))
+
       out = {}
       pinit = self.psize
       log_copy = self.log
       # self.log.switch_handler(f"SP{self.index}")
-      if self.solver == 'OMADS' or self.solver == 'MADS' or self.solver == 'mads' or self.solver == 'omads':
-        out, _, _ = self.optimizer(data)
-      else:
-        out, _ = self.optimizer(data)
+      if not hasattr(self, "fmin_old"):
+        self.fmin_old = np.inf
+      # OMADS evaluates trial points it fails to snap onto the bounds; reject them in evaluate() so they can
+      # never become the next poll center (which OMADS refuses with "lb <= x^mesh <= ub").
+      self._omads_bounds = (param["lb"], param["ub"])
+      try:
+        if self.solver == 'OMADS' or self.solver == 'MADS' or self.solver == 'mads' or self.solver == 'omads':
+          try:
+            out, _, _ = self.optimizer(data)
+          except Exception as exc:
+            # OMADS cache can occasionally desync its center index; retry once with cache disabled.
+            is_index_error = isinstance(exc, IndexError) or exc.__class__.__name__ == "IndexError"
+            cache_enabled = options.get("check_cache", True) or options.get("store_cache", True)
+            if is_index_error and "list index out of range" in str(exc) and cache_enabled:
+              options["check_cache"] = False
+              options["store_cache"] = False
+              data["options"] = options
+              out, _, _ = self.optimizer(data)
+            else:
+              raise
+
+        else:
+          out, _ = self.optimizer(data)
+      finally:
+        self._omads_bounds = None
       self.log = log_copy
       # self.log.switch_handler("DMDO")
       self.fmin = out["fmin"]
       self.hmin = out["hmin"]
-      if self.conf is not None and "constraintsHandling" in self.conf:
-        self.conf["constraintsHandling"]["h_max"] = copy.deepcopy(out["hmin"])
-      else:
-        self.conf = {}
-        self.conf["constraintsHandling"] = {}
-        self.conf["constraintsHandling"]["h_max"] = copy.deepcopy(out["hmin"])
+      
+      # if self.conf is not None and "constraintsHandling" in self.conf:
+      #   self.conf["constraintsHandling"]["h_max"] = copy.deepcopy(out["hmin"])
+      # else:
+      #   self.conf = {}
+      #   self.conf["constraintsHandling"] = {}
+      #   self.conf["constraintsHandling"]["h_max"] = copy.deepcopy(out["hmin"])
       if self.psize_init == PSIZE_UPDATE.DEFAULT:
         self.psize = 1.
       elif self.psize_init == PSIZE_UPDATE.SUCCESS:
@@ -581,30 +1010,61 @@ class SubProblem(partitionedProblemData):
       else:
         self.psize = 1.
       
+      
       # COMPLETE: Coordinator forgets q after calling the optimizer, possible remedy is to 
       # update the subproblem variables from the optimizer output and the master variables too
       # then at the end of each outer loop iteration we can calculate q of that subproblem before updating penalty parameters
 
       #  We need this extra evaluation step to update inconsistincies and the master_variables vector
       eval_out = out["xmin"] if len(out["xmin"]) > 0 else bl
+      
 
       self.evaluate(eval_out, self.get_list_constant_updates(self.get_design_vars()))
+      if self.fmin_nop < self.fmin_old:
+        self.xmin_old = copy.deepcopy(eval_out)
+        self.fmin_old = copy.deepcopy(self.fmin_nop)
+        self.psize_old = out["psuccess"]
     elif self.solver == 'scipy':
       if self.scipy is not None and isinstance(self.scipy, dict):
-        opts = self.scipy["options"]
-        bnds = Bounds(lb=self.get_list_vars_lb(self.get_design_vars()), ub=self.get_list_vars_ub(self.get_design_vars()))
-        
-        if self.scipy["is_con"]:
-          non_linear_constraints = NonlinearConstraint(fun=self.get_con, lb=-np.inf, \
-            ub= 0.0, keep_feasible=False, jac='2-point', hess=BFGS())
-          res = minimize(self.evaluate, method=self.scipy["method"], x0=bl, options=opts, tol=self.scipy["tol"], bounds=bnds,\
-                          constraints=[non_linear_constraints])
-          self.fmin = res.fun
-          self.hmin = 0 if (max(self.get_con(x=res.x)) <= 0.) else max(self.get_con(x=res.x))
+        opts = copy.deepcopy(self.scipy["options"])
+        # The inner budget (and the AI's budget expansion) acts on the iteration limit.
+        # Only trust-constr accepts 'verbose'; other methods emit OptimizeWarning for it.
+        if str(self.scipy["method"]).lower() != "trust-constr":
+          opts.pop("verbose", None)
+        if "maxiter" in opts:
+          opts["maxiter"] = max(1, int(round(float(opts["maxiter"]) * float(budget_scale))))
+        lb = np.asarray(self.get_list_vars_lb(self.get_design_vars()), dtype=float)
+        ub = np.asarray(self.get_list_vars_ub(self.get_design_vars()), dtype=float)
+        if self.scipy.get("normalize", False):
+          # Optimise z in [0, 1] with x = lb + z (ub - lb): finite-difference gradients on comparable scales.
+          span = np.where(ub > lb, ub - lb, 1.0)
+          to_x = lambda z: list(lb + np.clip(z, 0.0, 1.0) * span)  # noqa: E731
+          obj_fun = lambda z, *a: self.evaluate(to_x(z), *a)  # noqa: E731
+          con_fun = lambda z: self.get_con(x=to_x(z))  # noqa: E731
+          bnds = Bounds(lb=np.zeros_like(lb), ub=np.ones_like(ub))
+          x0 = np.clip((np.asarray(bl, dtype=float) - lb) / span, 0.0, 1.0)
         else:
-          res = minimize(self.evaluate, method=self.scipy["method"], x0=bl, options=opts, tol=self.scipy["tol"], bounds=bnds)
-          self.fmin = res.fun
-          self.hmin = 0
+          to_x = lambda z: list(z)  # noqa: E731
+          obj_fun = self.evaluate
+          con_fun = lambda x: self.get_con(x=x)  # noqa: E731
+          bnds, x0 = Bounds(lb=lb, ub=ub), bl
+
+        if self.scipy["is_con"]:
+          if str(self.scipy["method"]).upper() == "SLSQP":
+            # SLSQP takes dict constraints (fun >= 0).
+            cons = [{"type": "ineq", "fun": lambda z: -np.asarray(con_fun(z), dtype=float)}]
+          else:
+            cons = [NonlinearConstraint(fun=con_fun, lb=-np.inf, ub=0.0, keep_feasible=False, jac='2-point', hess=BFGS())]
+          res = minimize(obj_fun, method=self.scipy["method"], x0=x0, options=opts, tol=self.scipy["tol"], bounds=bnds,
+                         constraints=cons)
+        else:
+          res = minimize(obj_fun, method=self.scipy["method"], x0=x0, options=opts, tol=self.scipy["tol"], bounds=bnds)
+        x_best = np.asarray(to_x(res.x), dtype=float)
+        self.fmin = res.fun
+        # Same violation measure as OMADS's progressive barrier: h = sum(max(0, g)^2).
+        g = np.asarray(self.get_con(x=list(x_best)), dtype=float) if self.scipy["is_con"] else np.zeros(1)
+        self.hmin = float(np.sum(np.maximum(g, 0.0) ** 2))
+        res.x = x_best
         out = copy.deepcopy(res.x)
         self.evaluate(out)
         
@@ -616,6 +1076,9 @@ class SubProblem(partitionedProblemData):
       self.evaluate(out)
     else:
       self.log.log_msg(msg=f"Unknown solver is assigned to subproblem #{self.index}", msg_type=MSG_TYPE.ERROR.value)
+
+    if getattr(self.coord, "is_AI_regularizer", False):
+      self._update_ai_regularizer()
     self.log.log_msg(msg=f"Coordination iteration # {iter}: completed subproblem {self.index}", msg_type=MSG_TYPE.INFO.value)
 
     
@@ -710,6 +1173,35 @@ class SubProblem(partitionedProblemData):
           typ = vars[i].type[0].lower() if vars[i].dim == 1 else vars[i].type[0][0].lower()
           v.append(vars[i].baseline if (typ != "c" and typ != "d") else self.sets[vars[i].set].index(vars[i].baseline))
     return v
+  
+  def get_dict_vars(self, vars:List[variableData]):
+    v = {}
+    for i in range(len(vars)):
+      if vars[i].coupling_type != COUPLING_TYPE.CONSTANT:
+        if isinstance(vars[i].baseline, list):
+          for j in range(len(vars[i].baseline)):
+            typ = vars[i].type[0].lower() if vars[i].dim == 1 else vars[i].type[0][0].lower()
+            temp = vars[i].baseline[j] if (typ != "c" and typ != "d") else self.sets[vars[i].set].index(vars[i].baseline[j])
+            v[vars[i].name] = temp
+        else:
+          typ = vars[i].type[0].lower() if vars[i].dim == 1 else vars[i].type[0][0].lower()
+          v[vars[i].name] = vars[i].baseline if (typ != "c" and typ != "d") else self.sets[vars[i].set].index(vars[i].baseline)
+    return v
+  
+  def get_dict_outputs(self, vars:List[variableData]):
+    v = {}
+    for i in range(len(vars)):
+      if vars[i].coupling_type != COUPLING_TYPE.CONSTANT:
+        if isinstance(vars[i].baseline, list):
+          for j in range(len(vars[i].baseline)):
+            typ = vars[i].type[0].lower() if vars[i].dim == 1 else vars[i].type[0][0].lower()
+            temp = vars[i].baseline[j] if (typ != "c" and typ != "d") else self.sets[vars[i].set].index(vars[i].baseline[j])
+            v[vars[i].name] = temp
+        else:
+          typ = vars[i].type[0].lower() if vars[i].dim == 1 else vars[i].type[0][0].lower()
+          v[vars[i].name] = vars[i].value if (typ != "c" and typ != "d") else self.sets[vars[i].set].index(vars[i].baseline)
+    return v
+
 
   def get_list_vars_ub(self, vars:List[variableData]):
     v = []

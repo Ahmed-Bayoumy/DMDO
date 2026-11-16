@@ -29,9 +29,11 @@ def prepare_setup(n_repeatitions = 100):
   
   os.mkdir(bm_inputs_path)
 
-  bm_input_files = [os.path.join(bm_inputs_path, f'SBJ_run{x+1}.yaml') for x in range(n_repeatitions)]
+  bm_input_files = [os.path.join(os.path.join(bm_inputs_path, f'SBJ_run{x+1}'),\
+                                  f'SBJ_run{x+1}.yaml') for x in range(n_repeatitions)]
 
   for bm_input_file in bm_input_files:
+    os.mkdir(os.path.dirname(bm_input_file))
     shutil.copyfile(src=bm_main_input, dst=bm_input_file)
 
     # Read the YAML file
@@ -102,13 +104,12 @@ def SBJ_structure_opt(x, y, *args):
 def SBJ_auto_build_and_run(p_file, wd, run_name):
   # csd = os.path.dirname(os.path.abspath(__file__))
   # p_file: str = os.path.join(csd, "SBJ.yaml")
-
   def_dict = {
     "setup_file": p_file,
     "run_mode": "build",
     # "is_resume": 0,
     # "restart_file": None,
-    "exec_mode": "parallel",
+    "exec_mode": "serial",
     "mdo_name": run_name,
     "working_dir": wd
   }
@@ -118,7 +119,7 @@ def SBJ_auto_build_and_run(p_file, wd, run_name):
     for j in range(len(temp.analyses)):
       MDAO.subProblems[i].MDA_process.analyses[j].blackbox = globals()[MDAO.subProblems[i].MDA_process.analyses[j].blackbox]
     MDAO.subProblems[i].opt = globals()[MDAO.subProblems[i].opt]
-  out = MDAO.run(os.path.join(wd, f"{run_name}.out"), mode = "parallel")
+  out = MDAO.run(os.path.join(wd, f"{run_name}.out"), mode = "serial")
   print(out)
 
   

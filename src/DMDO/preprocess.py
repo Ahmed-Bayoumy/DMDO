@@ -42,6 +42,47 @@ from .coordinator import ADMM
 from ._protocols import coordinator
 from ._protocols import process
 from .variables import variableData
+
+# Optional coordinator keys (YAML coord.<id>) that tune the detector and the adaptation.
+_AI_OPTION_KEYS = (
+  "detector_window",
+  "detector_min_history",
+  "detector_options",
+  "detector_per_outer_iteration",
+  "adapt_beta",
+  "adapt_gamma",
+  "adapt_budget",
+  "adapt_cooldown",
+  "penalty_w_cap",
+  "w_stall_exponent",
+  "single_multiplier_update",
+  "spike_response",
+  "spike_w_hold_scale",
+  "spike_freeze_beta_scale",
+  "spike_freeze_gamma_scale",
+  "freeze_obj_rtol",
+  "ni_gate",
+  "max_adaptations",
+  "rollback",
+  "rollback_w_scale",
+  "rollback_obj_tol",
+  "rollback_q_factor",
+  "rollback_max",
+  "rollback_gap",
+  "rollback_trigger",
+  "w_init",
+  "budget_feasible_only",
+  "adapt_trigger",
+  "trigger_rise",
+  "harm_threshold",
+  "harm_window",
+  "placebo_rate",
+  "placebo_seed",
+  "rollback_on_infeasible",
+  "budget_neutral",
+  "budget_floor",
+  "budget_min_iter",
+)
 @dataclass
 class optimizationData:
   objectives: List[Callable]
@@ -164,7 +205,10 @@ class problemSetup:
     bl: List = [self.data["Sets"][vsets[list(vin.keys()).index(i)]].index(vin[i][5]) \
                 if (vtype[list(vin.keys()).index(i)] == 'c' \
                     or vtype[list(vin.keys()).index(i)] == 'i') else vin[i][5] for i in vin]
-
+    for i in range(len(ub)):
+      if isinstance(ub[i], str) and (vtype[i] == "REAL" or vtype[i] == "R"):
+        ub[i] = float(ub[i])
+        lb[i] = float(lb[i])
     scaling = np.subtract(ub,lb)
     self.Qscaling = []
     # blError = raise IOError()
@@ -342,7 +386,22 @@ class problemSetup:
         mode=c[i]["mode"],
         M_update_scheme=self.getWupdateScheme(c[i]["M_update_scheme"]),
         store_q_io=c[i]["store_q_io"],
-        budget=c[i]["budget"] if "budget" in c[i] else IOError(f'The budget key could not be found for {c[i]}.')
+        budget=c[i]["budget"] if "budget" in c[i] else IOError(f'The budget key could not be found for {c[i]}.'),
+        is_AI_regularizer=c[i]["is_AI_regularizer"] if "is_AI_regularizer" in c[i] else False,
+        AI_spike_policy=c[i]["AI_spike_policy"] if "AI_spike_policy" in c[i] else "L2_Normal",
+        spike_influence_on_multipliers=c[i].get("spike_influence_on_multipliers", True),
+        spike_w_damp_scale=(
+          c[i]["spike_w_damp_scale"] if "spike_w_damp_scale" in c[i]
+          else c[i].get("spike_w_scale", 2.2)
+        ),
+        spike_w_amplify_scale=c[i]["spike_w_amplify_scale"] if "spike_w_amplify_scale" in c[i] else 0.8,
+        spike_gamma_scale=c[i]["spike_gamma_scale"] if "spike_gamma_scale" in c[i] else 0.05,
+        budget_scale=c[i]["budget_scale"] if "budget_scale" in c[i] else 6,
+        spike_adaptive_scales=c[i]["spike_adaptive_scales"] if "spike_adaptive_scales" in c[i] else True,
+        spike_threshold=c[i]["spike_threshold"] if "spike_threshold" in c[i] else 0.5,
+        refit_every=c[i]["refit_every"] if "refit_every" in c[i] else 20,
+        detector_warm_start_from_history=c[i].get("detector_warm_start_from_history", False),
+        ai_options={key: c[i][key] for key in _AI_OPTION_KEYS if key in c[i]},
       ))
       self.log.log_msg(msg=f"Coordinator configurations: {c}", msg_type=MSG_TYPE.INFO.value)
     self.log.log_msg(msg="Completed coordinator setup ...\n", msg_type=MSG_TYPE.INFO.value)
@@ -352,10 +411,9 @@ class problemSetup:
     self.log.log_msg(msg="Starting subproblems setup ...", msg_type=MSG_TYPE.INFO.value)
     SP = self.data["subproblem"]
     is_conf =  "CONFIG" in self.data
+    
     if is_conf:
       CONF = self.data["CONFIG"]
-    
-
 
     self.SPs = []
     for i in SP:
@@ -385,7 +443,9 @@ class problemSetup:
         scipy= SP[i]["scipy"] if "scipy" in SP[i] else None,
         sets=self.Sets,
         conf= CONF[SP[i]["configurations"]] if ("configurations" in SP[i]) and is_conf \
-          and (SP[i]["configurations"] in CONF) else None
+          and (SP[i]["configurations"] in CONF) else None,
+        tweak_csv= SP[i]["tweak_csv"] if "tweak_csv" in SP[i] else None,
+        wd=self.data["working_dir"],
 
       ))
     self.log.log_msg(msg="Completed subproblems setup.\n", msg_type=MSG_TYPE.INFO.value)

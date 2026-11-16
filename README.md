@@ -58,6 +58,11 @@ terminal window under the src directory. The path of the JSON template, which co
 python ./src/DMDO/DMDO.py ./tests/test_files/Basic_MDO.yaml
 ```
 
+The generated `Coordination_history.out` file now includes two AI spike-tracking columns when the AI regularizer is enabled:
+
+- `alarm_detected`: the raw detector alarm for the current update
+- `spike_detected`: the stricter expected-spike flag returned by the coordinator helper after decisor and non-improvement gating
+
 
 
 

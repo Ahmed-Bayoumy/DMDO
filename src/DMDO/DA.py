@@ -32,6 +32,49 @@ import numpy as np
 from .variables import variableData
 from dataclasses import dataclass, field
 
+import inspect
+
+def analyze_and_validate_types(func) -> dict:
+    """Analyzes a function's parameters.
+    Parameters without a type hint (or callables without an inspectable signature)
+    are reported as "untyped", so the caller falls back to passing a list.
+    """
+    try:
+        signature = inspect.signature(func)
+    except (ValueError, TypeError):
+        return {}
+
+    analysis = {}
+
+    for name, param in signature.parameters.items():
+        # 1. Identify *args
+        if param.kind == inspect.Parameter.VAR_POSITIONAL:
+            analysis[name] = "var_positional (*args)"
+            continue
+            
+        # 2. Identify **kwargs
+        if param.kind == inspect.Parameter.VAR_KEYWORD:
+            analysis[name] = "var_keyword (**kwargs)"
+            continue
+
+        # 3. Missing type hints keep the legacy list-input behaviour
+        hint = param.annotation
+        if hint is inspect.Parameter.empty:
+            analysis[name] = "untyped"
+            continue
+
+        # 4. Map the identified types
+        if hint is list or getattr(hint, "__origin__", None) is list:
+            analysis[name] = "list"
+        elif hint is dict or getattr(hint, "__origin__", None) is dict:
+            analysis[name] = "dict"
+        else:
+            analysis[name] = f"other ({hint.__name__ if hasattr(hint, '__name__') else hint})"
+
+    return analysis
+
+
+
 @dataclass
 class DA_Data:
   inputs: List[variableData]
@@ -61,10 +104,15 @@ class DA(DA_Data):
 
     if isinstance(input, dict):
       self(**data)
+  
 
   def run(self):
     if callable(self.blackbox):
-      outs = self.blackbox(self.getInputsList())
+      input_type_analysis = analyze_and_validate_types(self.blackbox)
+      if len(input_type_analysis) > 0 and input_type_analysis[list(input_type_analysis.keys())[0]] == "dict":
+        outs = self.blackbox(self.getInputsDict())
+      else:
+        outs = self.blackbox(self.getInputsList())
     else:
       raise IOError("Callables are the only evaluator type currently allowed."
                     " Enabling evaluating BB executables is still in progress!")
@@ -121,6 +169,12 @@ class DA(DA_Data):
       else:
         v.append(self.inputs[i].value)
     return v
+
+  def getInputsDict(self):
+    d = {}
+    for i in range(len(self.inputs)):
+      d[self.inputs[i].name] = self.inputs[i].value
+    return d
 
   def getOutputs(self):
     return self.outputs

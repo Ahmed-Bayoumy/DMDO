@@ -7,8 +7,9 @@ class WingDesignAnalyzer:
     A class to analyze and design aircraft wings based on structural and aerodynamic parameters.
     """
     
-    def __init__(self, h=55000, Mach=1.4, tc=0.05, ARw=3.0, LAMBDAw=60.0, Sref=500, Sht=100, 
-                 ARht=5.5, lambdatr=0.3, Lift=25000, t=[3] * 9, ts=[6] * 9):
+    def __init__(self, h=55000, Mach=1.4, tc=0.0641, ARw=2.5, LAMBDAw=70.0, Sref=667, Sht=99.7, 
+                 ARht=5.5, lambdatr=0.1, Lift=34300, t=[0.97, 0.52, 0.21, 4.00, 3.66, 0.91, 0.97, 0.52, 0.21], 
+                 ts=[2.17, 1.48, 0.76, 4.40, 4.02,1.01, 2.17, 1.48, 0.76]):
         # Inputs
         self.h = h
         self.Mach = Mach
@@ -40,7 +41,7 @@ class WingDesignAnalyzer:
         # Panel parameters
         self.NP = 9  # number of panels per halfspan
         self.n = 90
-        self.rn = self.n // self.NP
+        self.rn = int(self.n / self.NP)
         
         # Thickness values (converted from inches to feet)
         self.ti = t
@@ -220,9 +221,10 @@ class WingDesignAnalyzer:
         C = c[3] + 2 * ((b / 2 - x) / b) * c1mc4
         C1 = c[3] + 2 * ((b / 2 - x1) / b) * c1mc4
         A_Tot = np.multiply((h / 4) * (C + C1), (np.add(f_all, f1_all)))
-        Area = np.sum(A_Tot.reshape((NP, rn)), axis=1)
-        Spanel = np.multiply((h * rn / 2), (np.add([C[int(i)] for i in np.linspace(0, n - 10, 9)], 
-                                   [C[int(i)] for i in np.linspace(9, n - 1, 9)])))
+        Area = np.sum(A_Tot.reshape((rn, NP), order='F'), axis=0)
+        idx1 = np.arange(0, n, rn)
+        idx2 = np.arange(rn - 1, n, rn)
+        Spanel = (h * rn / 2) * (C[idx1] + C[idx2])
 
         # Calculate sweep angles
         cosSweep = np.cos(Sweep_40 * np.pi / 180)
@@ -230,7 +232,7 @@ class WingDesignAnalyzer:
         tanCos2Sweep = np.tan(Sweep_40 * np.pi / 180) * cosSweep * cosSweep
         
         # Calculate distributed loads
-        p = np.divide(L * Area, sum(Area))
+        p = L * Area / np.sum(Area)
         
         # Calculate shear force and bending moment
         Tcsp = np.cumsum(p)
@@ -244,9 +246,11 @@ class WingDesignAnalyzer:
                                      np.multiply(l, np.subtract(Tsp, Tcsp))), cosInvSweep)
 
         # Extract loads at specific points
-        P = [T[int(i)] for i in np.arange(0, NP - 1, int(NP / 3))]
-        Mx = np.multiply(P, D_mx)
-        Mz = [Mb[int(i)] for i in np.arange(0, NP - 1, int(NP / 3))]
+        idx = np.arange(0, NP, NP // 3)
+        P = np.array(T[idx])
+        Mz = np.array(Mb[idx])
+        Mx = P * D_mx
+        # Mz = [Mb[int(i)] for i in np.arange(0, NP - 1, int(NP / 3))]
 
         # Calculate wing twist due to bending
         I = np.zeros((NP))  # noqa: E741
@@ -340,142 +344,165 @@ class WingDesignAnalyzer:
         return [Ws, Wf, theta]
 
     def calculate_constraints(self):
-        """Calculate structural constraints for the wing design."""
-        # Re-assign thickness arrays
-        t1 = self.t[0:3] 
+        """MATLAB-equivalent implementation of SBJ_constraint_weight"""
+
+        # ---- Inputs (MATCH MATLAB) ----
+        # t = np.array(self.t).reshape(-1) / 12.0
+        # ts = np.array(self.ts).reshape(-1) / 12.0
+
+        t1 = self.t[0:3]
         t2 = self.t[3:6]
         t3 = self.t[6:9]
+
         ts1 = self.ts[0:3]
         ts2 = self.ts[3:6]
         ts3 = self.ts[6:9]
 
-        # Calculate wing geometry
+        G = np.zeros(72)
+
+        # Constants
+        self.E = 10600000 * 144
+        self.nu = 0.3
+        self.beta = 0.9
+        self.k = 6.09375
+
+        # ---- Geometry ----
         self.c, self.c_box, self.Sweep_40, self.D_mx, self.b, self.a = self.Wing_Mod(self.Z, self.LAMBDA)
-        
-        # Calculate moments of inertia
-        h = (np.multiply([self.c[i] for i in range(3)], self.beta * float(self.Z[0]))) - \
-            np.multiply(0.5, np.add(self.ts1, self.ts3))
-        
-        A_top = (np.multiply(self.t1, 0.5 * self.c_box)) + (np.multiply(self.t2, h / 6))
-        A_bottom = (np.multiply(self.t3, 0.5 * self.c_box)) + (np.multiply(self.t2, h / 6))
-        Y_bar = np.multiply(h, np.divide((2 * A_top), (2 * A_top + 2 * A_bottom)))
-        self.Izz = np.multiply(2, np.multiply(A_top, np.power((h - Y_bar), 2))) + \
-              np.multiply(2, np.multiply(A_bottom, np.power((-Y_bar), 2)))
-        
-        # Calculate loads and deflections
-        self.P, self.Mz, self.Mx, self.bend_twist, self.Spanel = self.loads(
-            self.b, self.c, self.Sweep_40, self.D_mx, self.L, self.Izz, self.Z, self.E)
-        
-        # Calculate equivalent thicknesses
+
+        c = np.array(self.c)
+
+        l = 0.6 * self.c_box  # IMPORTANT: matches MATLAB  # noqa: E741
+
+        # ---- Equivalent thickness ----
         teq1 = ((t1**3)/4 + (3*t1)*(ts1 - t1/2)**2)**(1/3)
         teq2 = ((t2**3)/4 + (3*t2)*(ts2 - t2/2)**2)**(1/3)
         teq3 = ((t3**3)/4 + (3*t3)*(ts3 - t3/2)**2)**(1/3)
-        self.Mz = np.array(self.Mz)
-        # Calculate stresses
-        sig_1 = self.Mz * (0.95 * self.h - self.h * np.mean(self.t1)) / np.mean(self.Izz)
-        sig_2 = self.Mz * (self.h - self.h * np.mean(self.t1)) / np.mean(self.Izz)
+
+        # ---- Section geometry ----
+        h = self.Z[0] * (self.beta * c[0:3]) - 0.5 * (ts1 + ts3)
+
+        A_top = 0.5 * (t1 * l) + (1/6) * (t2 * h)
+        A_bottom = 0.5 * (t3 * l) + (1/6) * (t2 * h)
+
+        Y_bar = h * (2 * A_top) / (2 * A_top + 2 * A_bottom)
+
+        self.Izz = 2 * A_top * (h - Y_bar)**2 + 2 * A_bottom * (-Y_bar)**2
+
+        # ---- Loads ----
+        P, Mz, Mx, *_ = self.loads(self.b, c, self.Sweep_40, self.D_mx, self.L, self.Izz, self.Z, self.E)
+
+        # Ensure arrays
+        P = np.array(P)
+        Mz = np.array(Mz)
+        Mx = np.array(Mx)
+
+        # ---- Stresses (FIXED: use Y_bar and element-wise Izz) ----
+        sig_1 = Mz * (0.95 * h - Y_bar) / self.Izz
+        sig_2 = Mz * (h - Y_bar) / self.Izz
         sig_3 = sig_1
-        sig_4 = self.Mz * (0.05 * self.h - self.h * np.mean(self.t1)) / np.mean(self.Izz)
-        sig_5 = self.Mz * (-self.h * np.mean(self.t1)) / np.mean(self.Izz)
+        sig_4 = Mz * (0.05 * h - Y_bar) / self.Izz
+        sig_5 = Mz * (-Y_bar) / self.Izz
         sig_6 = sig_4
-        q = self.Mx / (2 * self.c_box * self.h)
-        
-        # Calculate critical stresses
-        sig_cr1 = (np.pi**2 * self.E * 4 / (12 * (1 - self.nu**2))) * (teq2 / (0.95 * self.h))**2
-        tau_cr1 = (np.pi**2 * self.E * 5.5 / (12 * (1 - self.nu**2))) * (teq2 / (0.95 * self.h))**2
-        sig_cr2 = (np.pi**2 * self.E * 4 / (12 * (1 - self.nu**2))) * (teq1 / self.c_box)**2
-        tau_cr2 = (np.pi**2 * self.E * 5.5 / (12 * (1 - self.nu**2))) * (teq1 / self.c_box)**2
+
+        q = Mx / (2 * l * h)  # FIXED: uses l
+
+        # ---- Point 1 ----
+        T1 = P * (l - self.a) / l  # FIXED
+        tau1_T = T1 / (h * t2)
+        tau1 = q / t2 + tau1_T
+
+        sig_eq1 = np.sqrt(sig_1**2 + 3 * tau1**2)
+
+        sig_cr1 = (np.pi**2 * self.E * 4 / (12 * (1 - self.nu**2))) * (teq2 / (0.95 * h))**2
+        tau_cr1 = (np.pi**2 * self.E * 5.5 / (12 * (1 - self.nu**2))) * (teq2 / (0.95 * h))**2
+
+        G[0:3] = self.k * sig_eq1
+        G[3:6] = self.k * ((sig_1 / sig_cr1) + (tau1 / tau_cr1)**2)
+        G[6:9] = self.k * ((-sig_1 / sig_cr1) + (tau1 / tau_cr1)**2)
+
+        # ---- Point 2 ----
+        tau2 = q / t1
+        sig_eq2 = np.sqrt(sig_2**2 + 3 * tau2**2)
+
+        sig_cr2 = (np.pi**2 * self.E * 4 / (12 * (1 - self.nu**2))) * (teq1 / l)**2
+        tau_cr2 = (np.pi**2 * self.E * 5.5 / (12 * (1 - self.nu**2))) * (teq1 / l)**2
+
+        G[9:12] = self.k * sig_eq2
+        G[12:15] = self.k * ((sig_2 / sig_cr2) + (tau2 / tau_cr2)**2)
+        G[15:18] = self.k * ((-sig_2 / sig_cr2) + (tau2 / tau_cr2)**2)
+
+        # ---- Point 3 ----
+        T2 = P * self.a / l  # FIXED
+        tau3_T = -T2 / (h * t2)
+        tau3 = q / t2 + tau3_T
+
+        sig_eq3 = np.sqrt(sig_3**2 + 3 * tau3**2)
+
         sig_cr3 = sig_cr1
         tau_cr3 = tau_cr1
-        sig_cr5 = (np.pi**2 * self.E * 4 / (12 * (1 - self.nu**2))) * (teq3 / self.c_box)**2
-        tau_cr5 = (np.pi**2 * self.E * 5.5 / (12 * (1 - self.nu**2))) * (teq3 / self.c_box)**2
-        
-        # Initialize constraint array
-        self.G = np.zeros((72))
-        
-        # Point 1: Shear and normal stresses
-        T1 = self.P * (self.a / self.c_box)
-        tau1_T = T1 / (self.h * self.t2)
-        tau1 = q / self.t2 + tau1_T
-        sig_eq1 = np.sqrt(sig_1**2 + 3 * tau1**2)
-        self.G[0:3] = self.k * sig_eq1
-        self.G[3:6] = self.k * (((sig_1 / sig_cr1) + (tau1 / tau_cr1)**2))
-        self.G[6:9] = self.k * (((-sig_1 / sig_cr1) + (tau1 / tau_cr1)**2))
-        
-        # Point 2: Shear and normal stresses
-        tau2 = q / self.t1
-        sig_eq2 = np.sqrt(sig_2**2 + 3 * tau2**2)
-        self.G[9:12] = self.k * sig_eq2
-        self.G[12:15] = self.k * (((sig_2 / sig_cr2) + (tau2 / tau_cr2)**2))
-        self.G[15:18] = self.k * (((-sig_2 / sig_cr2) + (tau2 / tau_cr2)**2))
-        
-        # Point 3: Shear and normal stresses
-        T2 = self.P * (self.a / self.c_box)
-        tau3_T = -T2 / (self.h * self.t2)
-        tau3 = q / self.t2 + tau3_T
-        sig_eq3 = np.sqrt(sig_3**2 + 3 * tau3**2)
-        self.G[18:21] = self.k * sig_eq3
-        self.G[21:24] = self.k * (((sig_3 / sig_cr3) + (tau3 / tau_cr3)**2))
-        self.G[24:27] = self.k * (((-sig_3 / sig_cr3) + (tau3 / tau_cr3)**2))
-        
-        # Point 4: Shear stresses
-        tau4 = -q / self.t2 + tau1_T
+
+        G[18:21] = self.k * sig_eq3
+        G[21:24] = self.k * ((sig_3 / sig_cr3) + (tau3 / tau_cr3)**2)
+        G[24:27] = self.k * ((-sig_3 / sig_cr3) + (tau3 / tau_cr3)**2)
+
+        # ---- Point 4 ----
+        tau4 = -q / t2 + tau1_T
         sig_eq4 = np.sqrt(sig_4**2 + 3 * tau4**2)
-        self.G[27:30] = self.k * sig_eq4
-        
-        # Point 5: Shear and normal stresses
-        tau5 = q / self.t3
+
+        G[27:30] = self.k * sig_eq4
+
+        # ---- Point 5 ----
+        tau5 = q / t3
         sig_eq5 = np.sqrt(sig_5**2 + 3 * tau5**2)
-        self.G[30:33] = self.k * sig_eq5
-        self.G[33:36] = self.k * (((sig_5 / sig_cr5) + (tau5 / tau_cr5)**2))
-        self.G[36:39] = self.k * (((-sig_5 / sig_cr5) + (tau5 / tau_cr5)**2))
-        
-        # Point 6: Shear stresses
-        tau6 = -q / self.t2 + tau3_T
+
+        sig_cr5 = (np.pi**2 * self.E * 4 / (12 * (1 - self.nu**2))) * (teq3 / l)**2
+        tau_cr5 = (np.pi**2 * self.E * 5.5 / (12 * (1 - self.nu**2))) * (teq3 / l)**2
+
+        G[30:33] = self.k * sig_eq5
+        G[33:36] = self.k * ((sig_5 / sig_cr5) + (tau5 / tau_cr5)**2)
+        G[36:39] = self.k * ((-sig_5 / sig_cr5) + (tau5 / tau_cr5)**2)
+
+        # ---- Point 6 ----
+        tau6 = -q / t2 + tau3_T
         sig_eq6 = np.sqrt(sig_6**2 + 3 * tau6**2)
-        self.G[39:42] = self.k * sig_eq6
-        
-        # Constraint formulation
+
+        G[39:42] = self.k * sig_eq6
+
+        # ---- Constraints ----
         Sig_C = 65000 * 144
         Sig_T = 65000 * 144
-        
-        self.G1 = np.zeros((72))
-        
-        # Compressive constraints
-        self.G1[0:3] = (self.G[0:3] / Sig_C) - 1
-        self.G1[54:57] = -(self.G[0:3] / Sig_C) - 1
-        self.G1[3:9] = self.G[3:9] - 1
-        
-        # Compressive constraints for point 2
-        self.G1[9:12] = (self.G[9:12] / Sig_C) - 1
-        self.G1[57:60] = -(self.G[9:12] / Sig_C) - 1
-        self.G1[12:18] = self.G[12:18] - 1
-        
-        # Compressive constraints for point 3
-        self.G1[18:21] = (self.G[18:21] / Sig_C) - 1
-        self.G1[60:63] = -(self.G[18:21] / Sig_C) - 1
-        self.G1[21:27] = self.G[21:27] - 1
-        
-        # Tensile constraints
-        self.G1[27:30] = (self.G[27:30] / Sig_T) - 1
-        self.G1[63:66] = -(self.G[27:30] / Sig_T) - 1
-        
-        # Tensile constraints for point 5
-        self.G1[30:33] = (self.G[30:33] / Sig_T) - 1
-        self.G1[66:69] = -(self.G[30:33] / Sig_T) - 1
-        self.G1[33:39] = self.G[33:39] - 1
-        
-        # Tensile constraints for point 6
-        self.G1[39:42] = (self.G[39:42] / Sig_T) - 1
-        self.G1[69:72] = -(self.G[39:42] / Sig_T) - 1
-        
-        # Thickness constraints
-        self.G1[42:45] = (1/2) * (ts1 + ts3) / self.h - 1
-        self.G1[45:48] = t1 / (ts1 - 0.1 * t1) - 1
-        self.G1[48:51] = t2 / (ts2 - 0.1 * t2) - 1
-        self.G1[51:54] = t3 / (ts3 - 0.1 * t3) - 1
-        
-        return self.G1.tolist()
+
+        G1 = np.zeros(72)
+
+        G1[0:3] = (G[0:3] / Sig_C) - 1
+        G1[54:57] = -(G[0:3] / Sig_C) - 1
+        G1[3:9] = G[3:9] - 1
+
+        G1[9:12] = (G[9:12] / Sig_C) - 1
+        G1[57:60] = -(G[9:12] / Sig_C) - 1
+        G1[12:18] = G[12:18] - 1
+
+        G1[18:21] = (G[18:21] / Sig_C) - 1
+        G1[60:63] = -(G[18:21] / Sig_C) - 1
+        G1[21:27] = G[21:27] - 1
+
+        G1[27:30] = (G[27:30] / Sig_T) - 1
+        G1[63:66] = -(G[27:30] / Sig_T) - 1
+
+        G1[30:33] = (G[30:33] / Sig_T) - 1
+        G1[66:69] = -(G[30:33] / Sig_T) - 1
+        G1[33:39] = G[33:39] - 1
+
+        G1[39:42] = (G[39:42] / Sig_T) - 1
+        G1[69:72] = -(G[39:42] / Sig_T) - 1
+
+        # ---- Thickness constraints ----
+        G1[42:45] = 0.5 * (ts1 + ts3) / h - 1
+        G1[45:48] = t1 / (ts1 - 0.1 * t1) - 1
+        G1[48:51] = t2 / (ts2 - 0.1 * t2) - 1
+        G1[51:54] = t3 / (ts3 - 0.1 * t3) - 1
+
+        return G1.tolist()
 
     def SBJ_wing_structural_design(self):
         """Run the complete wing design analysis."""
@@ -515,6 +542,11 @@ class WingDesignAnalyzer:
         print(f"Spanel = {out_dict['Spanel']}")
         print(f"Bend Twist = {out_dict['bend_twist']}")
         print(f"Constraints (G1) = {out_dict['G1']}")
+        CV = []
+        for i, g in enumerate(out_dict['G1']):
+          if g > 0:
+              CV.append((i, g))
+        print(f"Constraints Violation (G1) = {CV}")
         print("==================================")
 
 if __name__ == "__main__":
