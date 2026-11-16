@@ -1,14 +1,14 @@
 # The basic MDO problem
 variables:
 # vs:  [name, SP_index, Link, coupling type, lb, bl, ub, dim]
-  v0:  ["u",     1,       2,          s, 0., 1., 10.,  1, 'R']
-  v1:  ["v",     1,    None,          u, 0., 1., 10.,  1, 'R']
-  v2:  ["a",     1,       2,         ff, 0., 1., 10.,  1, 'R']
-  v3:  ["b",     1,       2,         fb, 0., 1., 10.,  1, 'R']
-  v4:  ["u",     2,       1,          s, 0., 1., 10.,  1, 'R']
-  v5:  ["w",     2,    None,          u, 0., 1., 10.,  1, 'R']
-  v6:  ["a",     2,       1,         fb, 0., 1., 10.,  1, 'R']
-  v7:  ["b",     2,       1,         ff, 0., 1., 10.,  1, 'R']
+  v0:  ["u",     1,       2,          s, 0., 1., 10.,  1, 'REAL']
+  v1:  ["v",     1,    None,          u, 0., 1., 10.,  1, 'REAL']
+  v2:  ["a",     1,       2,         ff, 0., 1., 10.,  1, 'REAL']
+  v3:  ["b",     1,       2,         fb, 0., 1., 10.,  1, 'REAL']
+  v4:  ["u",     2,       1,          s, 0., 1., 10.,  1, 'REAL']
+  v5:  ["w",     2,    None,          u, 0., 1., 10.,  1, 'REAL']
+  v6:  ["a",     2,       1,         fb, 0., 1., 10.,  1, 'REAL']
+  v7:  ["b",     2,       1,         ff, 0., 1., 10.,  1, 'REAL']
 
 DA:
   DA1:
@@ -49,13 +49,14 @@ coord:
     index: 1
     type: ADMM
     beta: 1.3
+    gamma: 0.5
     nsp: 2
     budget: 50
     index_of_master_SP: 1
     display: True
-    scaling: 10
+    scaling: 0.1
     mode: serial
-    M_update_scheme: median
+    M_update_scheme: normal
     store_q_io: True
 
 subproblem:
@@ -70,7 +71,8 @@ subproblem:
     opt: opt1
     type: callable
     fmin_nop: inf
-    budget: 20
+    solver: poll
+    budget: 150
     display: False
     psize: 1.
     pupdate: Last
@@ -87,7 +89,8 @@ subproblem:
     opt: opt2
     type: callable
     fmin_nop: inf
-    budget: 20
+    solver: poll
+    budget: 150
     display: False
     psize: 1.
     pupdate: Last
