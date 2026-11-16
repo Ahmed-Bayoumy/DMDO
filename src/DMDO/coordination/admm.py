@@ -24,7 +24,6 @@
 # """
 
 import copy
-import math
 from logging import warning
 from typing import Any, Dict, List, Optional
 
@@ -34,6 +33,7 @@ from ..core.enums import COUPLING_TYPE, w_scheme, eps_qio
 from ..core.variables import variableData
 from ..ai.detector import HybridAnomalyDetector
 from ..ai.decisor import resolve_level
+from .policy import policy_for
 from dataclasses import dataclass, field
 
 @dataclass
@@ -49,6 +49,8 @@ class coordinationData:
   n_dim: int = 0
   index: int = None
   is_AI_regularizer: bool = False
+  # Adaptation policy name (coordination/policy.py); None: "spike" with the AI regularizer, else "none".
+  adaptation_policy: Optional[str] = None
   qmax_predicted: float = np.inf
   spike_location: int = 0
   alarm_detected: bool = False
@@ -1046,242 +1048,24 @@ class ADMM(ADMM_data):
 
     return s
 
+  # ------------------------------------------------------------------ adaptation policy (see coordination/policy.py)
+  def adaptation(self):
+    """The :class:`~DMDO.coordination.policy.CoordinationPolicy` that adapts this coordinator's penalty update."""
+    return policy_for(self)
+
+  def assess_iteration(self, iter: int) -> tuple[bool, int, int]:
+    """Evaluate this outer iteration's adaptation event (flags reported in the coordination history)."""
+    return policy_for(self).expected_spike_event(self, iter)
+
+  # Pre-policy entry points, kept for scripts that call them directly.
   def _get_expected_spike_event(self, iter: int) -> tuple[bool, int, int]:
-    """
-    Return (is_expected_spike, spike_subproblem, spike_future_iteration).
-
-    A spike is considered expected when forecast confidence is accepted by the
-    decisor and associated with a non-improvement condition.
-    """
-    if not getattr(self, "is_AI_regularizer", False):
-      return False, 0, -1
-
-    detector = getattr(self, "ai_regularizer", None)
-    if detector is None:
-      return False, 0, -1
-
-    level_name = str(getattr(self, "AI_spike_policy", getattr(self, "spike_confidence_level", "L2_Normal")))
-    decision = detector.decide(level_name=level_name)
-    # Kept for the rollback trigger "forecast", which does not use the non-improvement gate.
-    self._forecast_accepted = bool(decision.accept_forecast_prob)
-
-    spike_threshold = float(getattr(self, "spike_threshold", 0.5))
-    spike_location = int(getattr(self, "spike_location", 0))
-    non_improvement_prob = float(getattr(self, "non_improvement_prob", 0.0))
-    objective_non_improvement_prob = float(getattr(self, "objective_non_improvement_prob", 0.0))
-    constraint_non_improvement_prob = float(getattr(self, "constraint_non_improvement_prob", 0.0))
-
-    non_improvement_gate = max(
-      non_improvement_prob,
-      objective_non_improvement_prob,
-      constraint_non_improvement_prob,
-    ) >= spike_threshold
-    if str(getattr(self, "ni_gate", "association")) == "direct":
-      # The association probabilities hover near 0.5 on some problems (GP), so read non-improvement directly.
-      non_improvement_gate = self._direct_non_improvement()
-
-    if str(getattr(self, "ni_gate", "association")) == "objective_drop":
-      non_improvement_gate = self._harm_gate()
-    elif str(getattr(self, "ni_gate", "association")) == "none":
-      non_improvement_gate = True  # act on every triggered event (no usefulness gate)
-    if str(getattr(self, "adapt_trigger", "forecast")) == "random":
-      # Placebo control: act at random iterations (rate placebo_rate), no detector decision and no gate. The draw
-      # depends only on (placebo_seed, iteration), so repeated calls within an iteration agree.
-      u = np.random.default_rng([int(getattr(self, "placebo_seed", 0)), int(iter)]).random()
-      is_expected_spike = bool(u < float(getattr(self, "placebo_rate", 0.0)))
-    elif str(getattr(self, "adapt_trigger", "forecast")) == "threshold":
-      # Act on a confirmed spike (q_max rose by >= trigger_rise decades) rather than on the one-step forecast,
-      # which validation showed to be late and noisy.
-      is_expected_spike = self._threshold_spike() and non_improvement_gate
-    else:
-      is_expected_spike = (
-        decision.accept_forecast_prob
-        and non_improvement_gate
-      )
-
-    # Both the decisor and the non-improvement gate must pass (paper Eq. ni_gate).
-    if not is_expected_spike:
-      return False, 0, -1
-
-    if spike_location <= 0:
-      spike_location = int(getattr(self, "last_spike_subproblem", 0))
-
-    # forecast_prob is a one-step-ahead signal, so expected spike timing is t+1.
-    spike_future_iteration = int(iter) + 1
-    self.last_spike_subproblem = spike_location
-    self.last_spike_iteration = spike_future_iteration
-    self.spike_detected = True
-    return True, spike_location, spike_future_iteration
+    return policy_for(self).expected_spike_event(self, iter)
 
   def _compute_ai_scales(self, iter: int) -> tuple[float, float, float, bool]:
-    """
-    Return (beta_scale, gamma_scale, budget_scale, spike) for this outer iteration.
-
-    Adaptation is applied only when the decisor accepts the forecast AND the non-improvement
-    gate holds. In adaptive mode each configured value is an upper bound reached at full
-    intensity. Nothing is committed here, so the logger can call it without side effects.
-
-    The beta rule is keyed on the objective: if it just decreased, spike_w_damp_scale (> 1 in the
-    benchmark configs) accelerates penalty growth on stalled couplings; otherwise
-    spike_w_amplify_scale (about 1) leaves it nearly unchanged.
-    """
-    neutral = (1.0, 1.0, 1.0)
-    if not (getattr(self, "is_AI_regularizer", False) and getattr(self, "spike_influence_on_multipliers", False)):
-      return (*neutral, False)
-
-    is_expected_spike, _, _ = self._get_expected_spike_event(iter)
-    max_adapt = int(getattr(self, "max_adaptations", 0))
-    if max_adapt > 0 and int(getattr(self, "_n_adapt", 0)) >= max_adapt:
-      self._event_kind = "spike" if is_expected_spike else ""
-      return (*neutral, is_expected_spike)
-    freeze = (not is_expected_spike) and self._premature_freeze(iter)
-    self._event_kind = "spike" if is_expected_spike else ("freeze" if freeze else "")
-    if not (is_expected_spike or freeze):
-      return (*neutral, False)
-
-    cooldown = int(getattr(self, "adapt_cooldown", 0))
-    if cooldown > 0 and int(iter) - int(getattr(self, "_last_adapt_iter", -10**9)) <= cooldown:
-      return (*neutral, is_expected_spike)
-
-    if freeze:
-      # Consistency is being bought at the expense of the objective: slow penalty growth and relax the stall test,
-      # and move evaluations to the subproblem that was still improving (see SP.solve).
-      beta_scale = float(getattr(self, "spike_freeze_beta_scale", 0.5)) if getattr(self, "adapt_beta", True) else 1.0
-      gamma_scale = float(getattr(self, "spike_freeze_gamma_scale", 1.5)) if getattr(self, "adapt_gamma", True) else 1.0
-      budget_scale = float(getattr(self, "budget_scale", 6.0)) if getattr(self, "adapt_budget", True) else 1.0
-      return beta_scale, gamma_scale, budget_scale, False
-
-    obj_hist = getattr(self, "objective_history", [])
-    obj_decreased = (
-      len(obj_hist) >= 2
-      and np.isfinite(obj_hist[-1])
-      and np.isfinite(obj_hist[-2])
-      and obj_hist[-1] < obj_hist[-2]
-    )
-    if obj_decreased:
-      configured_beta_scale = float(getattr(self, "spike_w_damp_scale", 1.8))
-    else:
-      configured_beta_scale = float(getattr(self, "spike_w_amplify_scale", 1.05))
-    configured_gamma_scale = float(getattr(self, "spike_gamma_scale", 0.05))
-    configured_budget_scale = float(getattr(self, "budget_scale", 6.0))
-
-    if not getattr(self, "spike_adaptive_scales", True):
-      beta_scale, gamma_scale, budget_scale = configured_beta_scale, configured_gamma_scale, configured_budget_scale
-      if self._penalty_caused_spike():
-        beta_scale, gamma_scale = float(getattr(self, "spike_w_hold_scale", 0.0)), 1.0
-    else:
-      forecast_prob = float(getattr(self, "forecast_prob", 1.0))
-      non_improvement_prob = float(getattr(self, "non_improvement_prob", 1.0))
-      intensity = float(np.clip(0.5 * forecast_prob + 0.5 * non_improvement_prob, 0.0, 1.0))
-      budget_intensity = float(np.clip(1.5 * non_improvement_prob, 0.0, 1.0))
-      beta_scale = 1.0 + (configured_beta_scale - 1.0) * intensity
-      # gamma_scale tightens the stall threshold; the configured value is the tightest extreme.
-      gamma_scale = 1.0 - (1.0 - configured_gamma_scale) * intensity
-      budget_scale = 1.0 + (configured_budget_scale - 1.0) * budget_intensity
-      if self._penalty_caused_spike():
-        # Accelerating the penalty would feed the spike: hold w (toward spike_w_hold_scale) and keep gamma.
-        hold = float(getattr(self, "spike_w_hold_scale", 0.0))
-        beta_scale = 1.0 - (1.0 - hold) * intensity
-        gamma_scale = 1.0
-
-    if not getattr(self, "adapt_beta", True):
-      beta_scale = 1.0
-    if not getattr(self, "adapt_gamma", True):
-      gamma_scale = 1.0
-    if not getattr(self, "adapt_budget", True):
-      budget_scale = 1.0
-    return beta_scale, gamma_scale, budget_scale, True
-
-  def _threshold_spike(self) -> bool:
-    """q_max rose by at least trigger_rise decades at this iteration, from above twice the tolerance."""
-    hist = list(getattr(self, "_qlog_hist", []))
-    if not hist or self.q is None or not np.size(self.q):
-      return False
-    tol = float(getattr(self, "_tol_ref", 0.0))
-    q_now = max(float(np.max(np.abs(self.q))), 1e-300)
-    q_prev = 10.0 ** hist[-1]
-    if q_prev < 2.0 * tol:
-      return False
-    return bool(np.log10(q_now) - hist[-1] >= float(getattr(self, "trigger_rise", 0.3)))
-
-  def _harm_gate(self) -> bool:
-    """Act when the objective dropped together with the spike, relative to its recent noise.
-
-    p_harm = Phi(-dS / s), dS = slog f_k - slog f_(k-1), s = median |dS| over the previous harm_window changes (floor
-    1e-6). Validation: an objective drop at a spike predicts that the objective will be worse a few iterations later.
-    """
-    obj = np.asarray(getattr(self, "objective_history", []), dtype=float)
-    if obj.size < 3 or not np.all(np.isfinite(obj[-2:])):
-      return False
-    so = np.sign(obj) * np.log1p(np.abs(obj))
-    dso = np.diff(so)
-    window = int(getattr(self, "harm_window", 5))
-    prev = dso[-window - 1:-1]
-    prev = prev[np.isfinite(prev)]
-    scale = max(float(np.median(np.abs(prev))) if prev.size else 0.0, 1e-6)
-    p_harm = 0.5 * (1.0 + math.erf((-dso[-1] / scale) / math.sqrt(2.0)))
-    self.harm_prob = float(p_harm)
-    return p_harm >= float(getattr(self, "harm_threshold", 0.45))
-
-  def _direct_non_improvement(self) -> bool:
-    """Objective worsened this iteration, or log q_max has been flat (span < 0.05) over the last four iterations."""
-    obj_hist = getattr(self, "objective_history", [])
-    worsened = (
-      len(obj_hist) >= 2 and np.isfinite(obj_hist[-1]) and np.isfinite(obj_hist[-2])
-      and float(obj_hist[-1]) > float(obj_hist[-2]) + 1e-4 * max(1.0, abs(float(obj_hist[-2])))
-    )
-    qlog = list(getattr(self, "_qlog_hist", []))
-    if self.q is not None and np.size(self.q):
-      qlog.append(float(np.log10(max(float(np.max(np.abs(self.q))), 1e-30))))
-    stalled = len(qlog) >= 4 and (max(qlog[-4:]) - min(qlog[-4:])) < 0.05
-    return bool(worsened or stalled)
-
-  def _premature_freeze(self, iter: int) -> bool:
-    """Causal response only: penalties grew last iteration and q_max fell, yet the objective did not improve.
-
-    That is the signature of the coordination converging on consistency before optimality, which the paper's
-    accelerating actions make worse.
-    """
-    if str(getattr(self, "spike_response", "accelerate")) != "causal":
-      return False
-    if int(iter) < int(getattr(self, "detector_min_history", 5)):
-      return False
-    if not getattr(self, "_w_grew_last", False) or self.q is None or not np.size(self.q):
-      return False
-    if float(np.max(np.abs(self.q))) >= float(getattr(self, "_qmax_prev", np.inf)):
-      return False
-    obj_hist = getattr(self, "objective_history", [])
-    if len(obj_hist) < 2 or not (np.isfinite(obj_hist[-1]) and np.isfinite(obj_hist[-2])):
-      return False
-    tol = float(getattr(self, "freeze_obj_rtol", 1e-4)) * max(1.0, abs(float(obj_hist[-2])))
-    return float(obj_hist[-1]) >= float(obj_hist[-2]) - tol
-
-  def _penalty_caused_spike(self) -> bool:
-    """True when the bidirectional or causal response is on and q_max rose right after the last penalty increase."""
-    if str(getattr(self, "spike_response", "accelerate")) not in ("bidirectional", "causal"):
-      return False
-    if not getattr(self, "_w_grew_last", False) or self.q is None or not np.size(self.q):
-      return False
-    return float(np.max(np.abs(self.q))) > float(getattr(self, "_qmax_prev", np.inf))
+    return policy_for(self).compute_scales(self, iter)
 
   def _get_ai_spike_multiplier_scales(self, iter: int) -> tuple[float, float, bool]:
-    """Return (beta_scale, gamma_scale, spike) and commit the budget scale and cool-down state."""
-    beta_scale, gamma_scale, budget_scale, spike = self._compute_ai_scales(iter)
-    if spike:
-      self.spike_detected = True
-    if getattr(self, "_event_kind", "") == "freeze" and (beta_scale != 1.0 or gamma_scale != 1.0 or budget_scale != 1.0):
-      self.freeze_detected = True
-    # The subproblem reads this on the next outer iteration (one-step-ahead adaptation).
-    self._effective_budget_scale = budget_scale
-    adapted = beta_scale != 1.0 or gamma_scale != 1.0 or budget_scale != 1.0
-    if adapted:
-      self._last_adapt_iter = int(iter)
-      self._n_adapt = int(getattr(self, "_n_adapt", 0)) + 1
-    kind = getattr(self, "_event_kind", "")
-    if adapted and kind == "spike" and self._penalty_caused_spike():
-      kind = "hold"
-    self._applied_scales = (beta_scale, gamma_scale, budget_scale, kind if adapted else "")
-    return beta_scale, gamma_scale, spike
+    return policy_for(self).multiplier_scales(self, iter)
 
   def _build_increase_w(self, update_scheme):
     kappa = float(getattr(self, "w_stall_exponent", 2.0))
@@ -1345,8 +1129,8 @@ class ADMM(ADMM_data):
 
   def update_multipliers(self, iter):
     spike_detected = False
-    # Apply AI spike policy from helper utility.
-    beta_scale, gamma_scale, spike_detected = self._get_ai_spike_multiplier_scales(iter)
+    # Adaptation scales from the coordinator's policy (all 1 for plain ADMM).
+    beta_scale, gamma_scale, spike_detected = policy_for(self).multiplier_scales(self, iter)
     self.v = np.add(self.v, np.multiply(
             np.multiply(np.multiply(2, self.w), self.w), self.q))
     self.calc_inconsistency_old()

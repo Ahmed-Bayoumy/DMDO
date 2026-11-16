@@ -47,6 +47,7 @@ from ..registry import blackboxes as _blackbox_registry
 
 # Optional coordinator keys (YAML coord.<id>) that tune the detector and the adaptation.
 _AI_OPTION_KEYS = (
+  "adaptation_policy",
   "detector_window",
   "detector_min_history",
   "detector_options",

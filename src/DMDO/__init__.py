@@ -37,11 +37,15 @@ from .analysis.mda import MDA, MDA_data
 from .analysis.da import DA, DA_Data
 from .app.builder import problemSetup, optimizationData
 from .dashboard import main as dmdo_dash
-from .ports import Discipline, Executor, SubproblemSolver, SolverRequest, SolverOutcome
+from .ports import (Discipline, Executor, IterationRecord, RunObserver, SubproblemSolver, SolverRequest,
+                    SolverOutcome)
 from .registry import Registry, blackboxes, executors, register_blackbox, solvers
 from .solvers import BaseSolver
 from .workflow.execution import (InProcessExecutor, ProcessExecutor, SubproblemResult, SubproblemTask,
                                  create_executor, solve_task)
+from .coordination.policy import CoordinationPolicy, NeutralPolicy, SpikeAdaptationPolicy, policies, policy_for
+from .workflow.observers import CheckpointWriter, ConsoleReporter, CoordinationHistoryRecorder
+from .workflow.ai_hooks import AIRegularizerHooks, RollbackGuard
 
 __all__: list[str] = [
   'USER', 
@@ -93,4 +97,16 @@ __all__: list[str] = [
   'SubproblemResult',
   'create_executor',
   'solve_task',
+  'RunObserver',
+  'IterationRecord',
+  'CheckpointWriter',
+  'ConsoleReporter',
+  'CoordinationHistoryRecorder',
+  'AIRegularizerHooks',
+  'RollbackGuard',
+  'CoordinationPolicy',
+  'NeutralPolicy',
+  'SpikeAdaptationPolicy',
+  'policies',
+  'policy_for',
   ]

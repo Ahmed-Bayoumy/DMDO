@@ -7,13 +7,15 @@ imports those packages; an adapter only has to satisfy the protocol.
 * :class:`Discipline` - a disciplinary analysis: named inputs in, named outputs out.
 * :class:`SubproblemSolver` - an optimizer that solves one subproblem given a :class:`SolverRequest`.
 * :class:`Executor` - runs subproblem tasks: in-process, in a process pool, or on remote workers/services.
+* :class:`RunObserver` - hooks into the coordination loop (history files, console, checkpoints, monitoring).
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Mapping, Optional, Protocol, Sequence, TypeVar, runtime_checkable
 
-__all__ = ["Discipline", "SubproblemSolver", "SolverRequest", "SolverOutcome", "Executor"]
+__all__ = ["Discipline", "SubproblemSolver", "SolverRequest", "SolverOutcome", "Executor", "RunObserver",
+           "IterationRecord"]
 
 _T = TypeVar("_T")
 _R = TypeVar("_R")
@@ -127,3 +129,57 @@ class Executor(Protocol):
 
   def close(self) -> None:
     ...
+
+
+@dataclass(frozen=True)
+class IterationRecord:
+  """Summary of one finished outer iteration, passed to :meth:`RunObserver.on_iteration_end`."""
+
+  iteration: int
+  objective: Any
+  max_inconsistency: float
+  max_penalty_weight: float
+  variables_change: float
+  worst_link: int
+
+
+class RunObserver:
+  """Hooks called by the coordination loop (:meth:`DMDO.MDO.run`), in this order within an outer iteration.
+
+  Subclass and override the hooks you need; every hook is optional (an observer may also be any object that defines
+  some of these methods). ``run`` is the :class:`DMDO.MDO` instance; read its state (``run.Coordinator``,
+  ``run.subProblems``, ``run.fmin``, ...) rather than keeping references to it. Observers are called in the order they
+  are given, after DMDO's own (AI regularizer, rollback, checkpoint, console, coordination history). They are not
+  pickled into checkpoints: pass them again to ``run(..., resume=True)``.
+
+  ``on_run_start(run)``
+      once, before the first outer iteration.
+  ``on_iteration_start(run, iteration)``
+      before the subproblems are solved.
+  ``on_sweep_end(run, iteration)``
+      all subproblems solved and the inconsistencies computed, before the penalty update.
+  ``on_iteration_end(run, record)``
+      the iteration's results are final for reporting (an :class:`IterationRecord`).
+  ``on_multipliers_updated(run, iteration)``
+      after the Lagrange multipliers and penalty weights were updated, before the stopping test.
+  ``on_run_end(run)``
+      once, after the last outer iteration (not called when the run raises).
+  """
+
+  def on_run_start(self, run: Any) -> None:
+    pass
+
+  def on_iteration_start(self, run: Any, iteration: int) -> None:
+    pass
+
+  def on_sweep_end(self, run: Any, iteration: int) -> None:
+    pass
+
+  def on_iteration_end(self, run: Any, record: IterationRecord) -> None:
+    pass
+
+  def on_multipliers_updated(self, run: Any, iteration: int) -> None:
+    pass
+
+  def on_run_end(self, run: Any) -> None:
+    pass

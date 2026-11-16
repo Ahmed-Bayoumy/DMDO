@@ -114,6 +114,32 @@ Each solve is shipped as a `SubproblemTask` and solved by the module-level `DMDO
 needs DMDO and the problem's blackboxes installed. Executors can also be registered by name
 (`DMDO.executors.register`) or through the `dmdo.executors` entry-point group.
 
+**Observing a run.** The coordination loop calls `DMDO.RunObserver` hooks in this order: `on_run_start`, then per
+outer iteration `on_iteration_start`, `on_sweep_end` (subproblems solved, inconsistencies computed), `on_iteration_end`
+(an `IterationRecord` with the objective, max. inconsistency, max. penalty weight, variables change and worst link) and
+`on_multipliers_updated`, and finally `on_run_end`. DMDO's own outputs are observers too (`CoordinationHistoryRecorder`
+writes `Coordination_history.out`, `ConsoleReporter` the progress lines, `CheckpointWriter` `coord_chk.pkl`, and with
+the AI regularizer `AIRegularizerHooks` and `RollbackGuard`). Extra observers, e.g. to stream progress to a dashboard
+or a monitoring service, are passed to `run` and are called after DMDO's own; any object defining some of the hooks
+works:
+
+```python
+from DMDO import RunObserver
+
+class Progress(RunObserver):
+    def on_iteration_end(self, run, record):
+        print(record.iteration, record.objective, record.max_inconsistency)
+
+MDAO.run(file, observers=[Progress()])
+```
+
+**Coordination policies.** How the ADMM penalty update is adapted is a separate strategy, chosen per coordinator:
+`none` (plain ADMM) or `spike` (the AI regularizer; the default when `is_AI_regularizer` is set). The coordinator
+option `adaptation_policy` selects another one by name or import path. A policy subclasses
+`DMDO.CoordinationPolicy`, implements `compute_scales(coord, iteration) -> (beta_scale, gamma_scale, budget_scale,
+event)` and is registered with `DMDO.policies.register("name", MyPolicy)` or through the `dmdo.policies` entry-point
+group.
+
 ## How to run DMDO from terminal
 After installing the libraries listed in the `requirements.txt`, `DMDO/DMDO.py` can be called directly from a 
 terminal window under the src directory. The path of the JSON template, which contains the problem input parameters, should be entered as an input argument to the `DMDO.py` call. 
