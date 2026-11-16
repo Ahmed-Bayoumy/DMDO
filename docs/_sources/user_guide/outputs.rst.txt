@@ -42,6 +42,9 @@ Result objects
 ``max_inconsistency``, ``max_penalty_weight``, ``variables_change`` (Euclidean norm of the change of all copies) and
 ``worst_link`` (index of the link with the largest inconsistency).
 
+All the ``.out`` files are comma-separated tables; the post-processing dashboard (:doc:`../tutorials/dashboard`)
+plots any of their columns interactively.
+
 The output folder
 =================
 

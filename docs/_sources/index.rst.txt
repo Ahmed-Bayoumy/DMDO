@@ -146,7 +146,7 @@ Organization of this documentation
    The regression problems and the recorded results on Sellar, the speed reducer and the geometric program.
 :doc:`tutorials/index`
    Worked examples: the basic problem, Sellar with three inner solvers, parallel and remote execution, the Session
-   API, extension points and the HTTP service.
+   API, extension points, the HTTP service and the post-processing dashboard.
 :doc:`user_guide/problem_definition` and :doc:`user_guide/outputs`
    Complete description of the problem-definition keys and of the files a run produces.
 :doc:`api/index`
