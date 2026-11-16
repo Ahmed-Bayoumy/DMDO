@@ -31,7 +31,7 @@
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="_static/proof.css" />
+    <link rel="stylesheet" type="text/css" href="_static/proof.css?v=8c6b312c" />
     <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=6a604523" />
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.css" />
     <link rel="stylesheet" type="text/css" href="_static/custom.css?v=1819abab" />
@@ -435,6 +435,7 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#results">Results</a><ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sellar-the-choice-of-inner-solver">Sellar: the choice of inner solver</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#speed-reducer-geometric-program-and-basic-problem">Speed reducer, geometric program and basic problem</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#supersonic-business-jet">Supersonic business jet</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#regression-suite">Regression suite</a></li>
@@ -500,7 +501,8 @@
 kept reproducible.</p>
 <section id="where-the-numbers-come-from">
 <h2>Where the numbers come from<a class="headerlink" href="#where-the-numbers-come-from" title="Link to this heading">#</a></h2>
-<p>Every result below comes from the <strong>recorded regression traces</strong> in <code class="docutils literal notranslate"><span class="pre">tests/golden/traces</span></code>. Each trace is the
+<p>Every result below, except those of the supersonic business jet (see <a class="reference internal" href="#supersonic-business-jet">Supersonic business jet</a>), comes from the
+<strong>recorded regression traces</strong> in <code class="docutils literal notranslate"><span class="pre">tests/golden/traces</span></code>. Each trace is the
 complete history of one run (the objective of the master subproblem and the maximum inconsistency at every outer
 iteration, the final multipliers, penalty weights and design), recorded with fixed seeds on Windows with Python 3.12.
 The test suite runs the same problems again and requires the current code to reproduce every trace <strong>bit for bit</strong>,
@@ -512,8 +514,8 @@ traces, without running any optimization, by:</p>
 </section>
 <section id="test-problems">
 <h2>Test problems<a class="headerlink" href="#test-problems" title="Link to this heading">#</a></h2>
-<div class="pst-scrollable-table-container"><table class="table" id="id3">
-<caption><span class="caption-number">Table 2 </span><span class="caption-text">Problems and settings of the recorded runs</span><a class="headerlink" href="#id3" title="Link to this table">#</a></caption>
+<div class="pst-scrollable-table-container"><table class="table" id="id9">
+<caption><span class="caption-number">Table 2 </span><span class="caption-text">Problems and settings of the recorded runs</span><a class="headerlink" href="#id9" title="Link to this table">#</a></caption>
 <colgroup>
 <col style="width: 22.0%" />
 <col style="width: 9.0%" />
@@ -539,7 +541,7 @@ traces, without running any optimization, by:</p>
 <td><p>50</p></td>
 <td><p>OMADS <code class="docutils literal notranslate"><span class="pre">poll</span></code> (150)</p></td>
 </tr>
-<tr class="row-odd"><td><p>Sellar <span class="bibtex-citation" id="id1">[<a class="reference internal" href="references.html#id18" title="R. S. Sellar, S. M. Batill, and J. E. Renaud. Response surface based, concurrent subspace optimization for multidisciplinary system design. In 34th AIAA Aerospace Sciences Meeting and Exhibit. 1996. AIAA 96-0714.">Sellar <em>et al.</em>, 1996</a>]</span></p></td>
+<tr class="row-odd"><td><p>Sellar <span class="bibtex-citation" id="id1">[<a class="reference internal" href="references.html#id20" title="R. S. Sellar, S. M. Batill, and J. E. Renaud. Response surface based, concurrent subspace optimization for multidisciplinary system design. In 34th AIAA Aerospace Sciences Meeting and Exhibit. 1996. AIAA 96-0714.">Sellar <em>et al.</em>, 1996</a>]</span></p></td>
 <td><p>2</p></td>
 <td><p>9</p></td>
 <td><p>2.0, 0.5, <code class="docutils literal notranslate"><span class="pre">median</span></code></p></td>
@@ -560,7 +562,7 @@ traces, without running any optimization, by:</p>
 <td><p>150</p></td>
 <td><p>OMADS <code class="docutils literal notranslate"><span class="pre">mads</span></code> (500)</p></td>
 </tr>
-<tr class="row-even"><td><p>Speed reducer <span class="bibtex-citation" id="id2">[<a class="reference internal" href="references.html#id19" title="J. Golinski. Optimal synthesis problems solved by means of nonlinear programming and random methods. Journal of Mechanisms, 5(3):287–309, 1970.">Golinski, 1970</a>]</span></p></td>
+<tr class="row-even"><td><p>Speed reducer <span class="bibtex-citation" id="id2">[<a class="reference internal" href="references.html#id21" title="J. Golinski. Optimal synthesis problems solved by means of nonlinear programming and random methods. Journal of Mechanisms, 5(3):287–309, 1970.">Golinski, 1970</a>]</span></p></td>
 <td><p>4</p></td>
 <td><p>20</p></td>
 <td><p>1.3, 0.5, <code class="docutils literal notranslate"><span class="pre">median</span></code></p></td>
@@ -583,8 +585,8 @@ problem statements and their partitions are given in <a class="reference interna
 </section>
 <section id="results">
 <h2>Results<a class="headerlink" href="#results" title="Link to this heading">#</a></h2>
-<div class="pst-scrollable-table-container"><table class="table" id="id4">
-<caption><span class="caption-number">Table 3 </span><span class="caption-text">Final results of the recorded runs</span><a class="headerlink" href="#id4" title="Link to this table">#</a></caption>
+<div class="pst-scrollable-table-container"><table class="table" id="id10">
+<caption><span class="caption-number">Table 3 </span><span class="caption-text">Final results of the recorded runs</span><a class="headerlink" href="#id10" title="Link to this table">#</a></caption>
 <colgroup>
 <col style="width: 20.0%" />
 <col style="width: 6.0%" />
@@ -602,7 +604,7 @@ problem statements and their partitions are given in <a class="reference interna
 <th class="head"><p>Inner solver</p></th>
 <th class="head"><p>Outer iterations</p></th>
 <th class="head"><p>Final objective</p></th>
-<th class="head"><p>Known optimum</p></th>
+<th class="head"><p>Best known solution</p></th>
 <th class="head"><p>Gap</p></th>
 <th class="head"><p>Final max. inconsistency</p></th>
 <th class="head"><p>First iteration with max. inconsistency &lt; 1e-3</p></th>
@@ -654,8 +656,8 @@ problem statements and their partitions are given in <a class="reference interna
 <td><p>SciPy SLSQP</p></td>
 <td><p>50</p></td>
 <td><p>2741.41</p></td>
-<td><p>n/a</p></td>
-<td><p>n/a</p></td>
+<td><p>2994.36</p></td>
+<td><p>-8.45 %</p></td>
 <td><p>7.40e-04</p></td>
 <td><p>16</p></td>
 </tr>
@@ -664,19 +666,22 @@ problem statements and their partitions are given in <a class="reference interna
 <td><p>OMADS MADS</p></td>
 <td><p>100</p></td>
 <td><p>20.2632</p></td>
-<td><p>n/a</p></td>
-<td><p>n/a</p></td>
+<td><p>17.59</p></td>
+<td><p>+15.20 %</p></td>
 <td><p>1.14e-07</p></td>
 <td><p>11</p></td>
 </tr>
 </tbody>
 </table>
 </div>
-<figure class="align-center" id="id5">
+<p>Best known solutions: Sellar and speed reducer from <span class="bibtex-citation" id="id3">Tedford and Martins [<a class="reference internal" href="references.html#id18" title="Nathan P. Tedford and Joaquim R. R. A. Martins. Benchmarking multidisciplinary design optimization algorithms. Optimization and Engineering, 11(1):159–183, 2010. doi:10.1007/s11081-009-9082-6.">2010</a>]</span> (Sects. 5.1 and 5.2), geometric
+programming from <span class="bibtex-citation" id="id4">Talgorn <em>et al.</em> [<a class="reference internal" href="references.html#id19" title="B. Talgorn, M. Kokkolaras, A. DeBlois, and P. Piperni. Numerical investigation of non-hierarchical coordination for distributed multidisciplinary design optimization with fixed computational budget. Structural and Multidisciplinary Optimization, 55(1):205–220, 2017. doi:10.1007/s00158-016-1489-z.">2017</a>]</span> (Table 1); none is published for the basic problem. The gap is
+relative to the best known solution.</p>
+<figure class="align-center" id="id11">
 <span id="f-bench-consistency"></span><a class="reference internal image-reference" href="_images/bench_consistency.svg"><img alt="Maximum inconsistency versus outer iteration for the six recorded runs" src="_images/bench_consistency.svg" style="width: 95%;" />
 </a>
 <figcaption>
-<p><span class="caption-number">Figure 8 </span><span class="caption-text">Maximum inconsistency between the copies of the disciplines at each outer iteration.</span><a class="headerlink" href="#id5" title="Link to this image">#</a></p>
+<p><span class="caption-number">Figure 8 </span><span class="caption-text">Maximum inconsistency between the copies of the disciplines at each outer iteration.</span><a class="headerlink" href="#id11" title="Link to this image">#</a></p>
 </figcaption>
 </figure>
 <p><strong>Consistency.</strong> In every run the coordinator brings the copies held by different subproblems into agreement
@@ -686,15 +691,16 @@ quickly: the maximum inconsistency falls below <span class="math notranslate noh
 budget (50 iterations), ends at <span class="math notranslate nohighlight">\(7.4\times10^{-4}\)</span>.</p>
 <section id="sellar-the-choice-of-inner-solver">
 <h3>Sellar: the choice of inner solver<a class="headerlink" href="#sellar-the-choice-of-inner-solver" title="Link to this heading">#</a></h3>
-<figure class="align-center" id="id6">
+<figure class="align-center" id="id12">
 <span id="f-bench-sellar"></span><a class="reference internal image-reference" href="_images/bench_sellar.svg"><img alt="Objective and maximum inconsistency of the Sellar problem with three inner solvers" src="_images/bench_sellar.svg" style="width: 98%;" />
 </a>
 <figcaption>
 <p><span class="caption-number">Figure 9 </span><span class="caption-text">Sellar problem with three inner solvers: objective of the master subproblem (left) and maximum inconsistency
-(right). The dashed line is the known optimum <span class="math notranslate nohighlight">\(f^\ast = 3.18339\)</span>.</span><a class="headerlink" href="#id6" title="Link to this image">#</a></p>
+(right). The dashed line is the best known solution <span class="math notranslate nohighlight">\(f^\ast = 3.18339\)</span>.</span><a class="headerlink" href="#id12" title="Link to this image">#</a></p>
 </figcaption>
 </figure>
-<p>The Sellar problem has a known optimum, <span class="math notranslate nohighlight">\(f^\ast = 3.18339\)</span>, which makes it a direct test of the coordination.
+<p>The Sellar problem has a known optimum, <span class="math notranslate nohighlight">\(f^\ast = 3.18339\)</span> at <span class="math notranslate nohighlight">\((z_1, x_1, x_2) = (1.9776, 0, 0)\)</span>
+<span class="bibtex-citation" id="id5">[<a class="reference internal" href="references.html#id18" title="Nathan P. Tedford and Joaquim R. R. A. Martins. Benchmarking multidisciplinary design optimization algorithms. Optimization and Engineering, 11(1):159–183, 2010. doi:10.1007/s11081-009-9082-6.">Tedford and Martins, 2010</a>]</span>, which makes it a direct test of the coordination.
 With derivative-free <strong>MADS</strong> subproblems, DMDO ends at <span class="math notranslate nohighlight">\(f = 3.2042\)</span>, <strong>0.65 % above the optimum</strong>, with the
 disciplines consistent to <span class="math notranslate nohighlight">\(1.3\times10^{-6}\)</span>. With the <strong>poll</strong> step alone and with <strong>SLSQP</strong>, the coordination
 also reaches consistency (<span class="math notranslate nohighlight">\(6.2\times10^{-6}\)</span> and <span class="math notranslate nohighlight">\(9.7\times10^{-6}\)</span>) but settles on designs 10.6 % and
@@ -710,27 +716,80 @@ much as the coordination itself.</p>
 </section>
 <section id="speed-reducer-geometric-program-and-basic-problem">
 <h3>Speed reducer, geometric program and basic problem<a class="headerlink" href="#speed-reducer-geometric-program-and-basic-problem" title="Link to this heading">#</a></h3>
-<figure class="align-center" id="id7">
+<figure class="align-center" id="id13">
 <span id="f-bench-objectives"></span><a class="reference internal image-reference" href="_images/bench_objectives.svg"><img alt="Objective of the master subproblem for the basic problem, the speed reducer and the geometric program" src="_images/bench_objectives.svg" style="width: 98%;" />
 </a>
 <figcaption>
-<p><span class="caption-number">Figure 10 </span><span class="caption-text">Objective of the master subproblem along the outer iterations.</span><a class="headerlink" href="#id7" title="Link to this image">#</a></p>
+<p><span class="caption-number">Figure 10 </span><span class="caption-text">Objective of the master subproblem along the outer iterations.</span><a class="headerlink" href="#id13" title="Link to this image">#</a></p>
 </figcaption>
 </figure>
-<p>These three runs have no known optimum of the decomposed problem in the regression suite; the suite instead checks
-the final objective, constraint violation and consistency against acceptance bands (next section).
-<a class="reference internal" href="#f-bench-objectives"><span class="std std-numref">Figure 10</span></a> shows the objectives settling early: they stay within 0.5 % of their final values from
+<p><a class="reference internal" href="#f-bench-objectives"><span class="std std-numref">Figure 10</span></a> shows the objectives settling early: they stay within 0.5 % of their final values from
 outer iteration 7 (geometric program), 9 (speed reducer) and 10 (basic problem) on, about when the inconsistency
 drops below <span class="math notranslate nohighlight">\(10^{-3}\)</span>.</p>
 <ul class="simple">
 <li><p><strong>Speed reducer</strong> (Golinski’s gear-box design, 7 design variables and 11 constraints split over 4 subproblems):
-final objective 2741.41, within 1.0 % of the suite’s reference value 2713.66, with the subproblem constraints met
-to the suite’s tolerance <span class="math notranslate nohighlight">\(h \le 0.06\)</span> (the all-in-one problem’s feasible optimum is 2994.47).</p></li>
+final objective 2741.41, 8.45 % <em>below</em> the best known solution <span class="math notranslate nohighlight">\(f^\ast = 2994.355026\)</span> at
+<span class="math notranslate nohighlight">\((z_1, z_2, x_{21}, x_{31}) = (0.7, 17, 7.3, 7.7153199)\)</span> <span class="bibtex-citation" id="id6">[<a class="reference internal" href="references.html#id18" title="Nathan P. Tedford and Joaquim R. R. A. Martins. Benchmarking multidisciplinary design optimization algorithms. Optimization and Engineering, 11(1):159–183, 2010. doi:10.1007/s11081-009-9082-6.">Tedford and Martins, 2010</a>]</span>. A value below the
+optimum is possible only because this run is not exactly consistent and feasible: it ends with a maximum
+inconsistency of <span class="math notranslate nohighlight">\(7.4\times10^{-4}\)</span>, and the regression suite accepts subproblem constraint violations up to
+<span class="math notranslate nohighlight">\(h \le 0.06\)</span> for it. Its acceptance band is <span class="math notranslate nohighlight">\(\pm 5\,\%\)</span> around 2713.66 (next section).</p></li>
 <li><p><strong>Geometric programming</strong> (14 variables, 4 coupling equalities and 6 inequalities over 3 subproblems): final
-objective 20.2632 with zero constraint violation and the tightest final consistency of all runs,
-<span class="math notranslate nohighlight">\(1.1\times10^{-7}\)</span>.</p></li>
+objective 20.2632, 15.2 % above the best known solution <span class="math notranslate nohighlight">\(f^\ast = 17.59\)</span> <span class="bibtex-citation" id="id7">[<a class="reference internal" href="references.html#id19" title="B. Talgorn, M. Kokkolaras, A. DeBlois, and P. Piperni. Numerical investigation of non-hierarchical coordination for distributed multidisciplinary design optimization with fixed computational budget. Structural and Multidisciplinary Optimization, 55(1):205–220, 2017. doi:10.1007/s00158-016-1489-z.">Talgorn <em>et al.</em>, 2017</a>]</span>,
+with zero constraint violation and the tightest final consistency of all runs, <span class="math notranslate nohighlight">\(1.1\times10^{-7}\)</span>.</p></li>
 <li><p><strong>Basic problem</strong>: final objective 5.58977 and consistency <span class="math notranslate nohighlight">\(3.1\times10^{-7}\)</span> after 50 iterations of the
-poll-step solver.</p></li>
+poll-step solver; no best known solution is published for this problem.</p></li>
+</ul>
+</section>
+<section id="supersonic-business-jet">
+<h3>Supersonic business jet<a class="headerlink" href="#supersonic-business-jet" title="Link to this heading">#</a></h3>
+<p>The supersonic business jet (SBJ) of <span class="bibtex-citation" id="id8">Tosserams <em>et al.</em> [<a class="reference internal" href="references.html#id17" title="S. Tosserams, Michael Kokkolaras, L. F. P. Etman, and J. E. Rooda. A nonhierarchical formulation of analytical target cascading. Journal of Mechanical Design, 132(5):051002, 2010. doi:10.1115/1.4001346.">2010</a>]</span> couples four subproblems (aircraft,
+propulsion, aerodynamics and structures, <code class="docutils literal notranslate"><span class="pre">tests/SBJ</span></code>); its objective is the total weight <span class="math notranslate nohighlight">\(W_t\)</span>, and the best
+known solution is <span class="math notranslate nohighlight">\(W_t^\ast = 33{,}600\)</span> lb, the lowest optimal weight of their all-in-one optimizations from
+100 random starting points (Table 2 of that paper). Unlike the runs above, the SBJ results come from benchmarking
+campaigns rather than from recorded regression traces. All constraints use the progressive barrier.</p>
+<div class="pst-scrollable-table-container"><table class="table" id="id14">
+<caption><span class="caption-number">Table 4 </span><span class="caption-text">SBJ results</span><a class="headerlink" href="#id14" title="Link to this table">#</a></caption>
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 12.0%" />
+<col style="width: 22.0%" />
+<col style="width: 16.0%" />
+<col style="width: 20.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Inner solver and campaign</p></th>
+<th class="head"><p>Runs</p></th>
+<th class="head"><p>Final weight <span class="math notranslate nohighlight">\(W_t\)</span></p></th>
+<th class="head"><p>Gap to <span class="math notranslate nohighlight">\(W_t^\ast\)</span></p></th>
+<th class="head"><p>Final max. inconsistency</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>SciPy SLSQP (at most 50 iterations per solve, 100 outer iterations)</p></td>
+<td><p>1</p></td>
+<td><p>35,374 lb</p></td>
+<td><p>+5.3 %</p></td>
+<td><p><span class="math notranslate nohighlight">\(4.4\times10^{-5}\)</span></p></td>
+</tr>
+<tr class="row-odd"><td><p>OMADS MADS (150 evaluations per solve, 500 in the structures subproblem)</p></td>
+<td><p>100</p></td>
+<td><p>33,536 lb (median of 86)</p></td>
+<td><p>−0.2 % (median)</p></td>
+<td><p><span class="math notranslate nohighlight">\(8.8\times10^{-9}\)</span> (median)</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<ul class="simple">
+<li><p><strong>SLSQP</strong>: the inconsistency falls below <span class="math notranslate nohighlight">\(10^{-3}\)</span> at outer iteration 14 and below <span class="math notranslate nohighlight">\(10^{-4}\)</span> at
+iteration 32; the largest remaining constraint violation is <span class="math notranslate nohighlight">\(3.8\times10^{-4}\)</span>.</p></li>
+<li><p><strong>MADS</strong> (run in March 2026 with DMDO 2601 and OMADS 2401; coordinator <span class="math notranslate nohighlight">\(\beta = 1.8\)</span>, <span class="math notranslate nohighlight">\(\gamma = 0.9\)</span>):
+every one of the 100 starts brings the inconsistency below <span class="math notranslate nohighlight">\(10^{-3}\)</span> (median outer iteration 13) and below
+<span class="math notranslate nohighlight">\(10^{-4}\)</span> (median iteration 18). The weight is the median of the 86 runs that end consistent and meet the
+2000 nm range requirement (middle half 26,600–38,800 lb). These histories record only the range constraint, so a
+median slightly below <span class="math notranslate nohighlight">\(W_t^\ast\)</span> is compatible with small violations of the other disciplines’ constraints.</p></li>
+<li><p>With only 50 evaluations per solve, MADS does not reach an inconsistency of <span class="math notranslate nohighlight">\(10^{-3}\)</span> within 100 outer
+iterations: the structures subproblem, with 72 constraints, needs the larger budget.</p></li>
 </ul>
 </section>
 </section>
@@ -739,8 +798,8 @@ poll-step solver.</p></li>
 <p><code class="docutils literal notranslate"><span class="pre">tests/test_basic.py</span></code> runs on Linux, Windows and macOS in continuous integration. Each problem must reach the
 following targets within its budget; <code class="docutils literal notranslate"><span class="pre">f</span></code> is the objective of the master subproblem, <code class="docutils literal notranslate"><span class="pre">h</span></code> the largest constraint
 violation and <code class="docutils literal notranslate"><span class="pre">q</span></code> the final maximum inconsistency.</p>
-<div class="pst-scrollable-table-container"><table class="table" id="id8">
-<caption><span class="caption-number">Table 4 </span><span class="caption-text">Acceptance criteria of the regression suite</span><a class="headerlink" href="#id8" title="Link to this table">#</a></caption>
+<div class="pst-scrollable-table-container"><table class="table" id="id15">
+<caption><span class="caption-number">Table 5 </span><span class="caption-text">Acceptance criteria of the regression suite</span><a class="headerlink" href="#id15" title="Link to this table">#</a></caption>
 <colgroup>
 <col style="width: 30.0%" />
 <col style="width: 70.0%" />

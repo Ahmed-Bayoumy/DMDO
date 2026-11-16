@@ -31,7 +31,7 @@
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="_static/proof.css" />
+    <link rel="stylesheet" type="text/css" href="_static/proof.css?v=8c6b312c" />
     <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=6a604523" />
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.css" />
     <link rel="stylesheet" type="text/css" href="_static/custom.css?v=1819abab" />
@@ -482,14 +482,15 @@ analysis (MDA) that converges at every design point, a single optimizer that sui
 in one process. DMDO removes those three requirements.</p>
 <ul class="simple">
 <li><p><strong>No converged MDA needed.</strong> DMDO implements nonhierarchical analytical target cascading (NHATC)
-<span class="bibtex-citation" id="id1">[<a class="reference internal" href="references.html#id17" title="S. Tosserams, Michael Kokkolaras, L. F. P. Etman, and J. E. Rooda. A nonhierarchical formulation of analytical target cascading. Journal of Mechanical Design, 2010.">Tosserams <em>et al.</em>, 2010</a>]</span>: each subproblem keeps local copies of the variables it shares with others,
+<span class="bibtex-citation" id="id1">[<a class="reference internal" href="references.html#id17" title="S. Tosserams, Michael Kokkolaras, L. F. P. Etman, and J. E. Rooda. A nonhierarchical formulation of analytical target cascading. Journal of Mechanical Design, 132(5):051002, 2010. doi:10.1115/1.4001346.">Tosserams <em>et al.</em>, 2010</a>]</span>: each subproblem keeps local copies of the variables it shares with others,
 and an augmented Lagrangian coordinator drives the copies to agreement. Coupled analyses never have to be iterated
 to convergence inside the optimizer.</p></li>
 <li><p><strong>The right optimizer for each discipline.</strong> A subproblem built on a noisy simulation can use derivative-free Mesh
-Adaptive Direct Search (OMADS <span class="bibtex-citation" id="id2">[<a class="reference internal" href="references.html#id24" title="Ahmed H. Bayoumy. OMADS: optimization using mesh adaptive direct search. 2022. URL: https://github.com/Ahmed-Bayoumy/OMADS, doi:10.5281/zenodo.23407559.">Bayoumy, 2022</a>, <a class="reference internal" href="references.html#id23" title="Charles Audet and Jr. Dennis, John E. Mesh adaptive direct search algorithms for constrained optimization. SIAM Journal on Optimization, 17(1):188–217, 2006. doi:10.1137/040603371.">Audet and Dennis, 2006</a>]</span>), while a smooth analytical one uses SciPy’s SLSQP,
+Adaptive Direct Search (OMADS <span class="bibtex-citation" id="id2">[<a class="reference internal" href="references.html#id26" title="Ahmed H. Bayoumy. OMADS: optimization using mesh adaptive direct search. 2022. URL: https://github.com/Ahmed-Bayoumy/OMADS, doi:10.5281/zenodo.23407559.">Bayoumy, 2022</a>, <a class="reference internal" href="references.html#id25" title="Charles Audet and Jr. Dennis, John E. Mesh adaptive direct search algorithms for constrained optimization. SIAM Journal on Optimization, 17(1):188–217, 2006. doi:10.1137/040603371.">Audet and Dennis, 2006</a>]</span>), while a smooth analytical one uses SciPy’s SLSQP,
 in the same run. Any other optimizer plugs in through a five-line strategy class.</p></li>
-<li><p><strong>Measured on the classic MDO benchmarks.</strong> On the Sellar problem <span class="bibtex-citation" id="id3">[<a class="reference internal" href="references.html#id18" title="R. S. Sellar, S. M. Batill, and J. E. Renaud. Response surface based, concurrent subspace optimization for multidisciplinary system design. In 34th AIAA Aerospace Sciences Meeting and Exhibit. 1996. AIAA 96-0714.">Sellar <em>et al.</em>, 1996</a>]</span> with MADS
-subproblems, DMDO reaches <span class="math notranslate nohighlight">\(f = 3.2042\)</span>, <strong>0.65 % from the known optimum</strong> <span class="math notranslate nohighlight">\(f^\ast = 3.18339\)</span>, with the
+<li><p><strong>Measured on the classic MDO benchmarks.</strong> On the Sellar problem <span class="bibtex-citation" id="id3">[<a class="reference internal" href="references.html#id20" title="R. S. Sellar, S. M. Batill, and J. E. Renaud. Response surface based, concurrent subspace optimization for multidisciplinary system design. In 34th AIAA Aerospace Sciences Meeting and Exhibit. 1996. AIAA 96-0714.">Sellar <em>et al.</em>, 1996</a>]</span> with MADS
+subproblems, DMDO reaches <span class="math notranslate nohighlight">\(f = 3.2042\)</span>, <strong>0.65 % from the best known solution</strong>
+<span class="math notranslate nohighlight">\(f^\ast = 3.18339\)</span> <span class="bibtex-citation" id="id4">[<a class="reference internal" href="references.html#id18" title="Nathan P. Tedford and Joaquim R. R. A. Martins. Benchmarking multidisciplinary design optimization algorithms. Optimization and Engineering, 11(1):159–183, 2010. doi:10.1007/s11081-009-9082-6.">Tedford and Martins, 2010</a>]</span>, with the
 disciplines consistent to <span class="math notranslate nohighlight">\(1.3\times10^{-6}\)</span>. Across the six recorded regression runs (Sellar, Golinski’s
 speed reducer, a geometric program and a basic two-discipline problem), the maximum inconsistency between
 disciplines falls <strong>below</strong> <span class="math notranslate nohighlight">\(10^{-3}\)</span> <strong>within 6 to 16 outer iterations</strong>; see <a class="reference internal" href="benchmarking.html"><span class="doc">Benchmarking</span></a>.</p></li>
@@ -504,11 +505,11 @@ and an optional HTTP service exposes sessions to any language.</p></li>
 that the current code must reproduce bit for bit, runs can be checkpointed and resumed exactly, and the test suite
 runs on Linux, Windows and macOS.</p></li>
 </ul>
-<figure class="align-center" id="id5">
+<figure class="align-center" id="id6">
 <a class="reference internal image-reference" href="_images/bench_consistency.svg"><img alt="Maximum inconsistency versus outer iteration for six benchmark runs" src="_images/bench_consistency.svg" style="width: 92%;" />
 </a>
 <figcaption>
-<p><span class="caption-number">Figure 1 </span><span class="caption-text">Maximum inconsistency between disciplines at each outer iteration of the six recorded regression runs.</span><a class="headerlink" href="#id5" title="Link to this image">#</a></p>
+<p><span class="caption-number">Figure 1 </span><span class="caption-text">Maximum inconsistency between disciplines at each outer iteration of the six recorded regression runs.</span><a class="headerlink" href="#id6" title="Link to this image">#</a></p>
 </figcaption>
 </figure>
 </section>
