@@ -22,6 +22,8 @@
 # ------------------------------------------------------------------------------------#
 # """
 
+# Must stay first: loads the legacy module aliases before the names below are bound (see _legacy.py).
+from . import _legacy  # noqa: F401
 
 from .app.main import main, logger
 from .workflow.mdo import MDO, MDO_data
