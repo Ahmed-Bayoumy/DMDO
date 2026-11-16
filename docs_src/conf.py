@@ -23,7 +23,7 @@ sys.path.insert(0, os.path.join(ROOT, "src"))
 # -- Project information -----------------------------------------------------
 
 project = "DMDO"
-author = "Dr. Ahmed H. Bayoumy"
+author = "Ahmed H. Bayoumy"
 copyright = f"2022-{date.today().year}, {author}"
 
 release = "2612.0"
