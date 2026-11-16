@@ -67,11 +67,18 @@ recorded benchmark runs. Details in the
 | Speed reducer | 4 | SciPy SLSQP | 50 | 2741.41 | – | 7.4 × 10⁻⁴ |
 | Geometric program | 3 | OMADS MADS | 100 | 20.2632 | – | 1.1 × 10⁻⁷ |
 | Basic problem | 2 | OMADS poll | 50 | 5.58977 | – | 3.1 × 10⁻⁷ |
+| Supersonic business jet (SBJ)\* | 4 | SciPy SLSQP | 100 | Wt = 35,374 lb | – | 4.4 × 10⁻⁵ |
 
 The numbers come from the recorded regression traces in `tests/golden/traces`, which the current code reproduces
 bit for bit. The Sellar rows show why DMDO lets every subproblem choose its optimizer: with the same coordination,
 the full MADS algorithm ends within 0.65 % of the optimum, while the poll step alone and SLSQP settle on consistent
 but less optimal designs.
+
+\* The SBJ row is a single run from the SBJ benchmarking campaign rather than a recorded regression trace: the
+aircraft, propulsion, aerodynamics and structures subproblems (`tests/SBJ`) start from a design perturbed by up to
+25 % and are solved with SLSQP (at most 50 iterations per solve). The inconsistency between disciplines falls below
+10⁻³ at outer iteration 14 and below 10⁻⁴ at iteration 32; the objective is the total weight Wt, and the largest
+remaining constraint violation is 3.8 × 10⁻⁴.
 
 ## Features
 
