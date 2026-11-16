@@ -31,7 +31,7 @@
 
     <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=8f2a1f02" />
     <link rel="stylesheet" type="text/css" href="_static/copybutton.css?v=76b2166b" />
-    <link rel="stylesheet" type="text/css" href="_static/proof.css" />
+    <link rel="stylesheet" type="text/css" href="_static/proof.css?v=8c6b312c" />
     <link rel="stylesheet" type="text/css" href="_static/sphinx-design.min.css?v=6a604523" />
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.css" />
     <link rel="stylesheet" type="text/css" href="_static/custom.css?v=1819abab" />
@@ -516,7 +516,7 @@ solutions so that the subproblem designs agree and are optimal for the system.</
 </figure>
 <section id="architectures-for-mdo">
 <h2>Architectures for MDO<a class="headerlink" href="#architectures-for-mdo" title="Link to this heading">#</a></h2>
-<p>MDO architectures are commonly divided into monolithic and distributed ones <span class="bibtex-citation" id="id1">[<a class="reference internal" href="references.html#id20" title="Joaquim R. R. A. Martins and Andrew B. Lambe. Multidisciplinary design optimization: a survey of architectures. AIAA Journal, 51(9):2049–2075, 2013. doi:10.2514/1.J051895.">Martins and Lambe, 2013</a>]</span>.
+<p>MDO architectures are commonly divided into monolithic and distributed ones <span class="bibtex-citation" id="id1">[<a class="reference internal" href="references.html#id22" title="Joaquim R. R. A. Martins and Andrew B. Lambe. Multidisciplinary design optimization: a survey of architectures. AIAA Journal, 51(9):2049–2075, 2013. doi:10.2514/1.J051895.">Martins and Lambe, 2013</a>]</span>.
 Monolithic architectures solve a single optimization problem: the multidisciplinary feasible (MDF) architecture
 converges a multidisciplinary analysis (MDA) at every design point, and the individual discipline feasible (IDF)
 architecture adds the coupling variables to the optimization and enforces their consistency as equality constraints.
@@ -551,7 +551,7 @@ gradient-based methods for smooth analytical models;</p></li>
 (components) that make up the system <span class="bibtex-citation" id="id8">[<a class="reference internal" href="references.html#id15" title="Nestor Michelena, Hyung Min Kim, and P. Y. Papalambros. A system partitioning and optimization approach to target cascading. In Proceedings of the 12th International Conference on Engineering Design, volume 2, 1109–1112. Munich, 1999.">Michelena <em>et al.</em>, 1999</a>, <a class="reference internal" href="references.html#id16" title="Hyung Min Kim, Nestor F. Michelena, Panos Y. Papalambros, and Tao Jiang. Target cascading in optimal system design. Journal of Mechanical Design, 125(3):474–480, 2003.">Kim <em>et al.</em>, 2003</a>]</span>. Targets are cascaded through a
 hierarchical decomposition: a subproblem sets targets for its children and computes responses to the targets it
 receives from its parent (<a class="reference internal" href="#f-tr"><span class="std std-numref">Figure 4</span></a>). Each subproblem minimizes the deviations between its target-response
-pairs while satisfying its local design constraints <span class="bibtex-citation" id="id9">[<a class="reference internal" href="references.html#id17" title="S. Tosserams, Michael Kokkolaras, L. F. P. Etman, and J. E. Rooda. A nonhierarchical formulation of analytical target cascading. Journal of Mechanical Design, 2010.">Tosserams <em>et al.</em>, 2010</a>]</span>.</p>
+pairs while satisfying its local design constraints <span class="bibtex-citation" id="id9">[<a class="reference internal" href="references.html#id17" title="S. Tosserams, Michael Kokkolaras, L. F. P. Etman, and J. E. Rooda. A nonhierarchical formulation of analytical target cascading. Journal of Mechanical Design, 132(5):051002, 2010. doi:10.1115/1.4001346.">Tosserams <em>et al.</em>, 2010</a>]</span>.</p>
 <figure class="align-center" id="id15">
 <span id="f-tr"></span><a class="reference internal image-reference" href="_images/t_r.png"><img alt="_images/t_r.png" src="_images/t_r.png" width="150" />
 </a>
@@ -600,7 +600,7 @@ shaded boxes show system-wide functions that depend on the variables of several 
 </section>
 <section id="nonhierarchical-atc">
 <h2>Nonhierarchical ATC<a class="headerlink" href="#nonhierarchical-atc" title="Link to this heading">#</a></h2>
-<p>NHATC <span class="bibtex-citation" id="id10">[<a class="reference internal" href="references.html#id17" title="S. Tosserams, Michael Kokkolaras, L. F. P. Etman, and J. E. Rooda. A nonhierarchical formulation of analytical target cascading. Journal of Mechanical Design, 2010.">Tosserams <em>et al.</em>, 2010</a>]</span> lets any subproblem send targets to, and receive targets from, any other
+<p>NHATC <span class="bibtex-citation" id="id10">[<a class="reference internal" href="references.html#id17" title="S. Tosserams, Michael Kokkolaras, L. F. P. Etman, and J. E. Rooda. A nonhierarchical formulation of analytical target cascading. Journal of Mechanical Design, 132(5):051002, 2010. doi:10.1115/1.4001346.">Tosserams <em>et al.</em>, 2010</a>]</span> lets any subproblem send targets to, and receive targets from, any other
 subproblem, its <em>neighbors</em>. The level index is dropped and the two indices of a quantity denote the sender and the
 receiver.</p>
 <div class="proof definition admonition" id="def-neighbors">
@@ -689,7 +689,7 @@ subproblem that holds the system objective is the <strong>master</strong> subpro
 <section id="method-of-multipliers">
 <h3>Method of multipliers<a class="headerlink" href="#method-of-multipliers" title="Link to this heading">#</a></h3>
 <p>The coordinator updates the penalty parameters after each outer iteration <span class="math notranslate nohighlight">\(t\)</span>, following the method of
-multipliers <span class="bibtex-citation" id="id11">[<a class="reference internal" href="references.html#id22" title="Dimitri P. Bertsekas. Constrained Optimization and Lagrange Multiplier Methods. Academic Press, 1982.">Bertsekas, 1982</a>]</span>:</p>
+multipliers <span class="bibtex-citation" id="id11">[<a class="reference internal" href="references.html#id24" title="Dimitri P. Bertsekas. Constrained Optimization and Lagrange Multiplier Methods. Academic Press, 1982.">Bertsekas, 1982</a>]</span>:</p>
 <div class="math notranslate nohighlight" id="equation-eq-v">
 <span class="eqno">(7)<a class="headerlink" href="#equation-eq-v" title="Link to this equation">#</a></span>\[\mathbf{v}^{t+1} = \mathbf{v}^{t} + 2\,\mathbf{w}^{t}\circ\mathbf{w}^{t}\circ\mathbf{q}^{t},\]</div>
 <p>and grows the penalty weights of the links that do not make enough progress:</p>
@@ -734,7 +734,7 @@ inconsistencies grow faster.</p></td>
 </div>
 <p>Growing the weights only where consistency stalls keeps the penalty small on couplings that converge on their own,
 which preserves the conditioning of the subproblems; the multipliers <span class="math notranslate nohighlight">\(\mathbf{v}\)</span> let the coordination reach
-consistency without driving the weights to infinity <span class="bibtex-citation" id="id12">[<a class="reference internal" href="references.html#id12" title="Simon Tosserams, L. F. P. Etman, and J. E. Rooda. Augmented Lagrangian coordination for distributed optimal design in MDO. International Journal for Numerical Methods in Engineering, 73(13):1885–1910, 2008.">Tosserams <em>et al.</em>, 2008</a>, <a class="reference internal" href="references.html#id21" title="Stephen Boyd, Neal Parikh, Eric Chu, Borja Peleato, and Jonathan Eckstein. Distributed optimization and statistical learning via the alternating direction method of multipliers. Foundations and Trends in Machine Learning, 3(1):1–122, 2011. doi:10.1561/2200000016.">Boyd <em>et al.</em>, 2011</a>]</span>.</p>
+consistency without driving the weights to infinity <span class="bibtex-citation" id="id12">[<a class="reference internal" href="references.html#id12" title="Simon Tosserams, L. F. P. Etman, and J. E. Rooda. Augmented Lagrangian coordination for distributed optimal design in MDO. International Journal for Numerical Methods in Engineering, 73(13):1885–1910, 2008.">Tosserams <em>et al.</em>, 2008</a>, <a class="reference internal" href="references.html#id23" title="Stephen Boyd, Neal Parikh, Eric Chu, Borja Peleato, and Jonathan Eckstein. Distributed optimization and statistical learning via the alternating direction method of multipliers. Foundations and Trends in Machine Learning, 3(1):1–122, 2011. doi:10.1561/2200000016.">Boyd <em>et al.</em>, 2011</a>]</span>.</p>
 </section>
 </section>
 <section id="the-coordination-loop">
@@ -749,7 +749,7 @@ same outer iteration, which usually reduces the number of outer iterations.</p>
 first set to their mean. Each subproblem then evaluates its penalty on the inconsistency shifted by
 <span class="math notranslate nohighlight">\(\delta_{l} = -v_{l}/(2w_{l}^{2}) - \bar{q}_{l}\)</span>, where <span class="math notranslate nohighlight">\(\bar{q}_{l}\)</span> is the inconsistency of the
 averaged snapshot; this is the scaled form of the augmented Lagrangian used by consensus ADMM
-<span class="bibtex-citation" id="id13">[<a class="reference internal" href="references.html#id21" title="Stephen Boyd, Neal Parikh, Eric Chu, Borja Peleato, and Jonathan Eckstein. Distributed optimization and statistical learning via the alternating direction method of multipliers. Foundations and Trends in Machine Learning, 3(1):1–122, 2011. doi:10.1561/2200000016.">Boyd <em>et al.</em>, 2011</a>]</span>. The subproblems can be solved concurrently; their results are then merged in
+<span class="bibtex-citation" id="id13">[<a class="reference internal" href="references.html#id23" title="Stephen Boyd, Neal Parikh, Eric Chu, Borja Peleato, and Jonathan Eckstein. Distributed optimization and statistical learning via the alternating direction method of multipliers. Foundations and Trends in Machine Learning, 3(1):1–122, 2011. doi:10.1561/2200000016.">Boyd <em>et al.</em>, 2011</a>]</span>. The subproblems can be solved concurrently; their results are then merged in
 subproblem order, each subproblem contributing the copies it owns, so the outcome does not depend on the order in
 which the solves finish.</p>
 </dd>

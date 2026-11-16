@@ -1,7 +1,7 @@
 DMDO: Distributed Multidisciplinary Design Optimization
 =======================================================
 
-| **Author:** Ahmed H. Bayoumy
+| **Author:** Dr. Ahmed H. Bayoumy
 | **Release:** |release|
 | **Source:** https://github.com/Ahmed-Bayoumy/DMDO
 

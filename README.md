@@ -15,6 +15,8 @@ Documentation, theory, tutorials and benchmarks: [ahmed-bayoumy.github.io/DMDO](
 
 ---
 
+**Author:** Dr. Ahmed H. Bayoumy
+
 **Version 2612.0**
 
 ---
