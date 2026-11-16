@@ -1,8 +1,8 @@
 """Analyses and objectives of the basic two-subproblem example (examples/basic_problem.yaml).
 
 The two analyses are written as :class:`DMDO.Discipline` objects (named inputs in, named outputs out), the form an
-adapter around another framework takes (see examples/adapters/). They live in an importable module so that worker
-processes can unpickle them.
+adapter around a model from another framework takes. They live in an importable module so that worker processes
+can unpickle them.
 """
 import numpy as np
 

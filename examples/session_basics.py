@@ -35,7 +35,7 @@ def main():
   with Session.from_dict(data, working_dir=WORK, mdo_name="step", blackboxes=BLACKBOXES,
                          observers=[Progress()]) as session:
     while (record := session.step()) is not None:
-      if record.max_inconsistency < 1e-2:
+      if record.max_inconsistency < 3e-2:
         session.request_stop()          # e.g. an outer driver decides it is good enough
     print(f"step(): stopped after {session.iteration} iterations ({session.result().stop_reason})")
 
