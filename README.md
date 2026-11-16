@@ -264,7 +264,8 @@ If DMDO contributes to published work, please cite it as follows.
   year      = {2022},
   publisher = {GitHub},
   version   = {2612.0},
-  url       = {https://github.com/Ahmed-Bayoumy/DMDO}
+  url       = {https://github.com/Ahmed-Bayoumy/DMDO},
+  doi       = {https://doi.org/10.5281/zenodo.24281878}
 }
 ```
 
