@@ -1578,7 +1578,7 @@ def Sellar_OMADS_MADS():
   CSP1["search"] = {
         "type": "sampling",
         "s_method": "ACTIVE",
-        "ns": 20,
+        "ns": 30,
         "visualize": False
             }
   CSP1["constraintsHandling"] = {
@@ -1608,7 +1608,7 @@ def Sellar_OMADS_MADS():
   CSP2["search"] = {
         "type": "sampling",
         "s_method": "ACTIVE",
-        "ns": 20,
+        "ns": 30,
         "visualize": False
             }
   CSP2["constraintsHandling"] = {
