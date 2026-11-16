@@ -433,8 +433,11 @@ class MDO(MDO_data):
     run_sweep = self._resolve_sweep(mode, sweep)
     hooks = default_observers(self) + list(observers or [])
 
+    # A checkpoint is written at the start of an outer iteration (after its on_iteration_start hooks): a resumed run
+    # repeats that iteration from the restored state instead of starting over.
+    start = int(self.iter) if resume else 0
     notify(hooks, "on_run_start", self)
-    for iter in range(self.Coordinator.budget):
+    for iter in range(start, self.Coordinator.budget):
       self.iter = iter
       # Initialize hmin dictionary for each SP at the start of each iteration
       self.hmin_dict = {}
@@ -442,7 +445,10 @@ class MDO(MDO_data):
         self.Coordinator.master_vars_old = copy.deepcopy(self.variables)
         self.Coordinator.master_vars = copy.deepcopy(self.variables)
         self._prepare_post_dir()
-      notify(hooks, "on_iteration_start", self, iter)
+      if resume and iter == start and start > 0:
+        notify(hooks, "on_resume", self, iter)
+      else:
+        notify(hooks, "on_iteration_start", self, iter)
       if iter > 0:
         self.Coordinator.master_vars_old = copy.deepcopy(self.Coordinator.master_vars)
 

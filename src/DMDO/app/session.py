@@ -105,6 +105,8 @@ class Session:
     self._executor_spec = executor
     self._executor = None
     self._resume = resume
+    # Iterations completed before the checkpoint a resumed session starts from.
+    self._completed_before = int(getattr(mdo, "iter", 0)) if resume else 0
     self._file = file if file is not None else os.path.join(mdo.post_dir, "coordination_summary.out")
     self._loop = None
     self._item: Any = None  # what the loop yielded last and is waiting on
@@ -150,8 +152,8 @@ class Session:
 
   @property
   def iteration(self) -> int:
-    """Number of completed outer iterations."""
-    return len(self.history)
+    """Number of completed outer iterations (including those before a resumed checkpoint)."""
+    return self._completed_before + len(self.history)
 
   @property
   def pending_tasks(self) -> List[SubproblemTask]:

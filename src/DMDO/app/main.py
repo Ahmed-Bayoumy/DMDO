@@ -333,7 +333,8 @@ def main(*args) -> Dict[str, Any]:  # noqa: C901
         raise IOError("Cannot resume a build operation")
         
     post_dir = os.path.join(working_dir, mdo_name+"_post")
-    if os.path.exists(post_dir):
+    # A resumed run keeps its outputs (the checkpoint and history usually live in this directory).
+    if os.path.exists(post_dir) and not is_resume:
       shutil.rmtree(post_dir)
     create_directory_if_not_exists(post_dir)
 

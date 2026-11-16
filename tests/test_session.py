@@ -1,12 +1,13 @@
 """Session API: run / step / ask-tell on the basic two-discipline problem."""
 import contextlib
+import csv
 import json
 import os
 import sys
 
 import pytest
 
-from DMDO import Session, SessionError, build_mdo, load_setup, solve_task
+from DMDO import Session, SessionError, build_mdo, load_setup, main, solve_task
 
 TESTS = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, TESTS)
@@ -139,6 +140,44 @@ def test_from_yaml_names_the_run_after_the_file(wd):
   assert os.path.isdir(os.path.join(wd, "Basic_MDO_post"))
   session.close()
   assert session.status == "closed" and session.ask() == []
+
+
+def _history_iterations(post_dir):
+  with open(os.path.join(post_dir, "Coordination_history.out"), newline="") as fh:
+    rows = [row for row in csv.reader(fh) if row]
+  return [int(float(row[1])) for row in rows[1:]]
+
+
+def _interrupted_checkpoint(data, wd, name, steps):
+  """Run ``steps`` outer iterations, then drop the session (the checkpoint is from the start of the last one)."""
+  session = _session(data, wd, name)
+  for _ in range(steps):
+    session.step()
+  session.close()
+  return os.path.join(session.mdo.post_dir, "coord_chk.pkl")
+
+
+def test_resumed_session_matches_an_uninterrupted_run(data, wd):
+  reference = _session(data, wd, "ref")
+  reference.run()
+  checkpoint = _interrupted_checkpoint(data, wd, "resume", steps=4)  # checkpoint at the start of iteration 3
+  resumed = Session.from_checkpoint(checkpoint)
+  assert resumed.mdo.iter == 3
+  result = resumed.run()
+  assert snapshot(resumed.mdo) == snapshot(reference.mdo)
+  assert result.iterations == BUDGET
+  assert [r.iteration for r in result.history] == [3, 4]
+  # Rows written after the checkpoint (iteration 3 of the interrupted run) are replaced, not duplicated.
+  assert _history_iterations(resumed.mdo.post_dir) == list(range(BUDGET))
+
+
+def test_main_resume_keeps_the_checkpoint_and_continues(data, wd):
+  reference = _session(data, wd, "ref")
+  reference.run()
+  checkpoint = _interrupted_checkpoint(data, wd, "main_resume", steps=3)
+  mdo = main({"is_resume": True, "restart_file": checkpoint, "working_dir": wd, "mdo_name": "main_resume"})
+  assert snapshot(mdo) == snapshot(reference.mdo)
+  assert _history_iterations(mdo.post_dir) == list(range(BUDGET))
 
 
 def test_from_checkpoint_loads_a_resumable_session(data, wd):

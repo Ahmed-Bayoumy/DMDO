@@ -191,6 +191,35 @@ class CoordinationHistoryRecorder(RunObserver):
   def on_iteration_end(self, run, record: IterationRecord) -> None:
     self.append_row(run, self.build_row(run, record))
 
+  def on_resume(self, run, iteration: int) -> None:
+    self.truncate_from(run, iteration)
+
+  @staticmethod
+  def truncate_from(run, iteration: int) -> None:
+    """Drop the rows of ``iteration`` and later (written after the checkpoint a run is resumed from)."""
+    file = getattr(run, "Ol_file", None)
+    if not file or not os.path.exists(file):
+      return
+    with open(file, newline="") as fh:
+      rows = [row for row in csv.reader(fh) if row]
+    if not rows:
+      return
+
+    def row_iteration(row):
+      try:
+        return int(float(row[1]))
+      except (IndexError, ValueError):
+        return -1
+
+    header, body = rows[0], rows[1:]
+    kept = [row for row in body if row_iteration(row) < iteration]
+    if len(kept) == len(body):
+      return
+    with open(file, mode='w') as csv_file:  # same mode as the writer above, so the line endings match
+      writer = csv.writer(csv_file)
+      writer.writerow(header)
+      writer.writerows(kept)
+
 
 def default_observers(run) -> List[Any]:
   """DMDO's own observers for ``run``, in the order they are called."""

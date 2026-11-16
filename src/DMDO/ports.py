@@ -156,6 +156,9 @@ class RunObserver:
       once, before the first outer iteration.
   ``on_iteration_start(run, iteration)``
       before the subproblems are solved.
+  ``on_resume(run, iteration)``
+      instead of ``on_iteration_start`` for the first iteration of a run resumed from a checkpoint: the checkpoint is
+      written after that iteration's ``on_iteration_start`` hooks, so their effects are already in the restored state.
   ``on_sweep_end(run, iteration)``
       all subproblems solved and the inconsistencies computed, before the penalty update.
   ``on_iteration_end(run, record)``
@@ -170,6 +173,9 @@ class RunObserver:
     pass
 
   def on_iteration_start(self, run: Any, iteration: int) -> None:
+    pass
+
+  def on_resume(self, run: Any, iteration: int) -> None:
     pass
 
   def on_sweep_end(self, run: Any, iteration: int) -> None:
