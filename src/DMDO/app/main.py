@@ -172,6 +172,57 @@ def create_directory_if_not_exists(path: str):
 
 
 # TODO: MDO setup will be simplified when the N2 chart UI is implemented
+def load_setup(setup_file: str, log: logger = None) -> Dict[str, Any]:
+  """Read a DMDO problem definition (``.yaml``/``.yml``/``.json``) into a dictionary."""
+  def _fail(msg):
+    if log is not None:
+      log.log_msg(msg, MSG_TYPE.ERROR.value)
+    raise IOError(msg)
+
+  if not isinstance(setup_file, str):
+    raise IOError(f'{setup_file} is not a string! Please use an appropriate DMDO yaml file!')
+  if log is not None:
+    log.log_msg(msg=f"Reading the input dictionary file {setup_file}.", msg_type=MSG_TYPE.INFO.value)
+  fext = os.path.splitext(setup_file)[1].lstrip(".").lower()
+  if fext not in ("yaml", "yml", "json"):
+    _fail(f'Cannot use files with {fext} extension. Please use an appropriate yaml file with yml or yaml extension!')
+  if not os.path.exists(setup_file):
+    _fail(f'Could not find {setup_file}! Please make sure that the file exists!')
+  with open(setup_file, "r") as stream:
+    try:
+      return yaml.safe_load(stream)
+    except yaml.YAMLError as exc:
+      if log is not None:
+        log.log_msg(exc, MSG_TYPE.ERROR.value)
+      raise IOError(exc)
+
+
+def build_mdo(data: Dict[str, Any], working_dir: str = ".", mdo_name: str = "MDO", blackboxes: Dict = None,
+              log: logger = None, post_dir: str = None) -> MDO:
+  """Build an :class:`MDO` from a problem definition dictionary (the content of a DMDO YAML file).
+
+  Outputs go to ``<working_dir>/<mdo_name>_post`` unless ``post_dir`` is given. The problem definition is not
+  modified.
+  """
+  data = copy.deepcopy(data)
+  if post_dir is None:
+    post_dir = os.path.join(working_dir, mdo_name + "_post")
+    if os.path.exists(post_dir):
+      shutil.rmtree(post_dir)
+  create_directory_if_not_exists(post_dir)
+  if log is None:
+    log = logger()
+  if log.log is None:
+    log.initialize(os.path.join(post_dir, "DMDO.log"), handler_name="DMDO")
+  data["working_dir"] = working_dir
+  data["post_dir"] = post_dir
+  data["mdo_name"] = mdo_name
+  log.log_msg(msg="-" * 50 + "\n", msg_type=MSG_TYPE.INFO.value)
+  mdo = problemSetup(data=data, log=log, blackboxes=blackboxes).autoProbSetup()
+  mdo.log = log
+  return mdo
+
+
 def main(*args) -> Dict[str, Any]:  # noqa: C901
     # Default run options and initialization
     exec_mode = "Serial"
@@ -295,46 +346,9 @@ def main(*args) -> Dict[str, Any]:  # noqa: C901
     else:
       log: logger = logger()
       log.initialize(os.path.join(post_dir, "DMDO.log"), handler_name="DMDO")
-      inp = setup_file
-      """ The DMDO main routine """
-      if not isinstance(setup_file, str): 
-        raise IOError(f'{setup_file} is not a string! Please use an appropriate DMDO yaml file!')
-      
-      if isinstance(inp, str):
-        log.log_msg(msg=f"Reading the input dictionary file {inp}.", msg_type=MSG_TYPE.INFO.value)
-        file = copy.deepcopy(inp)
-        fext = file.split('.')[1]
-        if not (fext == "yaml" or fext == "yml" or fext == "json"):
-          msg = f'Cannot use files with {fext} extension. Please use an appropriate yaml file with yml or yaml extension!'
-          log.log_msg(msg, MSG_TYPE.ERROR.value)
-          raise IOError(msg)
-      
-      if not os.path.exists(file):
-          msg = f'Could not find {file}! Please make sure that the file exists!'
-          log.log_msg(msg, MSG_TYPE.ERROR.value)
-          raise IOError(msg)
-          
-      with open(file, "r") as stream:
-        try:
-            data: Dict = yaml.safe_load(stream)
-        except yaml.YAMLError as exc:
-            msg = exc
-            log.log_msg(msg, MSG_TYPE.ERROR.value)
-            raise IOError(exc)
-
-      MDAO: MDO  
-      data["working_dir"] = working_dir
-      data["post_dir"] = post_dir
-      data["mdo_name"] = mdo_name
-      if log is None:
-        log = logger()
-      if log.log is None:
-        log.initialize(os.path.join(post_dir, "DMDO.log"), handler_name="DMDO")
-      
-      log.log_msg(msg="--------------------------------------------------\n",
-                  msg_type=MSG_TYPE.INFO.value)
-      MDAO= problemSetup(data=data, log = log, blackboxes=blackbox_map).autoProbSetup()
-      MDAO.log = log
+      data = load_setup(setup_file, log=log)
+      MDAO: MDO = build_mdo(data, working_dir=working_dir, mdo_name=mdo_name, blackboxes=blackbox_map, log=log,
+                            post_dir=post_dir)
 
       if run_mode != "run" and run_mode != "build":
         MDAO.prepare_post(os.path.join(post_dir, f"{mdo_name}.out"))

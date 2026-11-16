@@ -27,7 +27,7 @@ import copy
 from dataclasses import dataclass
 import os
 import pickle
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -40,6 +40,25 @@ from ..core.variables import variableData
 from ..ports import IterationRecord
 from .execution import SubproblemTask, create_executor, solve_task
 from .observers import HISTORY_FILE, ConsoleReporter, CoordinationHistoryRecorder, default_observers, notify
+
+@dataclass(frozen=True)
+class IterationEnd:
+  """Yielded by :meth:`MDO.coordinate` when an outer iteration is complete."""
+  record: IterationRecord
+  finished: bool
+
+
+def _check_results(results, tasks) -> list:
+  results = list(results)
+  if sorted(r.index for r in results) != sorted(t.index for t in tasks):
+    raise ValueError(f"Expected results for subproblem tasks {sorted(t.index for t in tasks)}, got "
+                     f"{sorted(r.index for r in results)}")
+  return results
+
+
+def _single_result(results, task):
+  return _check_results(results, [task])[0]
+
 
 @dataclass
 class MDO_data(Process_data):
@@ -276,23 +295,27 @@ class MDO(MDO_data):
       return self._sweep_jacobi
     raise ValueError(f"Unknown coordination sweep '{sweep}'. Use 'gauss_seidel' or 'jacobi'.")
 
-  def _sweep_gauss_seidel(self, executor) -> None:
-    """Solve the subproblems one after another; each one sees the coordinator updated by the previous solves."""
+  def _sweep_gauss_seidel(self):
+    """Solve the subproblems one after another; each one sees the coordinator updated by the previous solves.
+
+    A generator: yields a one-task batch per subproblem and receives the list of its results.
+    """
     for s in range(len(self.subProblems)):
       if self.iter > 0:
         self.subProblems[s].coord = self.Coordinator
       self.prepare_SP_jobs(s=s)
       task = SubproblemTask(index=s, subproblem=self.subProblems[s], v=self.Coordinator.v, w=self.Coordinator.w,
                             iteration=self.iter, file=self.file)
-      result = executor.map(solve_task, [task])[0]
+      result = _single_result((yield [task]), task)
       self.subProblems[s] = copy.deepcopy(result.subproblem)
       self._record_subproblem_solve(s)
       self.Coordinator = copy.deepcopy(self.subProblems[s].coord)
 
-  def _sweep_jacobi(self, executor) -> None:
+  def _sweep_jacobi(self):
     """Solve all subproblems from the same coordinator snapshot, then merge their results in subproblem order.
 
-    The outcome does not depend on how (or in which order) the executor runs the tasks.
+    The outcome does not depend on how (or in which order) the tasks are solved. A generator: yields one batch with
+    every subproblem's task and receives their results (in any order).
     """
     n = len(self.subProblems)
     if self.iter == 0:
@@ -307,7 +330,7 @@ class MDO(MDO_data):
       sp.modify_cond_vars(self.Coordinator.master_vars)
       tasks.append(SubproblemTask(index=s, subproblem=sp, v=copy.deepcopy(self.Coordinator.v),
                                   w=copy.deepcopy(self.Coordinator.w), iteration=self.iter, file=self.file))
-    results = sorted(executor.map(solve_task, tasks), key=lambda r: r.index)
+    results = sorted(_check_results((yield tasks), tasks), key=lambda r: r.index)
 
     merged = copy.deepcopy(self.Coordinator)
     for result in results:
@@ -343,9 +366,9 @@ class MDO(MDO_data):
     ql = [max(np.abs(q)) if isinstance(q, list) else abs(q) for q in qb]
     return int(np.argmax(ql))
 
-  def run(self, file=None, resume=False, mode="Serial", executor=None, sweep=None, max_workers=None,  # noqa: C901
+  def run(self, file=None, resume=False, mode="Serial", executor=None, sweep=None, max_workers=None,
           observers=None):
-    """Run the coordination loop.
+    """Run the coordination loop to the end.
 
     :param mode: ``"serial"`` (default sweep Gauss-Seidel, in-process) or ``"parallel"`` (default sweep Jacobi, process
       pool with one worker per subproblem).
@@ -354,6 +377,38 @@ class MDO(MDO_data):
     :param sweep: ``"gauss_seidel"`` or ``"jacobi"``; overrides the one implied by ``mode``.
     :param max_workers: worker count for executors created from a name (default: number of subproblems).
     :param observers: :class:`~DMDO.ports.RunObserver` objects notified during the run, after DMDO's own observers.
+
+    To drive the loop step by step, or to solve the subproblems yourself (ask/tell), use :class:`DMDO.Session`.
+    """
+    owns_executor = executor is None or isinstance(executor, str)
+    if executor is None:
+      executor = "inprocess" if self._is_serial(mode) else "process"
+    executor = create_executor(executor, max_workers=max_workers or len(self.subProblems))
+    try:
+      loop = self.coordinate(file=file, resume=resume, mode=mode, sweep=sweep, observers=observers)
+      reply = None
+      while True:
+        try:
+          item = loop.send(reply)
+        except StopIteration:
+          break
+        reply = executor.map(solve_task, item) if isinstance(item, list) else None
+    finally:
+      if owns_executor:
+        executor.close()
+
+  def coordinate(self, file=None, resume=False, mode="Serial", sweep=None, observers=None,  # noqa: C901
+                 should_stop: Optional[Callable[[], bool]] = None):
+    """The coordination loop as a generator; :meth:`run` and :class:`DMDO.Session` drive it.
+
+    It yields two kinds of items:
+
+    - a list of :class:`~DMDO.workflow.execution.SubproblemTask`: solve them and ``send`` back the list of
+      :class:`~DMDO.workflow.execution.SubproblemResult` (any order; :func:`~DMDO.workflow.execution.solve_task`
+      solves one task);
+    - an :class:`IterationEnd` when an outer iteration is complete (``send(None)`` to continue).
+
+    :param should_stop: called after each outer iteration; returning True ends the run there.
     """
     global eps_fio, eps_qio
     if file is not None:
@@ -376,59 +431,59 @@ class MDO(MDO_data):
     self.mode = mode
     self.Coordinator.mode = mode
     run_sweep = self._resolve_sweep(mode, sweep)
-    owns_executor = executor is None or isinstance(executor, str)
-    if executor is None:
-      executor = "inprocess" if self._is_serial(mode) else "process"
-    executor = create_executor(executor, max_workers=max_workers or len(self.subProblems))
     hooks = default_observers(self) + list(observers or [])
 
-    try:
-      notify(hooks, "on_run_start", self)
-      for iter in range(self.Coordinator.budget):
-        self.iter = iter
-        # Initialize hmin dictionary for each SP at the start of each iteration
-        self.hmin_dict = {}
-        if iter == 0:
-          self.Coordinator.master_vars_old = copy.deepcopy(self.variables)
-          self.Coordinator.master_vars = copy.deepcopy(self.variables)
-          self._prepare_post_dir()
-        notify(hooks, "on_iteration_start", self, iter)
-        if iter > 0:
-          self.Coordinator.master_vars_old = copy.deepcopy(self.Coordinator.master_vars)
+    notify(hooks, "on_run_start", self)
+    for iter in range(self.Coordinator.budget):
+      self.iter = iter
+      # Initialize hmin dictionary for each SP at the start of each iteration
+      self.hmin_dict = {}
+      if iter == 0:
+        self.Coordinator.master_vars_old = copy.deepcopy(self.variables)
+        self.Coordinator.master_vars = copy.deepcopy(self.variables)
+        self._prepare_post_dir()
+      notify(hooks, "on_iteration_start", self, iter)
+      if iter > 0:
+        self.Coordinator.master_vars_old = copy.deepcopy(self.Coordinator.master_vars)
 
-        run_sweep(executor)
-        self.Coordinator.calc_inconsistency()
-        notify(hooks, "on_sweep_end", self, iter)
-        if not getattr(self.Coordinator, "single_multiplier_update", False):
-          self.Coordinator.update_multipliers(iter)
-
-        dx = self.get_master_vars_difference()
-        index = self._worst_link_index()
-        # The objective history must include this iteration before the adaptation event is evaluated.
-        self.Coordinator.objective_history.append(float(self.fmin))
-        assess = getattr(self.Coordinator, "assess_iteration", None)
-        if assess is not None:
-          assess(iter)
-        record = IterationRecord(iteration=iter, objective=self.fmin,
-                                 max_inconsistency=float(np.max(np.abs(self.Coordinator.q))),
-                                 max_penalty_weight=float(np.max(self.Coordinator.w)), variables_change=dx,
-                                 worst_link=index)
-        notify(hooks, "on_iteration_end", self, record)
-
-        # Update Lagrange multipliers and penalty weights
+      yield from run_sweep()
+      self.Coordinator.calc_inconsistency()
+      notify(hooks, "on_sweep_end", self, iter)
+      if not getattr(self.Coordinator, "single_multiplier_update", False):
         self.Coordinator.update_multipliers(iter)
-        notify(hooks, "on_multipliers_updated", self, iter)
 
-        # Stopping criteria
-        self.tab_inc.append(np.max(np.abs(self.Coordinator.q)))
-        if self.check_termination_critt(iter):
-          break
+      dx = self.get_master_vars_difference()
+      index = self._worst_link_index()
+      # The objective history must include this iteration before the adaptation event is evaluated.
+      self.Coordinator.objective_history.append(float(self.fmin))
+      assess = getattr(self.Coordinator, "assess_iteration", None)
+      if assess is not None:
+        assess(iter)
+      record = IterationRecord(iteration=iter, objective=self.fmin,
+                               max_inconsistency=float(np.max(np.abs(self.Coordinator.q))),
+                               max_penalty_weight=float(np.max(self.Coordinator.w)), variables_change=dx,
+                               worst_link=index)
+      notify(hooks, "on_iteration_end", self, record)
+
+      # Update Lagrange multipliers and penalty weights
+      self.Coordinator.update_multipliers(iter)
+      notify(hooks, "on_multipliers_updated", self, iter)
+
+      # Stopping criteria
+      self.tab_inc.append(np.max(np.abs(self.Coordinator.q)))
+      finished = self.check_termination_critt(iter)
+      if not finished:
         self.eps_qio = copy.deepcopy(eps_qio)
         self.eps_fio = copy.deepcopy(eps_fio)
-      notify(hooks, "on_run_end", self)
-    finally:
-      if owns_executor:
-        executor.close()
+        if should_stop is not None and should_stop():
+          self.stop = "Stopped on request"
+          self.log.log_msg(msg=f"{self.stop} after iteration {iter}", msg_type=MSG_TYPE.INFO.value)
+          finished = True
+      finished = finished or iter == self.Coordinator.budget - 1
+      yield IterationEnd(record=record, finished=finished)
+      if finished:
+        break
+    notify(hooks, "on_run_end", self)
 
   def validation(self, vType: int):
     self.term_status = []

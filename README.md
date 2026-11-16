@@ -50,6 +50,35 @@ After installing the `DMDO` package using the `pip` command, the functions and c
 from DMDO import *
 ```
 
+## Using DMDO from other code: the Session API
+
+`DMDO.Session` builds a problem and drives its coordination loop. It is the entry point for scripts and for other
+packages; `main({...})` and the YAML files keep working and use the same building blocks (`load_setup`, `build_mdo`).
+
+```python
+from DMDO import Session, load_setup, solve_task
+
+data = load_setup("problem.yaml")                 # a plain dict: edit it before building if needed
+session = Session.from_dict(data, working_dir="runs", mdo_name="wing", blackboxes={"A1": aero, "A2": structures})
+
+result = session.run()                            # 1. to the end
+# or
+while (record := session.step()) is not None:     # 2. one outer iteration at a time (IterationRecord)
+    if record.max_inconsistency < 1e-4:
+        session.request_stop()
+# or
+while not session.done:                           # 3. ask/tell: you solve the subproblems, anywhere
+    tasks = session.ask()                         #    independent SubproblemTasks (Jacobi: all subproblems)
+    session.tell([solve_task(t) for t in tasks])  #    results in any order
+
+result = session.result()                         # RunResult: status, stop_reason, objective, variables, history
+result.to_dict()                                  # JSON-ready
+```
+
+`Session.from_yaml(path, ...)` and `Session.from_checkpoint("coord_chk.pkl")` are the other constructors; `mode`,
+`sweep`, `executor` and `observers` are accepted as keyword options. The `examples/` folder has runnable scripts and
+adapter sketches for OpenMDAO and GEMSEO in both directions (their model inside DMDO, and DMDO inside their model).
+
 ## Extending DMDO and connecting other packages
 
 DMDO talks to analyses and optimizers through small, framework-neutral interfaces (`DMDO.ports`). Nothing in DMDO

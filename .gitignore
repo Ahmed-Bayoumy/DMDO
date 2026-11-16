@@ -30,6 +30,8 @@ CHANGELOG*
 # Markdown notes stay local; only the README is tracked
 *.md
 !README.md
+!examples/README.md
+examples/_runs
 remote_config.json
 *.log
 *.tex

@@ -25,7 +25,8 @@
 # Must stay first: loads the legacy module aliases before the names below are bound (see _legacy.py).
 from . import _legacy  # noqa: F401
 
-from .app.main import main, logger
+from .app.main import main, logger, build_mdo, load_setup
+from .app.session import RunResult, Session, SessionError
 from .workflow.mdo import MDO, MDO_data
 from .core.enums import (BARRIER_TYPE, COUPLING_STRENGTH, COUPLING_TYPE, MDO_ARCHITECTURE, MODEL_TYPE, PSIZE_UPDATE,
                          VALIDATOR, VAR_TYPE, w_scheme, double_precision, USER)
@@ -109,4 +110,9 @@ __all__: list[str] = [
   'SpikeAdaptationPolicy',
   'policies',
   'policy_for',
+  'Session',
+  'RunResult',
+  'SessionError',
+  'build_mdo',
+  'load_setup',
   ]
