@@ -225,7 +225,7 @@ def build_mdo(data: Dict[str, Any], working_dir: str = ".", mdo_name: str = "MDO
 
 def main(*args) -> Dict[str, Any]:  # noqa: C901
     # Default run options and initialization
-    exec_mode = "Serial"
+    exec_mode = None  # None: the coordinator's mode from the problem definition
     restart_file = os.getcwd()
     run_mode: str = "run"
     is_resume: bool = False

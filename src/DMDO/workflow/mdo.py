@@ -287,6 +287,10 @@ class MDO(MDO_data):
   def _is_serial(mode) -> bool:
     return str(mode).lower() == "serial"
 
+  def default_mode(self) -> str:
+    """The coordinator's ``mode`` from the problem definition (``"serial"`` when it has none)."""
+    return str(getattr(getattr(self, "Coordinator", None), "mode", None) or "serial")
+
   def _resolve_sweep(self, mode, sweep):
     name = str(sweep if sweep is not None else ("gauss_seidel" if self._is_serial(mode) else "jacobi")).lower()
     if name in ("gauss_seidel", "gauss-seidel", "gs", "sequential"):
@@ -366,12 +370,12 @@ class MDO(MDO_data):
     ql = [max(np.abs(q)) if isinstance(q, list) else abs(q) for q in qb]
     return int(np.argmax(ql))
 
-  def run(self, file=None, resume=False, mode="Serial", executor=None, sweep=None, max_workers=None,
+  def run(self, file=None, resume=False, mode=None, executor=None, sweep=None, max_workers=None,
           observers=None):
     """Run the coordination loop to the end.
 
     :param mode: ``"serial"`` (default sweep Gauss-Seidel, in-process) or ``"parallel"`` (default sweep Jacobi, process
-      pool with one worker per subproblem).
+      pool with one worker per subproblem); default: the coordinator's ``mode`` from the problem definition.
     :param executor: an :class:`~DMDO.ports.Executor` instance or a registered executor name (``"inprocess"``,
       ``"process"`` or a plugin) that runs the subproblem solves; overrides the one implied by ``mode``.
     :param sweep: ``"gauss_seidel"`` or ``"jacobi"``; overrides the one implied by ``mode``.
@@ -380,6 +384,8 @@ class MDO(MDO_data):
 
     To drive the loop step by step, or to solve the subproblems yourself (ask/tell), use :class:`DMDO.Session`.
     """
+    if mode is None:
+      mode = self.default_mode()
     owns_executor = executor is None or isinstance(executor, str)
     if executor is None:
       executor = "inprocess" if self._is_serial(mode) else "process"
@@ -397,7 +403,7 @@ class MDO(MDO_data):
       if owns_executor:
         executor.close()
 
-  def coordinate(self, file=None, resume=False, mode="Serial", sweep=None, observers=None,  # noqa: C901
+  def coordinate(self, file=None, resume=False, mode=None, sweep=None, observers=None,  # noqa: C901
                  should_stop: Optional[Callable[[], bool]] = None):
     """The coordination loop as a generator; :meth:`run` and :class:`DMDO.Session` drive it.
 
@@ -428,6 +434,8 @@ class MDO(MDO_data):
       file = self.file
 
     self.fmin = np.inf
+    if mode is None:
+      mode = self.default_mode()
     self.mode = mode
     self.Coordinator.mode = mode
     run_sweep = self._resolve_sweep(mode, sweep)

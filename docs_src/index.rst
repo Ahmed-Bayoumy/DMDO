@@ -164,7 +164,7 @@ If DMDO contributes to published work, please cite it as follows.
      title     = {DMDO: Distributed Multidisciplinary Design Optimization},
      year      = {2022},
      publisher = {GitHub},
-     version   = {2612.0},
+     version   = {2612.1},
      url       = {https://github.com/Ahmed-Bayoumy/DMDO}
    }
 

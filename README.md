@@ -17,7 +17,7 @@ Documentation, theory, tutorials and benchmarks: [ahmed-bayoumy.github.io/DMDO](
 
 **Author:** Dr. Ahmed H. Bayoumy
 
-**Version 2612.0**
+**Version 2612.1**
 
 ---
 
@@ -265,7 +265,7 @@ If DMDO contributes to published work, please cite it as follows.
   title     = {DMDO: Distributed Multidisciplinary Design Optimization},
   year      = {2022},
   publisher = {GitHub},
-  version   = {2612.0},
+  version   = {2612.1},
   url       = {https://github.com/Ahmed-Bayoumy/DMDO},
   doi       = {https://doi.org/10.5281/zenodo.24281878}
 }

@@ -26,7 +26,7 @@ project = "DMDO"
 author = "Ahmed H. Bayoumy"
 copyright = f"2022-{date.today().year}, {author}"
 
-release = "2612.0"
+release = "2612.1"
 if tomllib is not None:
   with open(os.path.join(ROOT, "pyproject.toml"), "rb") as f:
     release = tomllib.load(f)["project"]["version"]

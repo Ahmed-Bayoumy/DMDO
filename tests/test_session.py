@@ -84,6 +84,31 @@ def test_jacobi_ask_tell_accepts_results_in_any_order(data, wd):
   assert snapshot(session.mdo) == snapshot(reference.mdo)
 
 
+def test_mode_defaults_to_the_coordinator_mode_of_the_problem_definition(data, wd):
+  from DMDO.workflow.execution import InProcessExecutor, ProcessExecutor
+
+  assert _session(data, wd, "yaml_serial").mode == "serial"
+  data["coord"]["c1"]["mode"] = "parallel"
+  session = _session(data, wd, "yaml_parallel")
+  assert session.mode == "parallel" and session.mdo.default_mode() == "parallel"
+  executor = session._get_executor()
+  try:
+    assert isinstance(executor, ProcessExecutor)
+  finally:
+    session._release_executor()
+  # An explicit mode still takes precedence over the problem definition.
+  explicit = _session(data, wd, "explicit_serial", mode="serial")
+  assert explicit.mode == "serial" and isinstance(explicit._get_executor(), InProcessExecutor)
+
+
+def test_parallel_mode_from_the_problem_definition_sweeps_jacobi(data, wd):
+  data["coord"]["c1"]["mode"] = "parallel"
+  session = _session(data, wd, "yaml_jacobi")
+  batches = _ask_tell(session)
+  assert batches == [2] * BUDGET  # Jacobi: every subproblem of the iteration in one batch
+  assert session.mdo.mode == "parallel"
+
+
 def test_step_yields_one_record_per_outer_iteration(data, wd):
   session = _session(data, wd, "step")
   records = []

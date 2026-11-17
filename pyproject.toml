@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "DMDO"
-version = "2612.0"
+version = "2612.1"
 requires-python = ">=3.10"
 description = "Distributed Multidisciplinary Design Optimization (DMDO)"
 readme = "README.md"
