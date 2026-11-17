@@ -1,5 +1,6 @@
 """Session API: run / step / ask-tell on the basic two-discipline problem."""
 import contextlib
+import copy
 import csv
 import json
 import os
@@ -107,6 +108,129 @@ def test_parallel_mode_from_the_problem_definition_sweeps_jacobi(data, wd):
   batches = _ask_tell(session)
   assert batches == [2] * BUDGET  # Jacobi: every subproblem of the iteration in one batch
   assert session.mdo.mode == "parallel"
+
+
+def _start_points(monkeypatch, data, wd, name, index=1):
+  """Run the problem and return the start point of every solve of subproblem ``index``."""
+  from DMDO.subproblem.subproblem import SubProblem
+
+  starts = []
+  original = SubProblem._build_solver_request
+
+  def spy(self, impl, x0, *args, **kwargs):
+    if self.index == index:
+      starts.append([float(x) for x in x0])
+    return original(self, impl, x0, *args, **kwargs)
+
+  monkeypatch.setattr(SubProblem, "_build_solver_request", spy)
+  _session(data, wd, name).run()
+  return starts
+
+
+def test_warm_start_point_follows_the_last_solution(data, wd, monkeypatch):
+  # Subproblem 2 moves away from its bl values (u, w, a = 1) from its first solve on.
+  starts = _start_points(monkeypatch, data, wd, "warm", index=2)
+  assert len(starts) == BUDGET and starts[0] == [1.0, 1.0, 1.0]
+  assert starts[1] != starts[0]
+
+
+def test_initial_start_point_on_a_moving_subproblem(data, wd, monkeypatch):
+  data["subproblem"]["sp2"]["start_point"] = "initial"
+  assert _start_points(monkeypatch, data, wd, "initial2", index=2) == [[1.0, 1.0, 1.0]] * BUDGET
+
+
+def test_initial_start_point_restarts_every_solve_from_bl(data, wd, monkeypatch):
+  data["subproblem"]["sp1"]["start_point"] = "initial"
+  starts = _start_points(monkeypatch, data, wd, "initial")
+  assert starts == [[1.0, 1.0, 1.0]] * BUDGET
+
+
+def test_mapping_start_point_overrides_the_listed_variables(data, wd, monkeypatch):
+  data["subproblem"]["sp1"]["start_point"] = {"v": 2.5}
+  starts = _start_points(monkeypatch, data, wd, "mapping")
+  assert starts == [[1.0, 2.5, 1.0]] * BUDGET
+
+
+def _with_second_v(data):
+  """Give subproblem 1 a second scalar design variable named "v" (opt1 sums its design vector, so it still runs)."""
+  data["variables"]["v8"] = ["v", 1, None, "u", 0., 2., 10., 1, "R"]
+  data["subproblem"]["sp1"]["vars"] = ["v0", "v1", "v8", "v3"]
+  data["subproblem"]["sp1"]["nv"] = 4
+  return data
+
+
+def test_repeated_variable_names_map_one_variable_per_key(data, wd):
+  sp1 = next(sp for sp in _session(_with_second_v(data), wd, "names").mdo.subProblems if sp.index == 1)
+  assert [(v.name, v.baseline) for v in sp1.get_design_vars()] == [("u", 1.0), ("v", 1.0), ("v", 2.0), ("b", 1.0)]
+
+
+def test_list_start_point_for_a_repeated_name(data, wd, monkeypatch):
+  data = _with_second_v(data)
+  data["subproblem"]["sp1"]["start_point"] = {"v": [3.0, 4.0]}
+  assert _start_points(monkeypatch, data, wd, "repeated") == [[1.0, 3.0, 4.0, 1.0]] * BUDGET
+  data["subproblem"]["sp1"]["start_point"] = {"v": [3.0, 4.0, 5.0]}
+  with pytest.raises(ValueError, match="2 design variable"):
+    _session(data, wd, "repeated_bad")
+
+
+def test_start_point_by_variable_key(data, wd, monkeypatch):
+  data = _with_second_v(data)
+  data["subproblem"]["sp1"]["start_point"] = {"v8": 4.0, "v0": 2.0}  # the second "v", and "u"
+  assert _start_points(monkeypatch, data, wd, "keys") == [[2.0, 1.0, 4.0, 1.0]] * BUDGET
+
+
+def test_key_entry_wins_over_a_name_entry(data, wd, monkeypatch):
+  data = _with_second_v(data)
+  data["subproblem"]["sp1"]["start_point"] = {"v": 3.0, "v8": 4.0}
+  assert _start_points(monkeypatch, data, wd, "key_over_name") == [[1.0, 3.0, 4.0, 1.0]] * BUDGET
+
+
+def test_start_point_key_of_another_subproblem_is_rejected(data, wd):
+  data["subproblem"]["sp1"]["start_point"] = {"v5": 1.0}  # "w" of subproblem 2
+  with pytest.raises(ValueError, match="not in its vars"):
+    _session(data, wd, "other_sp")
+
+
+def test_start_point_with_slsqp_subproblems(data, wd, monkeypatch):
+  for sp in ("sp1", "sp2"):
+    data["subproblem"][sp]["solver"] = "scipy"
+    data["subproblem"][sp]["scipy"] = {"method": "SLSQP", "is_con": True, "tol": 1e-6, "normalize": True,
+                                       "options": {"maxiter": 20, "ftol": 1e-6, "eps": 1e-6}}
+  warm = _start_points(monkeypatch, copy.deepcopy(data), wd, "slsqp_warm", index=2)
+  assert warm[1] != warm[0]  # SLSQP moves subproblem 2, so a warm start drifts
+  data["subproblem"]["sp2"]["start_point"] = {"v5": 2.0}  # "w" of subproblem 2
+  assert _start_points(monkeypatch, data, wd, "slsqp_fixed", index=2) == [[1.0, 2.0, 1.0]] * BUDGET
+
+
+def test_start_point_reaches_a_custom_solver(data, wd):
+  from DMDO import BaseSolver, SolverOutcome, solvers
+
+  received = []
+
+  class StepSolver(BaseSolver):
+    """Records the start point and returns it moved by 0.5 (within the bounds)."""
+
+    def solve(self, request):
+      received.append([float(x) for x in request.x0])
+      x = [min(float(xi) + 0.5, float(ub)) for xi, ub in zip(request.x0, request.ub)]
+      f, g = request.objective(x)
+      return SolverOutcome(x=x, fmin=f, hmin=max(g) if g else 0.0, raw={"x": x})
+
+  solvers.register("unit_test_step", StepSolver, override=True)
+  try:
+    data["subproblem"]["sp1"]["solver"] = "unit_test_step"
+    data["subproblem"]["sp1"]["start_point"] = "initial"
+    _session(data, wd, "custom").run()
+  finally:
+    solvers.unregister("unit_test_step")
+  assert received == [[1.0, 1.0, 1.0]] * BUDGET  # without start_point the solver would start at 1.5, 2.0, ...
+
+
+@pytest.mark.parametrize("bad", ["cold", {"not_a_variable": 1.0}, 3.0])
+def test_invalid_start_point_is_rejected(data, wd, bad):
+  data["subproblem"]["sp1"]["start_point"] = bad
+  with pytest.raises((ValueError, TypeError)):
+    _session(data, wd, "bad")
 
 
 def test_step_yields_one_record_per_outer_iteration(data, wd):

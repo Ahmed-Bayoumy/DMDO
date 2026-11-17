@@ -273,17 +273,39 @@ class problemSetup:
     self.log.log_msg(msg="Completed variables setup.\n", msg_type=MSG_TYPE.INFO.value)
   
   def getVariables(self, v: List[str]) -> List[variableData]:
-    """ Find the variables by the input key assigned to them"""
+    """ Find the variables by the input key assigned to them.
+
+    ``self.V`` holds one variable per key of the ``variables`` section, in the same order, so each key maps to
+    exactly one variable. (Matching by name and subproblem index instead returned every variable of that name, so a
+    subproblem with nine scalar variables named ``t`` got 81 of them.)
+    """
+    keys = list(self.data["variables"].keys())
     out = []
     for i in v:
-      namet = self.data["variables"][i][0]
-      indext = self.data["variables"][i][1]
-      for k in self.V:
-        if k.name == namet and k.sp_index == indext:
-          out.append(k)
-    
+      if i not in self.data["variables"]:
+        raise KeyError(f"Unknown variable key '{i}'.")
+      out.append(self.V[keys.index(i)])
     return out
   
+  def getStartPoint(self, sp: Dict) -> Any:
+    """The subproblem's ``start_point`` with YAML variable keys (``v27``) replaced by the variables' indices.
+
+    Entries that are not variable keys are passed on as variable names (see :meth:`SubProblem.set_start_point`).
+    """
+    start_point = sp.get("start_point", "warm")
+    if not isinstance(start_point, dict):
+      return start_point
+    keys = list(self.data["variables"].keys())
+    out = {}
+    for key, value in start_point.items():
+      if key in self.data["variables"]:
+        if key not in sp["vars"]:
+          raise ValueError(f"Subproblem {sp['index']}: start_point variable '{key}' is not in its vars {sp['vars']}.")
+        out[int(self.V[keys.index(key)].index)] = value
+      else:
+        out[key] = value
+    return out
+
   def getDA(self, d: List[int]) -> List[DA]:
     """ Get the list of corresponding disciplinary analyses """
     out = []
@@ -468,6 +490,7 @@ class problemSetup:
           and (SP[i]["configurations"] in CONF) else None,
         tweak_csv= SP[i]["tweak_csv"] if "tweak_csv" in SP[i] else None,
         wd=self.data["working_dir"],
+        start_point=self.getStartPoint(SP[i]),
 
       ))
     self.log.log_msg(msg="Completed subproblems setup.\n", msg_type=MSG_TYPE.INFO.value)
