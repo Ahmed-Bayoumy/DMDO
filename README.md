@@ -102,6 +102,66 @@ constraints are handled by the progressive barrier; the objective is the total w
 On SBJ the subproblem budget decides whether the derivative-free solvers converge: the structures subproblem, with
 72 constraints, needs a large budget for MADS to reach consistency.
 
+### SBJ: the four ATC formulations of Tosserams et al. (2010)
+
+Reference [5] decomposes the business jet in four ways (its Fig. 6, reproduced below). `tests/SBJ` contains one problem
+definition per formulation, `SBJ_a.yaml` to `SBJ_d.yaml`, run with `python run_SBJ.py <a|b|c|d> [working_dir]`.
+Formulations (c) and (d) relax the range constraint (and in (d) also the total weight Wt = We + Ws + Wf) as
+system-wide functions instead of target-response pairs, which the problem definition declares in a
+`system_functions` section.
+
+| (a) hierarchical: 26 pairs | (b) non-hierarchical: 16 pairs |
+|:---:|:---:|
+| <img width="400" alt="Fig. 6(a): aircraft coordinates propulsion, aerodynamics and structures; 26 target-response pairs" src="docs_src/_static/sbj/fig6a.png"> | <img width="400" alt="Fig. 6(b): non-hierarchical coupling between all four subproblems; 16 target-response pairs, no system-wide functions" src="docs_src/_static/sbj/fig6b.png"> |
+| **(c) range as a system-wide constraint: 14 pairs + 1 function** | **(d) no aircraft subproblem: 10 pairs + 2 functions** |
+| <img width="400" alt="Fig. 6(c): the range constraint becomes a system-wide function; 14 target-response pairs" src="docs_src/_static/sbj/fig6c.png"> | <img width="400" alt="Fig. 6(d): range and total weight become system-wide functions; propulsion, aerodynamics and structures only; 10 target-response pairs" src="docs_src/_static/sbj/fig6d.png"> |
+
+*Figure: Four ATC formulations of the business jet, reproduced from S. Tosserams et al., J. Mech. Des. 132(5),
+051002, 2010, Fig. 6 [5].*
+
+Each formulation was run once from the reference design of the paper's Table 1. The other settings were:
+
+- coordinator: β = 1.03, γ = 0.75, initial penalty weight 60, inconsistencies scaled by the reference values,
+  one multiplier update per outer iteration;
+- subproblem solvers: SLSQP in every subproblem, except propulsion in (a), (c) and (d), which uses OMADS MADS.
+
+Formulations (a) and (c) use the `max` penalty-update scheme. With the `normal` scheme they stalled: the drag pair
+between propulsion and aerodynamics stayed inconsistent at about 2.5 × 10⁻², because the throttle limit stops
+propulsion from matching the drag without a larger engine scale factor. The weights below come from a full
+multidisciplinary analysis of each final design, not from the subproblem copies.
+
+| Formulation | Update scheme | Outer iterations | Final max. inconsistency | Wt (MDA) | Max. constraint violation | Paper, Table 2: Wt min / mean / max | Paper: mean iterations |
+|---|:---:|:---:|:---:|---:|:---:|:---:|:---:|
+| (a) | max | 197‡ | 1.0 × 10⁻³ | 37,787 lb | 8.3 × 10⁻³ (range 1983 nm) | 34.0 / 34.9 / 39.2 × 10³ lb | 244 |
+| (b) | normal | 295 (converged) | 5.1 × 10⁻⁷ | 35,836 lb | none (range 2003 nm) | 33.9 / 35.0 / 48.5 × 10³ lb | 209 |
+| (c) | max | 169‡ | 1.1 × 10⁻⁴ | **34,625 lb** | 4 × 10⁻⁴ (range 1999 nm) | 33.6 / 34.3 / 38.8 × 10³ lb | 202 |
+| (d) | normal | 234‡ | 8.9 × 10⁻⁴ (lowest 2.0 × 10⁻⁵) | **34,611 lb** | 2 × 10⁻⁴ (range 2000 nm) | 34.0 / 34.7 / 46.0 × 10³ lb | 85 |
+
+‡ Stopped by hand. The weight had changed by less than 0.1 % over the last 30 or more iterations, while the
+inconsistency kept oscillating between about 10⁻⁵ and 5 × 10⁻³ above the 10⁻⁶ stopping tolerance. The constraint
+violations are of the same order as the paper's (Table 2: up to 0.009).
+
+All four weights lie within the paper's spread for the same formulation. Formulations (c) and (d) reach the paper's
+most frequent optimum, the MDF design of Table 1 (34.3 × 10³ lb), within 1 %:
+
+| Variable | Table 1 (MDF) | (a) | (b) | (c) | (d) |
+|---|---:|---:|---:|---:|---:|
+| t/c | 0.0641 | 0.0611 | 0.0734 | 0.0646 | 0.0659 |
+| AR_w | 2.5 | 2.50 | 2.51 | 2.50 | 2.50 |
+| Λ_w (deg) | 70 | 69.9 | 69.9 | 69.9 | 70.0 |
+| S_ref (ft²) | 667 | 788 | 629 | 681 | 668 |
+| S_ht (ft²) | 99.7 | 139.7 | 78.9 | 102.9 | 82.5 |
+| AR_ht | 2.5 | 2.50 | 4.45 | 2.50 | 3.90 |
+| T | 0.196 | 0.196 | 0.191 | 0.196 | 0.196 |
+| θ (deg) | 19.1 | 11.2 | 8.5 | 18.2 | 12.7 |
+| ESF | 0.75 | 0.85 | 0.83 | 0.78 | 0.77 |
+| L/D | 7.03 | 6.88 | 6.80 | 6.93 | 6.93 |
+| Ws / Wf / We (10³ lb) | 17.5 / 10.3 / 6.49 | 19.0 / 11.5 / 7.38 | 17.6 / 11.1 / 7.19 | 17.4 / 10.5 / 6.68 | 17.5 / 10.5 / 6.63 |
+
+Formulation (a) ends in the heavier local optimum: a larger wing (S_ref = 788 ft²) with 9-inch bottom skin cores.
+The paper also finds this optimum, at about 38 × 10³ lb. The paper's statistics come from 100 random starting points
+per formulation; the results here are single runs.
+
 ## Features
 
 - NHATC coordination with an augmented Lagrangian penalty and method-of-multipliers updates; penalty weights grow
