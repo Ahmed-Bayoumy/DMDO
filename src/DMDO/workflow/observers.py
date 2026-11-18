@@ -163,13 +163,13 @@ class CoordinationHistoryRecorder(RunObserver):
     status = copy.deepcopy(hstatus) if run.fmin != np.inf else "Error"
     cmax = worst_link_label(coord, index)
     if coord.is_AI_regularizer:
-      values = [curr_time, iter, np.max(np.abs(coord.q)), coord.spike_location,
+      values = [curr_time, iter, coord.max_inconsistency(), coord.spike_location,
                 int(bool(getattr(coord, "alarm_detected", False))), int(bool(getattr(coord, "spike_detected", False))),
                 run.fmin, coord.spike_prob, coord.forecast_prob, coord.non_improvement_prob,
                 coord.objective_non_improvement_prob, coord.constraint_non_improvement_prob,
                 coord.detector_uncertainty, coord.constraint_pressure, status, dx, np.max(coord.w), cmax]
     else:
-      values = [curr_time, iter, np.max(np.abs(coord.q)), int(bool(getattr(coord, "alarm_detected", False))),
+      values = [curr_time, iter, coord.max_inconsistency(), int(bool(getattr(coord, "alarm_detected", False))),
                 int(bool(getattr(coord, "spike_detected", False))), run.fmin, status, dx, np.max(coord.w), cmax]
     row = {keys[0]: str(values[0])}
     for k, value in zip(keys[1:len(values)], values[1:]):

@@ -1,0 +1,292 @@
+# The SBJ MDO problem: non-hierarchical ATC without the aircraft subproblem, formulation (d) of
+# Tosserams et al. (2010), Fig. 6(d) and Eqs. (A13)-(A15). Subproblems: 1 propulsion, 2 aerodynamics,
+# 3 structures. 10 target-response pairs + 2 system-wide functions:
+#   g_range  = 1 - range(SFC^p, We^p, L/D^ae, Ws^s, Wf^s) / 2000 <= 0  (slack s of propulsion)
+#   h_weight = Wt^ae - We^p - Ws^s - Wf^s = 0
+# The objective min Wt sits in aerodynamics, which owns Wt (Fig. 6d, x3).
+
+variables:
+# vs:  [name,     sp_index, link, coupling, lb,      bl,        ub,        dim, var_type]
+  v6: ["SFC", 1, null, ff, 1.0, 2.0, 4.0, 1, "REAL"]
+  v7: ["We", 1, null, ff, 100.0, 15000.0, 30000.0, 1, "REAL"]
+  v8: ["D", 1, 2, fb, 1000.0, 40000.0, 70000.0, 1, "REAL"]
+  v9: ["ESF", 1, 2, ff, 0.5, 1.0, 1.5, 1, "REAL"]
+  v10: ["T", 1, null, u, 0.1, 0.6, 1.0, 1, "REAL"]
+  # Slack of the system-wide range constraint (propulsion, Eq. A13)
+  v71: ["s_range", 1, null, u, 0.0, 0.0, 2.0, 1, "REAL"]
+  v11: ["D", 2, 1, ff, 1000.0, 40000.0, 70000.0, 1, "REAL"]
+  v12: ["ESF", 2, 1, fb, 0.5, 1.0, 1.5, 1, "REAL"]
+  v13: ["Wt", 2, null, u, 5000.0, 25000.0, 100000.0, 1, "REAL"]
+  v14: ["LD", 2, null, ff, 0.1, 5.0, 10.0, 1, "REAL"]
+  v15: ["theta", 2, 3, fb, 0.2, 10.0, 50.0, 1, "REAL"]
+  v16: ["L", 2, 3, ff, 5000.0, 25000.0, 100000.0, 1, "REAL"]
+  v17: ["tc", 2, 3, s, 0.01, 0.05, 0.1, 1, "REAL"]
+  v18: ["ARw", 2, 3, s, 2.5, 3.0, 8.0, 1, "REAL"]
+  v19: ["LAMBDAw", 2, 3, s, 40.0, 60.0, 70.0, 1, "REAL"]
+  v20: ["Sref", 2, 3, s, 200.0, 500.0, 800.0, 1, "REAL"]
+  v21: ["Sht", 2, 3, s, 50.0, 100.0, 148.9, 1, "REAL"]
+  v22: ["ARht", 2, 3, s, 2.5, 5.5, 8.5, 1, "REAL"]
+  v23: ["LAMBDAht", 2, null, u, 40.0, 45.0, 70.0, 1, "REAL"]
+  v24: ["Lw", 2, null, u, 0.01, 0.15, 0.2, 1, "REAL"]
+  v25: ["Lht", 2, null, u, 1.0, 1.5, 3.5, 1, "REAL"]
+  v26: ["theta", 3, 2, ff, 0.2, 10.0, 50.0, 1, "REAL"]
+  v27: ["L", 3, 2, fb, 5000.0, 25000.0, 100000.0, 1, "REAL"]
+  v28: ["Ws", 3, null, ff, 5000.0, 25000.0, 100000.0, 1, "REAL"]
+  v29: ["Wf", 3, null, ff, 5000.0, 25000.0, 100000.0, 1, "REAL"]
+  v30: ["tc", 3, 2, s, 0.01, 0.05, 0.1, 1, "REAL"]
+  v31: ["ARw", 3, 2, s, 2.5, 3.0, 8.0, 1, "REAL"]
+  v32: ["LAMBDAw", 3, 2, s, 40.0, 60.0, 70.0, 1, "REAL"]
+  v33: ["Sref", 3, 2, s, 200.0, 500.0, 800.0, 1, "REAL"]
+  v34: ["Sht", 3, 2, s, 50.0, 100.0, 148.9, 1, "REAL"]
+  v35: ["ARht", 3, 2, s, 2.5, 5.5, 8.5, 1, "REAL"]
+  v36: ["lambda", 3, null, u, 0.1, 0.3, 0.4, 1, "REAL"]
+  v37: ["t", 3, null, u, 0.1, 3.0, 4.0, 1, "REAL"]
+  v38: ["t", 3, null, u, 0.1, 3.0, 4.0, 1, "REAL"]
+  v39: ["t", 3, null, u, 0.1, 3.0, 4.0, 1, "REAL"]
+  v40: ["t", 3, null, u, 0.1, 3.0, 4.0, 1, "REAL"]
+  v41: ["t", 3, null, u, 0.1, 3.0, 4.0, 1, "REAL"]
+  v42: ["t", 3, null, u, 0.1, 3.0, 4.0, 1, "REAL"]
+  v43: ["t", 3, null, u, 0.1, 3.0, 4.0, 1, "REAL"]
+  v44: ["t", 3, null, u, 0.1, 3.0, 4.0, 1, "REAL"]
+  v45: ["t", 3, null, u, 0.1, 3.0, 4.0, 1, "REAL"]
+  v46: ["ts", 3, null, u, 0.1, 6.0, 9.0, 1, "REAL"]
+  v47: ["ts", 3, null, u, 0.1, 6.0, 9.0, 1, "REAL"]
+  v48: ["ts", 3, null, u, 0.1, 6.0, 9.0, 1, "REAL"]
+  v49: ["ts", 3, null, u, 0.1, 6.0, 9.0, 1, "REAL"]
+  v50: ["ts", 3, null, u, 0.1, 6.0, 9.0, 1, "REAL"]
+  v51: ["ts", 3, null, u, 0.1, 6.0, 9.0, 1, "REAL"]
+  v52: ["ts", 3, null, u, 0.1, 6.0, 9.0, 1, "REAL"]
+  v53: ["ts", 3, null, u, 0.1, 6.0, 9.0, 1, "REAL"]
+  v54: ["ts", 3, null, u, 0.1, 6.0, 9.0, 1, "REAL"]
+  v56: ["Temp_E", 1, null, dummy, 0.0, 0.0, 0.0, 1, "REAL"]
+  v57: ["Throttle_uA", 1, null, dummy, 0.0, 0.0, 0.0, 1, "REAL"]
+  v58: ["Pg", 2, null, dummy, 0.0, 0.0, 0.0, 1, "REAL"]
+  v59: ["CLo1", 2, null, dummy, 0.0, 0.0, 0.0, 1, "REAL"]
+  v60: ["CLo2", 2, null, dummy, 0.0, 0.0, 0.0, 1, "REAL"]
+
+DA:
+  DA1:
+    index: 1
+    inputs: [v8, v10]
+    outputs: [v6, v7, v9, v56, v57]
+    blackbox: SBJ_propulsion_analysis
+    type: callable
+    links: [2]
+    coupling_type: ff
+
+  DA2:
+    index: 2
+    inputs: [v13, v12, v15, v17, v18, v19, v20, v21, v22, v23, v24, v25]
+    outputs: [v16, v11, v14, v58, v59, v60]
+    blackbox: SBJ_aerodynamics_analysis
+    type: callable
+    links: [1, 3]
+    coupling_type: ff
+
+  DA3:
+    index: 3
+    inputs: [v27, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54]
+    outputs: [v28, v29, v26]
+    blackbox: SBJ_structure_analysis
+    type: callable
+    links: [2]
+    coupling_type: ff
+
+MDA:
+  MDA1:
+    index: 1
+    nAnalyses: 1
+    analyses: [1]
+    variables: [v8, v10, v71]
+    responses: [v6, v7, v9, v56, v57]
+
+  MDA2:
+    index: 2
+    nAnalyses: 1
+    analyses: [2]
+    variables: [v13, v12, v15, v17, v18, v19, v20, v21, v22, v23, v24, v25]
+    responses: [v16, v11, v14, v58, v59, v60]
+
+  MDA3:
+    index: 3
+    nAnalyses: 1
+    analyses: [3]
+    variables: [v27, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54]
+    responses: [v28, v29, v26]
+
+
+coord:
+  c1:
+    index: 1
+    type: ADMM
+    # Paper settings (Tosserams et al., Sec. 4.3): slow penalty growth beta = 1.03, gamma = 0.75.
+    beta: 1.03
+    gamma: 0.75
+    nsp: 3
+    budget: 500
+    index_of_master_SP: 2
+    display: true
+    # q = (copy - copy) / reference, the paper's scaling (variables scaled so the Table 1 reference is 1).
+    scaling: reference
+    w_init: 60
+    mode: serial
+    M_update_scheme: normal
+    store_q_io: true
+    # One multiplier/penalty update per outer iteration (method of multipliers, as in NoHiMDO and the paper).
+    single_multiplier_update: true
+
+# coord:
+#   c1:
+#     index: 1
+#     type: ADMM
+#     beta: 1.1
+#     gamma: 0.8
+#     nsp: 3
+#     budget: 500
+#     index_of_master_SP: 2
+#     display: True
+#     scaling: null
+#     mode: serial
+#     M_update_scheme: max
+#     store_q_io: True
+
+subproblem:
+  sp1:
+    nv: 3
+    index: 1
+    vars: [v8, v10, v71]
+    resps: [v6, v7, v9, v56, v57]
+    is_main: false
+    MDA: 1
+    coordinator: 1
+    opt: SBJ_propulsion_opt
+    type: callable
+    fmin_nop: inf
+    budget: 50
+    display: false
+    psize: 1.
+    pupdate: DEFAULT
+    solver: mads
+    save_results: true
+    configurations: CSP1
+
+  sp2:
+    nv: 12
+    index: 2
+    vars: [v13, v12, v15, v17, v18, v19, v20, v21, v22, v23, v24, v25]
+    resps: [v16, v11, v14, v58, v59, v60]
+    is_main: true
+    MDA: 2
+    coordinator: 1
+    opt: SBJ_aerodynamics_weight_opt
+    type: callable
+    freal: 34300
+    fmin_nop: inf
+    budget: 50
+    display: true
+    psize: 1.
+    pupdate: DEFAULT
+    solver: scipy
+    scipy:
+      method: SLSQP
+      is_con: true
+      normalize: true
+      cache_constraints: true
+      restore_feasibility: true
+      scale_objective: true
+      tol: 1.0e-8
+      options: {maxiter: 50, ftol: 1.0e-9, eps: 1.0e-7, disp: false}
+    save_results: true
+    save_all_best: false
+    configurations: CSP1
+
+  sp3:
+    nv: 26
+    index: 3
+    vars: [v27, v30, v31, v32, v33, v34, v35, v36, v37, v38, v39, v40, v41, v42, v43, v44, v45, v46, v47, v48, v49, v50, v51, v52, v53, v54]
+    resps: [v28, v29, v26]
+    is_main: false
+    MDA: 3
+    coordinator: 1
+    opt: SBJ_structure_opt
+    type: callable
+    fmin_nop: inf
+    budget: 50
+    display: false
+    psize: 2.
+    pupdate: DEFAULT
+    solver: scipy
+    scipy:
+      method: SLSQP
+      is_con: true
+      normalize: true
+      cache_constraints: true
+      restore_feasibility: true
+      scale_objective: true
+      tol: 1.0e-8
+      options: {maxiter: 200, ftol: 1.0e-9, eps: 1.0e-7, disp: false}
+    save_results: true
+    save_all_best: false
+    configurations: CSP1
+
+USER:
+  h: 55000
+  M: 1.4
+
+MDO:
+  architecture: IDF
+  coordinator: 1
+  subproblems: [1, 2, 3]
+  responses: [v6, v7, v9, v16, v11, v14, v28, v29, v26]
+  fmin: inf
+  hmin: inf
+  display: true
+  inc_stop: 1.0e-6
+  stop: "Iteration budget exhausted"
+  tab_inc: []
+  noprogress_stop: 100
+
+# System-wide functions (Sec. 2.2, Eqs. 5-6): relaxed by the coordinator with their own multipliers;
+# every subproblem that owns an input (or the slack) adds phi(g + s) / phi(h) to its objective.
+system_functions:
+  g_range:
+    type: ineq
+    blackbox: SBJ_range_constraint
+    inputs: [v6, v7, v14, v28, v29]
+    slack: v71
+    scaling: 1.0
+  h_weight:
+    type: eq
+    blackbox: SBJ_weight_balance
+    inputs: [v13, v7, v28, v29]
+    scaling: 4.0e-5  # 1 / Wt reference (25000 lb)
+
+# March 2026 MADS settings (DMDO b87b4fb defaults) for DMDO 2612; search: MADS sampling (LH) instead of VNS.
+CONFIG:
+  CSP1:
+    constraintsHandling:
+      barriers: PB_all
+      rho: 0.001
+      h_max: 0.01
+      lambda_multipliers: 1000
+    options:
+      seed: 10000
+      tol: 0.001
+      psize_init: 1
+      display: false
+      opportunistic: true
+      check_cache: true
+      store_cache: true
+      collect_y: false
+      rich_direction: false
+      precision: high
+      save_results: false
+      save_coordinates: false
+      save_all_best: false
+      parallel_mode: false
+    search:
+      type: sampling
+      s_method: LH
+      ns: 10
+      visualize: false
+      criterion: null

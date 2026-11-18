@@ -158,9 +158,10 @@ class MDO(MDO_data):
     if (
       iter > 1
       and np.abs(self.tab_inc[iter]) < self.inc_stop
-      and np.max(np.abs(np.subtract(np.abs(self.Coordinator.q), np.abs(self.Coordinator.qold)))) < self.inc_stop
+      and np.max(np.abs(np.subtract(np.abs(self.Coordinator.q_extended()),
+                                    np.abs(self.Coordinator.qold_extended())))) < self.inc_stop
     ):
-      msg = f'Stop: qmax = {np.max(np.abs(self.Coordinator.q))} < {self.inc_stop}'
+      msg = f'Stop: qmax = {self.Coordinator.max_inconsistency()} < {self.inc_stop}'
       self.log.log_msg(msg=msg, msg_type=MSG_TYPE.INFO.value)
       print(msg)
       msg = "Max inconsitency is below stopping threshold"
@@ -475,7 +476,7 @@ class MDO(MDO_data):
       if assess is not None:
         assess(iter)
       record = IterationRecord(iteration=iter, objective=self.fmin,
-                               max_inconsistency=float(np.max(np.abs(self.Coordinator.q))),
+                               max_inconsistency=self.Coordinator.max_inconsistency(),
                                max_penalty_weight=float(np.max(self.Coordinator.w)), variables_change=dx,
                                worst_link=index)
       notify(hooks, "on_iteration_end", self, record)
@@ -485,7 +486,7 @@ class MDO(MDO_data):
       notify(hooks, "on_multipliers_updated", self, iter)
 
       # Stopping criteria
-      self.tab_inc.append(np.max(np.abs(self.Coordinator.q)))
+      self.tab_inc.append(self.Coordinator.max_inconsistency())
       finished = self.check_termination_critt(iter)
       if not finished:
         self.eps_qio = copy.deepcopy(eps_qio)

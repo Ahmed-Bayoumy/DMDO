@@ -792,6 +792,8 @@ class SubProblem(partitionedProblemData):
     q_indices: List = self.getLocalIndices()
     self.coord.calc_inconsistency()
     self.coord.calc_penalty(q_indices, self.fmin_nop)
+    # System-wide functions that depend on this subproblem (evaluated at its trial values, the others' latest).
+    self.coord.phi = self.coord.phi + self.coord.system_penalty(self.index)
     # TODO: change the name of this routine
     self.coord.update_master_vector_val(self.vars, self.MDA_process.responses, self.sets)
     mvs = self.coord.master_vars

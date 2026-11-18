@@ -38,6 +38,7 @@ from ..subproblem.subproblem import SubProblem
 from ..utils.log import MSG_TYPE, logger
 from ..core.enums import COUPLING_TYPE, MDO_ARCHITECTURE, PSIZE_UPDATE, USER, w_scheme
 from ..coordination.admm import ADMM
+from ..coordination.system_functions import SystemFunction
 
 from ..core.protocols import coordinator
 from ..core.protocols import process
@@ -467,7 +468,52 @@ class problemSetup:
         ai_options={key: c[i][key] for key in _AI_OPTION_KEYS if key in c[i]},
       ))
       self.log.log_msg(msg=f"Coordinator configurations: {c}", msg_type=MSG_TYPE.INFO.value)
+    self.systemFunctionsSetup()
     self.log.log_msg(msg="Completed coordinator setup ...\n", msg_type=MSG_TYPE.INFO.value)
+
+  def _variable_index(self, key: str, where: str) -> int:
+    keys = list(self.data["variables"].keys())
+    if key not in keys:
+      raise KeyError(f"{where}: unknown variable key '{key}'.")
+    return int(self.V[keys.index(key)].index)
+
+  def systemFunctionsSetup(self):
+    """Optional ``system_functions`` section: system-wide constraints relaxed by the coordinator (Tosserams et al.
+    2010, Eqs. 5-6). Each entry::
+
+      g_range:
+        type: ineq            # ineq: g(x) <= 0, relaxed as phi(g + s) with the slack s >= 0; eq: h(x) = 0
+        blackbox: my_function # callable(list of input values) -> float
+        inputs: [v6, v7, v14] # variable keys; their values are passed to blackbox in this order
+        slack: v71            # ineq only: a local variable (lower bound 0) of one subproblem
+        scaling: 1.0          # optional, multiplies the value before it enters the inconsistency vector
+        coordinator: 1        # optional, default: the first coordinator
+    """
+    sf = self.data.get("system_functions")
+    if not sf:
+      return
+    for coord in self.Coords:
+      coord.system_functions = []
+    for name, spec in sf.items():
+      where = f"system_functions.{name}"
+      if "blackbox" not in spec or "inputs" not in spec or "type" not in spec:
+        raise IOError(f"{where} needs 'type', 'blackbox' and 'inputs'.")
+      func = SystemFunction(
+        name=str(name), kind=spec["type"], blackbox=self.resolve_callable(spec["blackbox"]),
+        inputs=[self._variable_index(k, where) for k in spec["inputs"]],
+        slack=self._variable_index(spec["slack"], where) if spec.get("slack") is not None else None,
+        scaling=float(spec.get("scaling", 1.0)))
+      if not callable(func.blackbox):
+        raise IOError(f"{where}: blackbox '{spec['blackbox']}' could not be resolved to a callable.")
+      if func.slack is not None and float(np.min(np.atleast_1d(self.V[func.slack - 1].lb))) < 0.0:
+        raise ValueError(f"{where}: the slack variable '{spec['slack']}' needs a lower bound >= 0.")
+      func.bind(self.V)
+      coord = self.getCoord(spec.get("coordinator", self.Coords[0].index))
+      if coord is None:
+        raise IOError(f"{where}: unknown coordinator {spec.get('coordinator')}.")
+      coord.system_functions.append(func)
+      self.log.log_msg(msg=f"System-wide function {name} ({func.kind}) penalised in subproblems {func.subproblems}",
+                       msg_type=MSG_TYPE.INFO.value)
 
   def SPSetup(self):
     """ Setup subproblems definition """

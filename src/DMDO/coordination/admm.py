@@ -34,6 +34,7 @@ from ..core.variables import variableData
 from ..ai.detector import HybridAnomalyDetector
 from ..ai.decisor import resolve_level
 from .policy import policy_for
+from .system_functions import penalty as _sw_penalty
 from dataclasses import dataclass, field
 
 @dataclass
@@ -1010,6 +1011,68 @@ class ADMM(ADMM_data):
     if np.iscomplex(self.phi) or np.isnan(self.phi):
       self.phi = np.inf
   
+  # ------------------------------------------------------------------------------------ system-wide functions
+  # Optional (``system_functions`` in the problem definition; see coordination/system_functions.py). Their state is
+  # kept apart from the pair vectors q, v, w so the pair bookkeeping (batching by linked variable) is unchanged.
+  def _sw_ready(self) -> bool:
+    sw = getattr(self, "system_functions", None)
+    if not sw:
+      return False
+    n = len(sw)
+    if getattr(self, "v_sw", None) is None or len(self.v_sw) != n:
+      self.v_sw = np.zeros(n)
+      self.w_sw = np.full(n, float(getattr(self, "w_init", 1.0)))
+      self.q_sw = np.zeros(n)
+      self.q_sw_old = np.zeros(n)
+    return True
+
+  def calc_system_functions(self, master_vars=None) -> np.ndarray:
+    """Scaled values g0 + s / h0 of the system-wide functions at ``master_vars`` (default: the master vector)."""
+    if not self._sw_ready():
+      return np.zeros(0)
+    mv = self.master_vars if master_vars is None else master_vars
+    return np.array([f.value(mv) for f in self.system_functions], dtype=float)
+
+  def system_penalty(self, sp_index: int) -> float:
+    """Penalty of the system-wide functions that depend on subproblem ``sp_index`` (updates ``q_sw``)."""
+    if not self._sw_ready():
+      return 0.0
+    self.q_sw = self.calc_system_functions()
+    phi = _sw_penalty(self.v_sw, self.w_sw, self.q_sw)
+    out = float(sum(phi[k] for k, f in enumerate(self.system_functions) if int(sp_index) in f.subproblems))
+    return np.inf if np.isnan(out) else out
+
+  def update_system_multipliers(self) -> None:
+    """Method of multipliers for the system-wide functions (Eqs. 7-8, per-function weight update)."""
+    if not self._sw_ready():
+      return
+    self.q_sw = self.calc_system_functions()
+    if getattr(self, "master_vars_old", None):
+      self.q_sw_old = self.calc_system_functions(self.master_vars_old)
+    self.v_sw = self.v_sw + 2.0 * self.w_sw * self.w_sw * self.q_sw
+    stall = np.greater(np.abs(self.q_sw), self.gamma * np.abs(self.q_sw_old))
+    self.w_sw = np.where(stall, self.w_sw * self.beta, self.w_sw)
+    w_cap = float(getattr(self, "penalty_w_cap", np.inf))
+    if np.isfinite(w_cap):
+      self.w_sw = np.minimum(self.w_sw, w_cap)
+
+  def q_extended(self) -> np.ndarray:
+    """Extended inconsistency vector [c; g0 + s; h0] (the pair part alone when there are no system-wide functions)."""
+    q = np.ravel(np.asarray(self.q, dtype=float))
+    if self._sw_ready():
+      q = np.concatenate([q, np.ravel(self.q_sw)])
+    return q
+
+  def qold_extended(self) -> np.ndarray:
+    q = np.ravel(np.asarray(self.qold, dtype=float))
+    if self._sw_ready():
+      q = np.concatenate([q, np.ravel(self.q_sw_old)])
+    return q
+
+  def max_inconsistency(self) -> float:
+    q = self.q_extended()
+    return float(np.max(np.abs(q))) if q.size else 0.0
+
   def sigmoid(self, x: np.ndarray):
     """
     Compute the sigmoid of x
@@ -1133,6 +1196,7 @@ class ADMM(ADMM_data):
     beta_scale, gamma_scale, spike_detected = policy_for(self).multiplier_scales(self, iter)
     self.v = np.add(self.v, np.multiply(
             np.multiply(np.multiply(2, self.w), self.w), self.q))
+    self.update_system_multipliers()
     self.calc_inconsistency_old()
     old = self.batch_q_old(self.qold)
     current = self.batch_q(self.q)

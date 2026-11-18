@@ -261,7 +261,7 @@ class Session:
     hmin = mdo.hmin
     hmax = max(np.atleast_1d(np.asarray(hmin, dtype=float))) if hmin is not None and np.size(hmin) else 0.0
     variables = {f"{v.name}_{v.sp_index}": copy.deepcopy(v.value) for v in getattr(coord, "master_vars", [])}
-    q = np.asarray(getattr(coord, "q", []), dtype=float)
+    q = coord.q_extended() if hasattr(coord, "q_extended") else np.asarray(getattr(coord, "q", []), dtype=float)
     return RunResult(
       status=self.status,
       stop_reason=str(getattr(mdo, "stop", "")),
