@@ -217,6 +217,16 @@ class problemSetup:
         lb[i] = float(lb[i])
     scaling = np.subtract(ub,lb)
     self.Qscaling = []
+    # Alternative inconsistency scaling (coord ``scaling: reference``): q = (x1 - x2) / |reference|, with the baseline
+    # value as the reference (Tosserams et al. scale every variable so that its reference value is 1).
+    self.Qscaling_reference = []
+    for i in range(len(names)):
+      ref = bl[i]
+      try:
+        ref = float(np.mean(np.abs(np.asarray(ref, dtype=float))))
+      except (TypeError, ValueError):
+        ref = 0.0
+      self.Qscaling_reference.append(1.0 / ref if np.isfinite(ref) and ref > 0.0 else 1.0)
     # blError = raise IOError()
     for i in range(len(names)):
       cond_on = None
@@ -409,6 +419,15 @@ class problemSetup:
         variables=self.getVariables(MD[i]["variables"]), 
         responses=self.getVariables(MD[i]["responses"])))
 
+  def _coord_scaling(self, value: Any) -> Any:
+    """Inconsistency scaling of a coordinator: a float, ``"reference"`` (1/|baseline| per variable) or, by default,
+    0.1/(ub - lb) per variable."""
+    if isinstance(value, float):
+      return value
+    if isinstance(value, str) and value.strip().lower() == "reference":
+      return copy.deepcopy(self.Qscaling_reference)
+    return copy.deepcopy(self.Qscaling)
+
   def COORDSetup(self):
     """ Setup coordinators definition """
     self.log.log_msg(msg="Starting coordinator setup ...", msg_type=MSG_TYPE.INFO.value)
@@ -426,7 +445,7 @@ class problemSetup:
         nsp=  c[i]["nsp"],
         index_of_master_SP= c[i]["index_of_master_SP"],
         display= c[i]["display"],
-        scaling= c[i]["scaling"] if isinstance(c[i]["scaling"], float)  else copy.deepcopy(self.Qscaling),
+        scaling=self._coord_scaling(c[i].get("scaling")),
         mode=c[i]["mode"],
         M_update_scheme=self.getWupdateScheme(c[i]["M_update_scheme"]),
         store_q_io=c[i]["store_q_io"],

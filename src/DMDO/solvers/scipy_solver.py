@@ -16,7 +16,8 @@ class ScipySolver(BaseSolver):
 
   ``request.config`` is the subproblem's ``scipy`` block: ``method``, ``options``, ``tol``, ``is_con`` (pass the
   coupling/local constraints to the optimizer instead of a quadratic penalty) and ``normalize`` (optimize in the
-  unit box).
+  unit box). Optional: ``scale_objective`` (divide the objective by max(1, |f(x0)|) in each solve), ``jac`` (passed
+  to scipy, e.g. ``"3-point"``) and ``cache_constraints`` (see :meth:`SubProblem.get_con`).
   """
 
   objective_form = "scalar"
@@ -63,7 +64,20 @@ class ScipySolver(BaseSolver):
       con_fun = constraints
       bnds, x0 = Bounds(lb=lb, ub=ub), request.x0
 
+    # Optional ``scale_objective``: divide the objective by max(1, |f(x0)|) for this solve. The minimiser is unchanged,
+    # but SLSQP's absolute ftol and its identity initial Hessian assume f = O(1); with a raw objective of ~1e4 plus a
+    # large augmented-Lagrangian penalty it stops at x0 or fails its line search ("Positive directional derivative").
+    f_scale = 1.0
+    if settings.get("scale_objective", False):
+      f0 = float(obj_fun(x0))
+      if np.isfinite(f0):
+        f_scale = max(1.0, abs(f0))
+      unscaled_obj = obj_fun
+      obj_fun = lambda z, *a: unscaled_obj(z, *a) / f_scale  # noqa: E731
+
     kwargs = {"method": settings["method"], "x0": x0, "options": opts, "tol": settings["tol"], "bounds": bnds}
+    if settings.get("jac") is not None:
+      kwargs["jac"] = settings["jac"]
     if settings["is_con"]:
       if str(settings["method"]).upper() == "SLSQP":
         # SLSQP takes dict constraints (fun >= 0).
@@ -72,6 +86,22 @@ class ScipySolver(BaseSolver):
         kwargs["constraints"] = [NonlinearConstraint(fun=con_fun, lb=-np.inf, ub=0.0, keep_feasible=False,
                                                      jac='2-point', hess=BFGS())]
     res = minimize(obj_fun, **kwargs)
+    # Optional ``restore_feasibility``: SLSQP (unlike fmincon's SQP) cannot recover from an infeasible start once its
+    # QP linearisation becomes inconsistent; it then stops with status 8 ("Positive directional derivative") at an
+    # infeasible point. On such an infeasible result, minimise the squared violation within the bounds and restart.
+    if settings["is_con"] and settings.get("restore_feasibility", False):
+      con_tol = float(settings.get("con_tol", 1e-6))
+      viol = lambda z: float(np.sum(np.maximum(np.asarray(con_fun(z), dtype=float), 0.0) ** 2))  # noqa: E731
+      if viol(res.x) > con_tol ** 2:
+        phase1 = minimize(viol, res.x, method="L-BFGS-B", bounds=bnds, options={"maxiter": 200, "ftol": 1e-16, "gtol": 1e-12})
+        if viol(phase1.x) < viol(res.x):
+          res2 = minimize(obj_fun, **{**kwargs, "x0": phase1.x})
+          v2 = viol(res2.x)
+          if v2 <= con_tol ** 2 or v2 < viol(res.x):
+            res = res2
+          elif viol(phase1.x) < viol(res.x):
+            res = phase1
+            res.fun = float(obj_fun(phase1.x))
     x_best = np.asarray(to_x(res.x), dtype=float)
     # Same violation measure as OMADS's progressive barrier: h = sum(max(0, g)^2).
     g = np.asarray(constraints(list(x_best)), dtype=float) if settings["is_con"] else np.zeros(1)
@@ -79,4 +109,4 @@ class ScipySolver(BaseSolver):
     # Legacy behaviour (kept for numerical reproducibility): the best point is evaluated here once more, on top of
     # the commit evaluation SubProblem.solve performs after every solver.
     objective(copy.deepcopy(x_best))
-    return SolverOutcome(x=copy.deepcopy(x_best), fmin=res.fun, hmin=hmin, raw=copy.deepcopy(x_best))
+    return SolverOutcome(x=copy.deepcopy(x_best), fmin=res.fun * f_scale, hmin=hmin, raw=copy.deepcopy(x_best))

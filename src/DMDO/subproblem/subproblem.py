@@ -662,7 +662,22 @@ class SubProblem(partitionedProblemData):
       self.coord.alarm_detected = bool(getattr(self.coord, "alarm_detected", False) or alarm)
 
   def get_con(self, x):
+    # Opt-in (scipy setting ``cache_constraints``): reuse the constraints of an objective evaluation at the same
+    # point in this solve instead of running the analysis again (SLSQP asks for f and c separately at every point).
+    memo = self.__dict__.get("_con_memo")
+    if memo is not None:
+      hit = memo.get(self._memo_key(x))
+      if hit is not None:
+        return list(hit)
     return self.evaluate(x, None, "con_only")
+
+  @staticmethod
+  def _memo_key(x) -> tuple:
+    return tuple(float(a) for a in np.ravel(np.asarray(x, dtype=float)))
+
+  def _con_memo_enabled(self) -> bool:
+    return (self._solver_impl().objective_form == "scalar" and isinstance(self.scipy, dict)
+            and bool(self.scipy.get("is_con")) and bool(self.scipy.get("cache_constraints", False)))
   
   @staticmethod
   def _is_out_of_bounds(vlist, lb, ub) -> bool:
@@ -793,6 +808,9 @@ class SubProblem(partitionedProblemData):
         if is_conOnly:
           return con
         else:
+          memo = self.__dict__.get("_con_memo")
+          if memo is not None and vlist is not None:
+            memo[self._memo_key(vlist)] = list(con)
           return fun[0] + self.coord.phi
       else:
         hmax = 0.001
@@ -923,10 +941,13 @@ class SubProblem(partitionedProblemData):
     # Some solvers evaluate trial points they fail to snap onto the bounds; reject them in evaluate() so they can
     # never become the next poll center (which OMADS refuses with "lb <= x^mesh <= ub").
     self._omads_bounds = (request.lb, request.ub) if impl.rejects_out_of_bounds else None
+    # Constraint memo lives for one solve only (the multipliers and the other subproblems' values change between).
+    self.__dict__["_con_memo"] = {} if self._con_memo_enabled() else None
     try:
       outcome = impl.solve(request)
     finally:
       self._omads_bounds = None
+      self.__dict__["_con_memo"] = None
     self.log = log_copy
     self.fmin = outcome.fmin
     self.hmin = outcome.hmin

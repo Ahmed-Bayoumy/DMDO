@@ -170,7 +170,8 @@ class MDO(MDO_data):
 
     i = self.noprogress_stop
 
-    if iter > i + 2 and np.log(np.min(self.Coordinator.w) > 6.) \
+    # NoHiMDO: log10(min(w)) > 6 (the former np.log(min(w) > 6.) was truthy exactly when min(w) <= 6).
+    if iter > i + 2 and np.log10(np.min(self.Coordinator.w)) > 6. \
       and np.less_equal(self.tab_inc[iter-i], np.min(self.tab_inc[iter-i+1:iter])):
       msg = f'Stop: no progress after {i} iterations.'
       self.log.log_msg(msg=msg, msg_type=MSG_TYPE.INFO.value)
