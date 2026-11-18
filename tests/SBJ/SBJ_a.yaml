@@ -183,7 +183,7 @@ coord:
     scaling: reference
     w_init: 60
     mode: serial
-    M_update_scheme: normal
+    M_update_scheme: max
     store_q_io: true
     # One multiplier/penalty update per outer iteration (method of multipliers, as in NoHiMDO and the paper).
     single_multiplier_update: true

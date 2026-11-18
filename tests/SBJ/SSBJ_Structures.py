@@ -372,7 +372,7 @@ class WingDesignAnalyzer:
 
         c = np.array(self.c)
 
-        l = 0.6 * self.c_box  # IMPORTANT: matches MATLAB
+        l = 0.6 * self.c_box  # noqa: E741  IMPORTANT: matches MATLAB
 
         # ---- Equivalent thickness ----
         teq1 = ((t1**3)/4 + (3*t1)*(ts1 - t1/2)**2)**(1/3)
