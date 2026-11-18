@@ -46,8 +46,9 @@ class SSBJ_Aircraft:
         Returns:
             float: Range in nautical miles
         """
-        return (self.Mach * self.LDr * 661.0 * 
-                np.sqrt(theta_r / self.SFCp) * 
+        # Breguet range (MATLAB SBJ_constraint_range.m): M * L/D * 661 * sqrt(theta) / SFC * ln(Wt / (Wt - Wf))
+        return (self.Mach * self.LDr * 661.0 *
+                np.sqrt(theta_r) / self.SFCp *
                 math.log(Wt / (Wt - self.Wf)))
 
     def _calculate_constraints(self, range) -> List[float]:

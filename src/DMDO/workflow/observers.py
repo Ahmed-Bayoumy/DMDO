@@ -67,11 +67,18 @@ class ConsoleReporter(RunObserver):
                                      record.max_penalty_weight)
     run.log.log_msg(msg=formatted_msg, msg_type=MSG_TYPE.INFO.value)
     print(formatted_msg)
-    a = coord.master_vars[coord._linker[0, record.worst_link]-1]
-    b = coord.master_vars[coord._linker[1, record.worst_link]-1]
-    run.log.log_msg(msg=f'Highest inconsistency : {a.name}_{a.sp_index} to {b.name}_{b.link}',
-                    msg_type=MSG_TYPE.INFO.value)
-    print(f'Highest inconsistency : {a.name}_{a.link} to {b.name}_{b.link}')
+    label = worst_link_label(coord, record.worst_link)
+    run.log.log_msg(msg=f'Highest inconsistency : {label}', msg_type=MSG_TYPE.INFO.value)
+    print(f'Highest inconsistency : {label}')
+
+
+def worst_link_label(coord, link: int) -> str:
+  """``<name>_<subproblem> to <name>_<subproblem>`` for a link (a column of ``coord._linker``, the index used by
+  :meth:`~DMDO.ADMM.batch_q` and ``IterationRecord.worst_link``): the two copies of the variable and the subproblems
+  that own them."""
+  a = coord.master_vars[coord._linker[0, link] - 1]
+  b = coord.master_vars[coord._linker[1, link] - 1]
+  return f'{a.name}_{a.sp_index} to {b.name}_{b.sp_index}'
 
 
 class CoordinationHistoryRecorder(RunObserver):
@@ -154,17 +161,15 @@ class CoordinationHistoryRecorder(RunObserver):
     hmin = max(run.hmin) if isinstance(run.hmin, list) and run.hmin is not None and len(run.hmin) > 0 else run.hmin
     hstatus = "Feasible" if hmin <= FEASIBILITY_TOL else "Infeasible"
     status = copy.deepcopy(hstatus) if run.fmin != np.inf else "Error"
-    a = coord.master_vars[coord.extended_linker[0, index]-1]
-    b = coord.master_vars[coord.extended_linker[1, index]-1]
-    cmax = f'{a.name}_{a.link} to {b.name}_{b.link}'
+    cmax = worst_link_label(coord, index)
     if coord.is_AI_regularizer:
-      values = [curr_time, iter, np.max(np.abs(coord.q)), coord.spike_location,
+      values = [curr_time, iter, coord.max_inconsistency(), coord.spike_location,
                 int(bool(getattr(coord, "alarm_detected", False))), int(bool(getattr(coord, "spike_detected", False))),
                 run.fmin, coord.spike_prob, coord.forecast_prob, coord.non_improvement_prob,
                 coord.objective_non_improvement_prob, coord.constraint_non_improvement_prob,
                 coord.detector_uncertainty, coord.constraint_pressure, status, dx, np.max(coord.w), cmax]
     else:
-      values = [curr_time, iter, np.max(np.abs(coord.q)), int(bool(getattr(coord, "alarm_detected", False))),
+      values = [curr_time, iter, coord.max_inconsistency(), int(bool(getattr(coord, "alarm_detected", False))),
                 int(bool(getattr(coord, "spike_detected", False))), run.fmin, status, dx, np.max(coord.w), cmax]
     row = {keys[0]: str(values[0])}
     for k, value in zip(keys[1:len(values)], values[1:]):

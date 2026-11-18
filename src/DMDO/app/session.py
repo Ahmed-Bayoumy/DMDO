@@ -83,7 +83,8 @@ class Session:
   """Build and drive one DMDO coordination run.
 
   :param mdo: the problem (built with :meth:`from_yaml`, :meth:`from_dict`, :meth:`from_checkpoint` or by hand).
-  :param mode: ``"serial"`` (Gauss-Seidel, in-process) or ``"parallel"`` (Jacobi, process pool) defaults.
+  :param mode: ``"serial"`` (Gauss-Seidel, in-process) or ``"parallel"`` (Jacobi, process pool) defaults; default: the
+    coordinator's ``mode`` from the problem definition.
   :param sweep: ``"gauss_seidel"`` or ``"jacobi"``, overriding ``mode``.
   :param executor: executor used by :meth:`run` and :meth:`step` (an :class:`~DMDO.ports.Executor` or a registered
     name); not used by ask/tell.
@@ -92,11 +93,11 @@ class Session:
   :param resume: continue a checkpointed run (see :meth:`from_checkpoint`).
   """
 
-  def __init__(self, mdo: MDO, *, mode: str = "serial", sweep: Optional[str] = None, executor: Any = None,
+  def __init__(self, mdo: MDO, *, mode: Optional[str] = None, sweep: Optional[str] = None, executor: Any = None,
                max_workers: Optional[int] = None, observers: Iterable[Any] = (), resume: bool = False,
                file: Optional[str] = None) -> None:
     self.mdo = mdo
-    self.mode = mode
+    self.mode = mode if mode is not None else mdo.default_mode()
     self.sweep = sweep
     self.max_workers = max_workers
     self.observers: List[Any] = list(observers)
@@ -260,7 +261,7 @@ class Session:
     hmin = mdo.hmin
     hmax = max(np.atleast_1d(np.asarray(hmin, dtype=float))) if hmin is not None and np.size(hmin) else 0.0
     variables = {f"{v.name}_{v.sp_index}": copy.deepcopy(v.value) for v in getattr(coord, "master_vars", [])}
-    q = np.asarray(getattr(coord, "q", []), dtype=float)
+    q = coord.q_extended() if hasattr(coord, "q_extended") else np.asarray(getattr(coord, "q", []), dtype=float)
     return RunResult(
       status=self.status,
       stop_reason=str(getattr(mdo, "stop", "")),

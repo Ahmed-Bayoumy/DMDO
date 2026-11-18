@@ -111,12 +111,18 @@ class partitionedProblemData:
   _tweak_df: pd.DataFrame = None
   _AI_regularizer: HybridAnomalyDetector = None
 
+def _is_index_key(key) -> bool:
+  """True for an integer variable index (not a bool) used as a start_point key."""
+  return isinstance(key, (int, np.integer)) and not isinstance(key, bool)
+
+
 @dataclass
 class SubProblem(partitionedProblemData):
   # Constructor
   def __init__(self, nv, index, vars, resps, is_main, analysis, coordination, opt, fmin_nop, budget, display, scipy=None, \
                psize=1, pupdate=PSIZE_UPDATE.LAST, freal=None, tol=1E-12, solver='OMADS', sets=None, conf = None, \
-                realistic_objective=False, log: logger=None, tweak_csv: str=None, wd: str = None):
+                realistic_objective=False, log: logger=None, tweak_csv: str=None, wd: str = None,
+               start_point: Any = "warm"):
     self.nv = nv
     self.index = index
     self.vars = copy.deepcopy(vars)
@@ -178,6 +184,93 @@ class SubProblem(partitionedProblemData):
       canonical = DEFAULT_SOLVER
     self.solver = canonical
     self.scipy = self._solver_impl().prepare_settings(scipy, self.index, self._warn)
+    self.set_start_point(start_point)
+
+  # ------------------------------------------------------------------------------------------------ start point
+  START_POINT_MODES = ("warm", "initial")
+
+  def set_start_point(self, start_point: Any = "warm") -> None:
+    """Choose where every solve of this subproblem starts.
+
+    * ``"warm"`` (default): from the last solution (the current values of the design variables).
+    * ``"initial"``: always from the design-variable values the subproblem was built with (YAML ``bl``).
+    * a mapping ``{variable: value}``: always from these values; design variables not listed keep their initial
+      values. A variable is given by its index (``variableData.index``, which is what a YAML variable key such as
+      ``v27`` is translated to when the problem is built) or by its name. A name shared by several scalar design
+      variables takes one value for all of them or a list with one value each, in the subproblem's order; an
+      index entry wins over a name entry for the same variable. Vector variables take a list of ``dim`` values.
+
+    The initial values are those at the time of the call, so call it before the run (the YAML ``start_point`` key
+    of the subproblem does this when the problem is built).
+    """
+    if isinstance(start_point, str):
+      mode = start_point.strip().lower()
+      if mode not in self.START_POINT_MODES:
+        raise ValueError(f"Subproblem {self.index}: start_point must be 'warm', 'initial' or a mapping "
+                         f"{{variable: value}}, got '{start_point}'.")
+      start_point = mode
+    elif isinstance(start_point, dict):
+      design = self._start_point_design_vars()
+      indices = {int(v.index) for v in design}
+      names = {v.name for v in design}
+      unknown = sorted((str(k) for k in start_point
+                        if not ((_is_index_key(k) and int(k) in indices) or (isinstance(k, str) and k in names))))
+      if unknown:
+        raise ValueError(f"Subproblem {self.index}: start_point refers to {unknown}, which are not design "
+                         f"variables of this subproblem; design variables: "
+                         f"{[(int(v.index), v.name) for v in design]} (index, name).")
+    elif start_point is not None:
+      raise TypeError(f"Subproblem {self.index}: start_point must be a string or a mapping, got "
+                      f"{type(start_point).__name__}.")
+    self.start_point = "warm" if start_point is None else copy.deepcopy(start_point)
+    self._initial_x0 = self._start_vector(self.start_point)
+
+  def _start_point_design_vars(self) -> List[variableData]:
+    return [v for v in self.get_design_vars() if v.coupling_type != COUPLING_TYPE.CONSTANT]
+
+  def _start_vector(self, start_point: Any) -> List[Any]:
+    """Flattened design vector (``get_list_vars`` order) of the initial values, with a mapping's values applied."""
+    design = self._start_point_design_vars()
+    by_index = ({int(k): v for k, v in start_point.items() if _is_index_key(k)}
+                if isinstance(start_point, dict) else {})
+    by_name = ({k: v for k, v in start_point.items() if isinstance(k, str)}
+               if isinstance(start_point, dict) else {})
+    copies = {name: sum(1 for v in design if v.name == name and not isinstance(v.baseline, list))
+              for name in {v.name for v in design}}
+    seen = {name: 0 for name in copies}
+    x0: List[Any] = []
+    for var in design:
+      values = copy.deepcopy(var.baseline)
+      label = None
+      if int(var.index) in by_index:
+        values, label = copy.deepcopy(by_index[int(var.index)]), f"variable {int(var.index)} ({var.name})"
+      elif var.name in by_name:
+        values, label = copy.deepcopy(by_name[var.name]), f"'{var.name}'"
+        if not isinstance(var.baseline, list) and isinstance(values, list):
+          # A list for a name shared by several scalar variables: one value each, in the subproblem's order.
+          if len(values) != copies[var.name]:
+            raise ValueError(f"Subproblem {self.index}: start_point value of '{var.name}' has {len(values)} "
+                             f"entries, but the subproblem has {copies[var.name]} design variable(s) named "
+                             f"'{var.name}'.")
+          values = values[seen[var.name]]
+          seen[var.name] += 1
+      if not isinstance(var.baseline, list) and isinstance(values, list):
+        raise ValueError(f"Subproblem {self.index}: start_point value of {label} must be a single value.")
+      if label is not None and isinstance(var.baseline, list) and (
+              not isinstance(values, list) or len(values) != len(var.baseline)):
+        raise ValueError(f"Subproblem {self.index}: start_point value of {label} must be a list of "
+                         f"{len(var.baseline)} entries (the variable's dim).")
+      typ = var.type[0].lower() if var.dim == 1 else var.type[0][0].lower()
+      categorical = typ in ("c", "d")
+      for value in (values if isinstance(values, list) else [values]):
+        x0.append(self.sets[var.set].index(value) if categorical else value)
+    return x0
+
+  def _solve_start_point(self) -> List[Any]:
+    """Start point of the next solve: the last solution, or the fixed one chosen with :meth:`set_start_point`."""
+    if getattr(self, "start_point", "warm") == "warm":  # checkpoints from before 2612.1 have no start_point
+      return self.get_list_vars(self.get_design_vars())
+    return copy.deepcopy(self._initial_x0)
 
   def _warn(self, msg: str) -> None:
     log = getattr(self, "log", None)
@@ -569,7 +662,22 @@ class SubProblem(partitionedProblemData):
       self.coord.alarm_detected = bool(getattr(self.coord, "alarm_detected", False) or alarm)
 
   def get_con(self, x):
+    # Opt-in (scipy setting ``cache_constraints``): reuse the constraints of an objective evaluation at the same
+    # point in this solve instead of running the analysis again (SLSQP asks for f and c separately at every point).
+    memo = self.__dict__.get("_con_memo")
+    if memo is not None:
+      hit = memo.get(self._memo_key(x))
+      if hit is not None:
+        return list(hit)
     return self.evaluate(x, None, "con_only")
+
+  @staticmethod
+  def _memo_key(x) -> tuple:
+    return tuple(float(a) for a in np.ravel(np.asarray(x, dtype=float)))
+
+  def _con_memo_enabled(self) -> bool:
+    return (self._solver_impl().objective_form == "scalar" and isinstance(self.scipy, dict)
+            and bool(self.scipy.get("is_con")) and bool(self.scipy.get("cache_constraints", False)))
   
   @staticmethod
   def _is_out_of_bounds(vlist, lb, ub) -> bool:
@@ -684,6 +792,8 @@ class SubProblem(partitionedProblemData):
     q_indices: List = self.getLocalIndices()
     self.coord.calc_inconsistency()
     self.coord.calc_penalty(q_indices, self.fmin_nop)
+    # System-wide functions that depend on this subproblem (evaluated at its trial values, the others' latest).
+    self.coord.phi = self.coord.phi + self.coord.system_penalty(self.index)
     # TODO: change the name of this routine
     self.coord.update_master_vector_val(self.vars, self.MDA_process.responses, self.sets)
     mvs = self.coord.master_vars
@@ -700,6 +810,9 @@ class SubProblem(partitionedProblemData):
         if is_conOnly:
           return con
         else:
+          memo = self.__dict__.get("_con_memo")
+          if memo is not None and vlist is not None:
+            memo[self._memo_key(vlist)] = list(con)
           return fun[0] + self.coord.phi
       else:
         hmax = 0.001
@@ -804,7 +917,7 @@ class SubProblem(partitionedProblemData):
     self.cache = self._create_cache_frame()
     self.coord.v = copy.deepcopy(v)
     self.coord.w = copy.deepcopy(w)
-    bl = self.get_list_vars(self.get_design_vars())
+    bl = self._solve_start_point()
     # Values carried over from other subproblems can land a round-off outside the bounds, which OMADS rejects
     # ("mesh center values must satisfy: lb <= x^mesh <= ub"), so clamp the start point onto the box.
     lbs = self.get_list_vars_lb(self.get_design_vars())
@@ -830,10 +943,13 @@ class SubProblem(partitionedProblemData):
     # Some solvers evaluate trial points they fail to snap onto the bounds; reject them in evaluate() so they can
     # never become the next poll center (which OMADS refuses with "lb <= x^mesh <= ub").
     self._omads_bounds = (request.lb, request.ub) if impl.rejects_out_of_bounds else None
+    # Constraint memo lives for one solve only (the multipliers and the other subproblems' values change between).
+    self.__dict__["_con_memo"] = {} if self._con_memo_enabled() else None
     try:
       outcome = impl.solve(request)
     finally:
       self._omads_bounds = None
+      self.__dict__["_con_memo"] = None
     self.log = log_copy
     self.fmin = outcome.fmin
     self.hmin = outcome.hmin

@@ -125,6 +125,27 @@ def test_history_file_and_checkpoint_are_written_by_the_default_observers():
   assert not any(isinstance(v, RunObserver) for v in vars(checkpoint).values())
 
 
+def test_worst_link_label_names_the_two_linked_subproblems():
+  from DMDO.workflow.observers import worst_link_label
+
+  def inspect(mdo):
+    coord = mdo.Coordinator
+    labels = [worst_link_label(coord, link) for link in range(coord._linker.shape[1])]
+    with open(mdo.Ol_file) as fh:
+      rows = [[c.strip() for c in line.split(",")] for line in fh.read().splitlines() if line.strip()]
+    return coord, labels, rows
+
+  rec = Recorder()
+  coord, labels, rows = _run_basic(observers=[rec], inspect=inspect)["inspect"]
+  for link, label in enumerate(labels):
+    a = coord.master_vars[coord._linker[0, link] - 1]
+    b = coord.master_vars[coord._linker[1, link] - 1]
+    assert a.sp_index != b.sp_index
+    assert label == f"{a.name}_{a.sp_index} to {b.name}_{b.sp_index}"
+  column = rows[0].index("Coupling_with_qmax")
+  assert [row[column] for row in rows[1:]] == [labels[r.worst_link] for r in rec.records]
+
+
 def test_default_observers_depend_on_the_ai_regularizer():
   def names(is_ai):
     run = SimpleNamespace(Coordinator=SimpleNamespace(is_AI_regularizer=is_ai))

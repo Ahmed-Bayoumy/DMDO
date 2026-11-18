@@ -1,14 +1,14 @@
 import numpy as np
 import copy
-# from dataclasses import dataclass, field
+
 
 class WingDesignAnalyzer:
     """
     A class to analyze and design aircraft wings based on structural and aerodynamic parameters.
     """
-    
-    def __init__(self, h=55000, Mach=1.4, tc=0.0641, ARw=2.5, LAMBDAw=70.0, Sref=667, Sht=99.7, 
-                 ARht=5.5, lambdatr=0.1, Lift=34300, t=[0.97, 0.52, 0.21, 4.00, 3.66, 0.91, 0.97, 0.52, 0.21], 
+
+    def __init__(self, h=55000, Mach=1.4, tc=0.0641, ARw=2.5, LAMBDAw=70.0, Sref=667, Sht=99.7,
+                 ARht=5.5, lambdatr=0.1, Lift=34300, t=[0.97, 0.52, 0.21, 4.00, 3.66, 0.91, 0.97, 0.52, 0.21],
                  ts=[2.17, 1.48, 0.76, 4.40, 4.02,1.01, 2.17, 1.48, 0.76]):
         # Inputs
         self.h = h
@@ -21,7 +21,7 @@ class WingDesignAnalyzer:
         self.ARht = ARht
         self.lambdatr = lambdatr
         self.Lift = Lift
-        
+
         # Constants
         self.C = [500.0, 16000.0, 4.0, 4360.0, 0.01375, 1.0]
         self.G = 4000000 * 144
@@ -32,23 +32,23 @@ class WingDesignAnalyzer:
         self.rho_fuel = 6.5 * 7.4805
         self.Fw_at_t = 5
         self.k = 6.09375
-        
+
         # Local variables
         self.Z = [self.tc, self.h, self.Mach, self.ARw, self.LAMBDAw, self.Sref, self.Sht, self.ARht]
         self.LAMBDA = self.lambdatr
         self.L = self.Lift
-        
+
         # Panel parameters
         self.NP = 9  # number of panels per halfspan
         self.n = 90
         self.rn = int(self.n / self.NP)
-        
+
         # Thickness values (converted from inches to feet)
         self.ti = t
         self.tsi = ts
         self.t = np.array([ti / 12.0 for ti in self.ti])
         self.ts = np.array([tsi / 12.0 for tsi in self.tsi])
-        
+
         # Split thickness arrays
         self.t1 = self.t[:3]
         self.t2 = self.t[3:6]
@@ -56,10 +56,10 @@ class WingDesignAnalyzer:
         self.ts1 = self.ts[:3]
         self.ts2 = self.ts[3:6]
         self.ts3 = self.ts[6:9]
-        
+
         # Beta factor
         self.beta = 0.9
-        
+
         # Initialize results
         self.c = None
         self.c_box = None
@@ -90,14 +90,14 @@ class WingDesignAnalyzer:
         self.theta = None
         # self.G = None
         self.G1 = None
-        
+
     def polyApprox(self, S, S_new, flag, S_bound):
         """Calculate polynomial approximation for structural parameters."""
         S_norm = []
         S_shifted = []
         Ai = []
         Aij = np.zeros((len(S), len(S)))
-        
+
         for i in range(len(S)):
             S_norm.append(S_new[i] / S[i])
             if S_norm[i] > 1.25:
@@ -114,7 +114,7 @@ class WingDesignAnalyzer:
                 Sl = So - S_bound[i]
                 Su = So + S_bound[i]
                 Mtx_shifted = np.array([[1, Sl, Sl**2], [1, So, So**2], [1, Su, Su**2]])
-                
+
                 F_bound = np.array([1 + (.5 * a)**2, 1, 1 + (.5 * b)**2])
                 A = np.linalg.solve(Mtx_shifted, F_bound)
                 Ao = A[0]
@@ -122,7 +122,7 @@ class WingDesignAnalyzer:
                 Aij[i, i] = A[2]
             else:
                 if flag[i] == 0:
-                    S_shifted.append(0)
+                    S_shifted[i] = 0  # MATLAB: S_shifted(i) = 0
                 elif flag[i] == 3:
                     a *= -1.
                     b = copy.deepcopy(a)
@@ -131,7 +131,7 @@ class WingDesignAnalyzer:
                 elif flag[i] == 4:
                     a *= -1
                     b = 2 * a
-                
+
                 # Determine bounds on FF depending on slope-shape
                 So = 0
                 Sl = So - S_bound[i]
@@ -142,25 +142,25 @@ class WingDesignAnalyzer:
                 Ao = A[0]
                 Ai.append(A[1])
                 Aij[i, i] = A[2]
-        
+
         # Create correlation matrix R
-        R = np.array([[0.2736, 0.3970, 0.8152, 0.9230, 0.1108], 
+        R = np.array([[0.2736, 0.3970, 0.8152, 0.9230, 0.1108],
                       [0.4252, 0.4415, 0.6357, 0.7435, 0.1138],
                       [0.0329, 0.8856, 0.8390, 0.3657, 0.0019],
                       [0.0878, 0.7248, 0.1978, 0.0200, 0.0169],
                       [0.8955, 0.4568, 0.8075, 0.9239, 0.2525]])
-        
+
         # Fill in correlation matrix
         for i in range(len(S)):
             for j in range(i+1, len(S)):
                 Aij[i, j] = Aij[i, i] * R[i, j]
                 Aij[j, i] = Aij[i, j]
-        
+
         S_shifted = np.array(S_shifted)
-        
+
         # Calculate FF (structural efficiency factor)
         FF = Ao + np.dot(Ai, S_shifted.T) + 0.5 * np.dot(np.dot(S_shifted, Aij), S_shifted.T)
-        
+
         return FF
 
     def Wing_Mod(self, Z, LAMBDA):
@@ -168,7 +168,7 @@ class WingDesignAnalyzer:
         c = [0, 0, 0, 0]
         x = [0] * 8
         y = [0] * 8
-        
+
         b = max(2, np.real(np.sqrt(Z[3] * Z[5])))
         c[0] = 2 * Z[5] / ((1 + LAMBDA) * b)
         c[3] = LAMBDA * c[0]
@@ -194,7 +194,7 @@ class WingDesignAnalyzer:
         Sweep_40 = (np.arctan(((x[7] - 0.6 * (x[7] - x[6])) - 0.4 * x[1]) / y[7])) * 180 / np.pi
 
         l = np.multiply([c[i] for i in range(3)], 0.4 * np.cos(Z[4] * np.pi / 180))  # noqa: E741
-        k = np.multiply([c[i] for i in range(3)], 0.6 * np.sin((90 - TE_sweep) * np.pi / 180) / 
+        k = np.multiply([c[i] for i in range(3)], 0.6 * np.sin((90 - TE_sweep) * np.pi / 180) /
                        np.sin((90 + TE_sweep - Z[4]) * np.pi / 180))
         c_box = np.add(l, k)
         D_mx = np.subtract(l, np.multiply(0.407, c_box))
@@ -206,7 +206,7 @@ class WingDesignAnalyzer:
         NP = self.NP
         n = self.n
         rn = self.rn
-        
+
         h = (b / 2) / n
         x = np.linspace(0, b / 2 - h, n)
         x1 = np.linspace(h, b / 2, n)
@@ -214,9 +214,9 @@ class WingDesignAnalyzer:
         # Calculate wing loading
         l = np.linspace(0, (b / 2) - (b / 2) / NP, NP)  # noqa: E741
         c1mc4 = c[0] - c[3]
-        f_all = np.multiply((3 * b / 10), np.sqrt(np.subtract(1, np.power(x, 2) / 
+        f_all = np.multiply((3 * b / 10), np.sqrt(np.subtract(1, np.power(x, 2) /
                             np.power(np.divide(b, 2), 2))))
-        f1_all = np.multiply((3 * b / 10), np.sqrt(np.subtract(1, np.power(x1, 2) / 
+        f1_all = np.multiply((3 * b / 10), np.sqrt(np.subtract(1, np.power(x1, 2) /
                              np.power(np.divide(b, 2), 2))))
         C = c[3] + 2 * ((b / 2 - x) / b) * c1mc4
         C1 = c[3] + 2 * ((b / 2 - x1) / b) * c1mc4
@@ -230,10 +230,10 @@ class WingDesignAnalyzer:
         cosSweep = np.cos(Sweep_40 * np.pi / 180)
         cosInvSweep = 1 / cosSweep
         tanCos2Sweep = np.tan(Sweep_40 * np.pi / 180) * cosSweep * cosSweep
-        
+
         # Calculate distributed loads
         p = L * Area / np.sum(Area)
-        
+
         # Calculate shear force and bending moment
         Tcsp = np.cumsum(p)
         Tsp = Tcsp[-1]
@@ -242,7 +242,7 @@ class WingDesignAnalyzer:
         pl = np.multiply(p, l)
         Tcspl = np.cumsum(pl)
         Tspl = Tcspl[-1]
-        Mb = np.multiply(np.subtract(np.subtract(Tspl, Tcspl), 
+        Mb = np.multiply(np.subtract(np.subtract(Tspl, Tcspl),
                                      np.multiply(l, np.subtract(Tsp, Tcsp))), cosInvSweep)
 
         # Extract loads at specific points
@@ -259,7 +259,7 @@ class WingDesignAnalyzer:
         y[0, :] = (l - 0.4 * chord * tanCos2Sweep) * cosInvSweep
         y[1, :] = (l + 0.6 * chord * tanCos2Sweep) * cosInvSweep
         y[1, 0] = 0
-        
+
         I[0:int(NP / 3)] = np.sqrt((Izz[0]**2 + Izz[1]**2) / 2)
         I[int(NP / 3):int(2 * NP / 3)] = np.sqrt((Izz[1]**2 + Izz[2]**2) / 2)
         I[int(2 * NP / 3):int(NP)] = np.sqrt((Izz[2]**2) / 2)
@@ -268,7 +268,7 @@ class WingDesignAnalyzer:
         La = np.append(0, La)
         Lb = y[1, 1:NP] - y[1, 0:NP - 1]
         Lb = np.append(0, Lb)
-        
+
         A = T * La**3 / (3 * E * I) + Mb * La**2 / (2 * E * I)
         B = T * Lb**3 / (3 * E * I) + Mb * Lb**2 / (2 * E * I)
         Slope_A = T * La**2 / (2 * E * I) + Mb * La / (E * I)
@@ -281,46 +281,47 @@ class WingDesignAnalyzer:
             B[i + 1] = B[i] + Slope_B[i] * Lb[i + 1] + B[i + 1]
 
         bend_twist = ((B - A) / chord) * 180 / np.pi
-        
+
         # Ensure twist is non-decreasing
         for i in range(1, len(bend_twist)):
             if bend_twist[i] < bend_twist[i - 1]:
                 bend_twist[i] = bend_twist[i - 1]
-        
+
         return P, Mz, Mx, bend_twist, Spanel
 
     def calculate_structural_response(self):
         """Calculate the complete structural response of the wing."""
         # Calculate wing geometry
         self.c, self.c_box, self.Sweep_40, self.D_mx, self.b, self.a = self.Wing_Mod(self.Z, self.LAMBDA)
-        
-        # Calculate moments of inertia
+
+        # Calculate moments of inertia (MATLAB SBJ_obj_weight.m: box width l = 0.6*c_box)
+        l = 0.6 * np.asarray(self.c_box)  # noqa: E741
         h = (np.multiply([self.c[i] for i in range(3)], self.beta * float(self.Z[0]))) - \
             np.multiply(0.5, np.add(self.ts1, self.ts3))
-        
-        A_top = (np.multiply(self.t1, 0.5 * self.c_box)) + (np.multiply(self.t2, h / 6))
-        A_bottom = (np.multiply(self.t3, 0.5 * self.c_box)) + (np.multiply(self.t2, h / 6))
+
+        A_top = 0.5 * self.t1 * l + self.t2 * h / 6
+        A_bottom = 0.5 * self.t3 * l + self.t2 * h / 6
         Y_bar = np.multiply(h, np.divide((2 * A_top), (2 * A_top + 2 * A_bottom)))
         self.Izz = np.multiply(2, np.multiply(A_top, np.power((h - Y_bar), 2))) + \
               np.multiply(2, np.multiply(A_bottom, np.power((-Y_bar), 2)))
-        
+
         # Calculate loads and deflections
         self.P, self.Mz, self.Mx, self.bend_twist, self.Spanel = self.loads(
             self.b, self.c, self.Sweep_40, self.D_mx, self.L, self.Izz, self.Z, self.E)
-        
+
         # Calculate torsional deformation
-        Phi = (self.Mx / (4 * self.G * (self.c_box * h)**2)) * (self.c_box / self.t1 + 2 * h / self.t2 + self.c_box / self.t3)
-        
-        # Calculate total twist
+        Phi = (self.Mx / (4 * self.G * (l * h)**2)) * (l / self.t1 + 2 * h / self.t2 + l / self.t3)
+
+        # Calculate total twist (float array: an integer array truncated the twist, so theta was 0 most of the time)
         aa = len(self.bend_twist)
-        self.twist = np.array([0] * aa)
+        self.twist = np.zeros(aa)
         self.twist[0:int(aa/3)] = self.bend_twist[0:int(aa/3)] + Phi[0] * 180 / np.pi
         self.twist[int(aa/3):int(aa*2/3)] = self.bend_twist[int(aa/3):int(aa*2/3)] + Phi[1] * 180 / np.pi
         self.twist[int(aa*2/3):aa] = self.bend_twist[int(aa*2/3):aa] + Phi[2] * 180 / np.pi
-        
+
         # Calculate total twist contribution
         self.deltaL_divby_q = np.sum(self.twist * self.Spanel * 0.1 * 2)
-        
+
         # Calculate structural weights
         self.Wtop_alum = (self.b / 4) * (self.c[0] + self.c[3]) * np.mean(self.t1) * self.rho_alum
         self.Wbottom_alum = (self.b / 4) * (self.c[0] + self.c[3]) * np.mean(self.t3) * self.rho_alum
@@ -328,19 +329,19 @@ class WingDesignAnalyzer:
         self.Wtop_core = (self.b / 4) * (self.c[0] + self.c[3]) * np.mean(np.subtract(self.ts1, self.t1)) * self.rho_core
         self.Wbottom_core = (self.b / 4) * (self.c[0] + self.c[3]) * np.mean(np.subtract(self.ts3, self.t3)) * self.rho_core
         self.Wside_core = (self.b / 2) * np.mean(h) * np.mean(np.subtract(self.ts2, self.t2)) * self.rho_core
-        self.W_wingstruct = (self.Wtop_alum + self.Wbottom_alum + self.Wside_alum + 
+        self.W_wingstruct = (self.Wtop_alum + self.Wbottom_alum + self.Wside_alum +
                            self.Wtop_core + self.Wbottom_core + self.Wside_core)
-        self.W_fuel_wing = np.mean(h * 0.6 * self.c_box) * (self.b / 3) * 2 * self.rho_fuel
-        
+        self.W_fuel_wing = np.mean(h * l) * (self.b / 3) * 2 * self.rho_fuel
+
         # Calculate horizontal tail weight
         self.Bh = np.sqrt(self.ARht * self.Sht)
         self.W_ht = 3.316 * ((1 + (self.Fw_at_t / self.Bh))**-2.0) * ((self.L * self.C[2] / 1000)**0.260) * (self.Sht**0.806)
-        
+
         # Calculate total weights
         Wf = self.C[0] + self.W_fuel_wing
         Ws = self.C[1] + self.W_ht + 2 * self.W_wingstruct
         theta = self.deltaL_divby_q
-        
+
         return [Ws, Wf, theta]
 
     def calculate_constraints(self):
@@ -371,7 +372,7 @@ class WingDesignAnalyzer:
 
         c = np.array(self.c)
 
-        l = 0.6 * self.c_box  # IMPORTANT: matches MATLAB  # noqa: E741
+        l = 0.6 * self.c_box  # noqa: E741  IMPORTANT: matches MATLAB
 
         # ---- Equivalent thickness ----
         teq1 = ((t1**3)/4 + (3*t1)*(ts1 - t1/2)**2)**(1/3)
@@ -508,10 +509,10 @@ class WingDesignAnalyzer:
         """Run the complete wing design analysis."""
         # Calculate structural response
         Ws, Wf, theta = self.calculate_structural_response()
-        
+
         # Calculate constraints
         G1 = self.calculate_constraints()
-        
+
         # Return results
         return {
             'Lift': self.Lift,
@@ -523,7 +524,7 @@ class WingDesignAnalyzer:
             'Spanel': self.Spanel,
             'bend_twist': self.bend_twist
         }
-    
+
     def SBJ_structure_analysis(self):
         return self.calculate_structural_response()
 

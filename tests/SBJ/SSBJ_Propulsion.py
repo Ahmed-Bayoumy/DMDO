@@ -78,7 +78,7 @@ class SSBJPropulsion:
                 Aij[i,i] = A[2]
             else:
                 if flag[i] == 0:
-                    S_shifted.append(0)
+                    S_shifted[i] = 0  # MATLAB: S_shifted(i) = 0
                 elif flag[i] == 3:
                     a *= -1
                     b = copy.deepcopy(a)

@@ -191,6 +191,16 @@ One entry per variable **copy**; each entry is a list:
      - ``1.0``, ``last``
      - Initial OMADS frame size, and how it carries over between outer iterations (``last``, ``success``,
        ``max``, ``default``).
+   * - ``start_point``
+     - ``warm``
+     - Where every inner solve starts: ``warm`` (the last solution), ``initial`` (the ``bl`` values of the
+       subproblem's design variables, every time) or a mapping ``{variable key: value}`` such as
+       ``{v27: 100000.0, v37: 3.0}`` (these values; design variables not listed start from their ``bl``). Keys must
+       be in the subproblem's ``vars``; vector variables take a list of ``dim`` values. A variable name can be used
+       instead of a key (a name shared by several variables then takes one value for all of them, or a list with
+       one value each in the order of ``vars``). Only the start point is fixed: the frame size still follows
+       ``pupdate`` (use ``pupdate: default`` to reset it too). In Python: ``SubProblem.set_start_point(...)``, with
+       variable indices (``variableData.index``) or names as keys.
    * - ``fmin_nop``
      - ``inf``
      - Initial best objective.

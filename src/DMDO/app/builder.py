@@ -38,6 +38,7 @@ from ..subproblem.subproblem import SubProblem
 from ..utils.log import MSG_TYPE, logger
 from ..core.enums import COUPLING_TYPE, MDO_ARCHITECTURE, PSIZE_UPDATE, USER, w_scheme
 from ..coordination.admm import ADMM
+from ..coordination.system_functions import SystemFunction
 
 from ..core.protocols import coordinator
 from ..core.protocols import process
@@ -217,6 +218,16 @@ class problemSetup:
         lb[i] = float(lb[i])
     scaling = np.subtract(ub,lb)
     self.Qscaling = []
+    # Alternative inconsistency scaling (coord ``scaling: reference``): q = (x1 - x2) / |reference|, with the baseline
+    # value as the reference (Tosserams et al. scale every variable so that its reference value is 1).
+    self.Qscaling_reference = []
+    for i in range(len(names)):
+      ref = bl[i]
+      try:
+        ref = float(np.mean(np.abs(np.asarray(ref, dtype=float))))
+      except (TypeError, ValueError):
+        ref = 0.0
+      self.Qscaling_reference.append(1.0 / ref if np.isfinite(ref) and ref > 0.0 else 1.0)
     # blError = raise IOError()
     for i in range(len(names)):
       cond_on = None
@@ -273,17 +284,39 @@ class problemSetup:
     self.log.log_msg(msg="Completed variables setup.\n", msg_type=MSG_TYPE.INFO.value)
   
   def getVariables(self, v: List[str]) -> List[variableData]:
-    """ Find the variables by the input key assigned to them"""
+    """ Find the variables by the input key assigned to them.
+
+    ``self.V`` holds one variable per key of the ``variables`` section, in the same order, so each key maps to
+    exactly one variable. (Matching by name and subproblem index instead returned every variable of that name, so a
+    subproblem with nine scalar variables named ``t`` got 81 of them.)
+    """
+    keys = list(self.data["variables"].keys())
     out = []
     for i in v:
-      namet = self.data["variables"][i][0]
-      indext = self.data["variables"][i][1]
-      for k in self.V:
-        if k.name == namet and k.sp_index == indext:
-          out.append(k)
-    
+      if i not in self.data["variables"]:
+        raise KeyError(f"Unknown variable key '{i}'.")
+      out.append(self.V[keys.index(i)])
     return out
   
+  def getStartPoint(self, sp: Dict) -> Any:
+    """The subproblem's ``start_point`` with YAML variable keys (``v27``) replaced by the variables' indices.
+
+    Entries that are not variable keys are passed on as variable names (see :meth:`SubProblem.set_start_point`).
+    """
+    start_point = sp.get("start_point", "warm")
+    if not isinstance(start_point, dict):
+      return start_point
+    keys = list(self.data["variables"].keys())
+    out = {}
+    for key, value in start_point.items():
+      if key in self.data["variables"]:
+        if key not in sp["vars"]:
+          raise ValueError(f"Subproblem {sp['index']}: start_point variable '{key}' is not in its vars {sp['vars']}.")
+        out[int(self.V[keys.index(key)].index)] = value
+      else:
+        out[key] = value
+    return out
+
   def getDA(self, d: List[int]) -> List[DA]:
     """ Get the list of corresponding disciplinary analyses """
     out = []
@@ -387,6 +420,15 @@ class problemSetup:
         variables=self.getVariables(MD[i]["variables"]), 
         responses=self.getVariables(MD[i]["responses"])))
 
+  def _coord_scaling(self, value: Any) -> Any:
+    """Inconsistency scaling of a coordinator: a float, ``"reference"`` (1/|baseline| per variable) or, by default,
+    0.1/(ub - lb) per variable."""
+    if isinstance(value, float):
+      return value
+    if isinstance(value, str) and value.strip().lower() == "reference":
+      return copy.deepcopy(self.Qscaling_reference)
+    return copy.deepcopy(self.Qscaling)
+
   def COORDSetup(self):
     """ Setup coordinators definition """
     self.log.log_msg(msg="Starting coordinator setup ...", msg_type=MSG_TYPE.INFO.value)
@@ -404,7 +446,7 @@ class problemSetup:
         nsp=  c[i]["nsp"],
         index_of_master_SP= c[i]["index_of_master_SP"],
         display= c[i]["display"],
-        scaling= c[i]["scaling"] if isinstance(c[i]["scaling"], float)  else copy.deepcopy(self.Qscaling),
+        scaling=self._coord_scaling(c[i].get("scaling")),
         mode=c[i]["mode"],
         M_update_scheme=self.getWupdateScheme(c[i]["M_update_scheme"]),
         store_q_io=c[i]["store_q_io"],
@@ -426,7 +468,52 @@ class problemSetup:
         ai_options={key: c[i][key] for key in _AI_OPTION_KEYS if key in c[i]},
       ))
       self.log.log_msg(msg=f"Coordinator configurations: {c}", msg_type=MSG_TYPE.INFO.value)
+    self.systemFunctionsSetup()
     self.log.log_msg(msg="Completed coordinator setup ...\n", msg_type=MSG_TYPE.INFO.value)
+
+  def _variable_index(self, key: str, where: str) -> int:
+    keys = list(self.data["variables"].keys())
+    if key not in keys:
+      raise KeyError(f"{where}: unknown variable key '{key}'.")
+    return int(self.V[keys.index(key)].index)
+
+  def systemFunctionsSetup(self):
+    """Optional ``system_functions`` section: system-wide constraints relaxed by the coordinator (Tosserams et al.
+    2010, Eqs. 5-6). Each entry::
+
+      g_range:
+        type: ineq            # ineq: g(x) <= 0, relaxed as phi(g + s) with the slack s >= 0; eq: h(x) = 0
+        blackbox: my_function # callable(list of input values) -> float
+        inputs: [v6, v7, v14] # variable keys; their values are passed to blackbox in this order
+        slack: v71            # ineq only: a local variable (lower bound 0) of one subproblem
+        scaling: 1.0          # optional, multiplies the value before it enters the inconsistency vector
+        coordinator: 1        # optional, default: the first coordinator
+    """
+    sf = self.data.get("system_functions")
+    if not sf:
+      return
+    for coord in self.Coords:
+      coord.system_functions = []
+    for name, spec in sf.items():
+      where = f"system_functions.{name}"
+      if "blackbox" not in spec or "inputs" not in spec or "type" not in spec:
+        raise IOError(f"{where} needs 'type', 'blackbox' and 'inputs'.")
+      func = SystemFunction(
+        name=str(name), kind=spec["type"], blackbox=self.resolve_callable(spec["blackbox"]),
+        inputs=[self._variable_index(k, where) for k in spec["inputs"]],
+        slack=self._variable_index(spec["slack"], where) if spec.get("slack") is not None else None,
+        scaling=float(spec.get("scaling", 1.0)))
+      if not callable(func.blackbox):
+        raise IOError(f"{where}: blackbox '{spec['blackbox']}' could not be resolved to a callable.")
+      if func.slack is not None and float(np.min(np.atleast_1d(self.V[func.slack - 1].lb))) < 0.0:
+        raise ValueError(f"{where}: the slack variable '{spec['slack']}' needs a lower bound >= 0.")
+      func.bind(self.V)
+      coord = self.getCoord(spec.get("coordinator", self.Coords[0].index))
+      if coord is None:
+        raise IOError(f"{where}: unknown coordinator {spec.get('coordinator')}.")
+      coord.system_functions.append(func)
+      self.log.log_msg(msg=f"System-wide function {name} ({func.kind}) penalised in subproblems {func.subproblems}",
+                       msg_type=MSG_TYPE.INFO.value)
 
   def SPSetup(self):
     """ Setup subproblems definition """
@@ -468,6 +555,7 @@ class problemSetup:
           and (SP[i]["configurations"] in CONF) else None,
         tweak_csv= SP[i]["tweak_csv"] if "tweak_csv" in SP[i] else None,
         wd=self.data["working_dir"],
+        start_point=self.getStartPoint(SP[i]),
 
       ))
     self.log.log_msg(msg="Completed subproblems setup.\n", msg_type=MSG_TYPE.INFO.value)

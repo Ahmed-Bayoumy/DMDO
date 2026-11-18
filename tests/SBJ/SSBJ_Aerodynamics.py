@@ -107,7 +107,7 @@ class SSBJAerodynamics:
                 # CALCULATE POLYNOMIAL COEFFICIENTS
             else:
                 if flag[i] == 0:
-                    S_shifted.append(0)
+                    S_shifted[i] = 0  # MATLAB: S_shifted(i) = 0
                 elif flag[i] == 3:
                     a *= -1
                     b = copy.deepcopy(a)
@@ -178,7 +178,7 @@ class SSBJAerodynamics:
         # Solve for CLo
         try:
             CLo = np.linalg.solve(A, B)
-        except:  # noqa: E722
+        except (np.linalg.LinAlgError, ValueError):
             CLo = np.array([-np.inf, np.inf])
 
         # Calculate delta_L
@@ -193,21 +193,22 @@ class SSBJAerodynamics:
         # Solve for DCL
         try:
             self.DCL = np.linalg.solve(A, D)
-        except:  # noqa: E722
+        except (np.linalg.LinAlgError, ValueError):
             self.DCL = np.array([np.nan, np.nan])
 
         # Calculate induced drag factors
         if self.Z[2] >= 1:
-            kw = self.Z[3] * (self.Z[2]**2 - 1) * np.cos(self.Z[4] * np.pi / 180) / \
-            (4 * self.Z[3] * np.sqrt(self.Z[2]**2 - 1) - 2)
-            kht = ARht * (self.Z[2]**2 - 1) * np.cos(self.LAMBDAht * np.pi / 180) / \
-            (4 * ARht * np.sqrt(self.Z[2]**2 - 1) - 2)
+            kw = (self.Z[3] * (self.Z[2]**2 - 1) * np.cos(self.Z[4] * np.pi / 180)
+                  / (4 * self.Z[3] * np.sqrt(self.Z[2]**2 - 1) - 2))
+            kht = ARht * (self.Z[2]**2 - 1) * np.cos(self.LAMBDAht * np.pi / 180) / (4 * ARht * np.sqrt(self.Z[2]**2 - 1) - 2)
         else:
             kw = 1 / (np.pi * 0.8 * self.Z[3])
             kht = 1 / (np.pi * 0.8 * ARht)
 
-        # Calculate Fo1
-        S_initial1 = copy.deepcopy(self.ESFp)
+        # Calculate Fo1: skin-friction drag factor of the engine scale factor about its reference value ESF = 1
+        # (Sobieski's model, used by Tosserams et al. 2010, Table 1). NoHiMDO's SBJ_obj_dragpolar.m passes ESF as its
+        # own reference, which makes Fo1 == 1; with that, the published optimum is infeasible (L/D 6.86 vs 7.03).
+        S_initial1 = 1.0
         S1 = copy.deepcopy(self.ESFp)
         flag1 = 1
         bound1 = 0.25
