@@ -102,7 +102,7 @@ BLACKBOXES = {name: globals()[name] for name in (
   "SBJ_aircraft_weight_analysis", "SBJ_aircraft_weight_opt", "SBJ_aerodynamics_weight_opt",
   "SBJ_range_constraint", "SBJ_weight_balance")}
 
-def mda_check(z, T, LAMht, Lw, Lht, t, ts, lam, tol=1e-12, max_iter=500):
+def mda_check(z, T, LAMht, Lw, Lht, t, ts, lam, tol=1e-12, max_iter=500, return_g=False):
   """Gauss-Seidel MDA of the design (z = [tc, ARw, LAMw, Sref, Sht, ARht]): coupling values and all constraints."""
   tc, ARw, LAMw, Sref, Sht, ARht = z
   Wt, theta, ESF = 25000., 10., 1.
@@ -123,7 +123,10 @@ def mda_check(z, T, LAMht, Lw, Lht, t, ts, lam, tol=1e-12, max_iter=500):
   Wt, rng = SSBJ_Aircraft(We=We, Ws=Ws, Wf=Wf, SFCp=SFC, LDr=LD).SBJ_aircraft_analysis()
   g = (list(struc.calculate_constraints()) + list(aero.calculate_constraints(Pg, [CL0, CL1]))
        + list(prop.calculate_constraints(TempE, ThrUA)) + [1. - rng / 2000.])
-  return dict(Wt=Wt, Ws=Ws, Wf=Wf, We=We, theta=th, L=L, D=D, LD=LD, ESF=ESFn, SFC=SFC, range=rng, gmax=max(g))
+  out = dict(Wt=Wt, Ws=Ws, Wf=Wf, We=We, theta=th, L=L, D=D, LD=LD, ESF=ESFn, SFC=SFC, range=rng, gmax=max(g))
+  if return_g:
+    out["g"] = g
+  return out
 
 
 # Tosserams et al. (2010), Table 1 (MDF optimum)

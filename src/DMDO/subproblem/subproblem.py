@@ -297,6 +297,7 @@ class SubProblem(partitionedProblemData):
     return int(self.RANDOM_SEED)
 
   def __getstate__(self):
+    self._flush_buffers()
     # Remove or replace non-picklable attributes
     state = self.__dict__.copy()
     # Example: remove or replace RLock
@@ -347,20 +348,36 @@ class SubProblem(partitionedProblemData):
     return int.from_bytes(hashlib.blake2b(payload, digest_size=8).digest(), byteorder="big", signed=False)
 
   def cache_row(self, cache_address: int) -> pd.Series:
+    self._flush_cache()
     return self.cache.loc[cache_address]
 
   def get_cached_row(self, vlist: List[Any]) -> pd.Series:
     return self.cache_row(self.get_cache_address(vlist))
 
+  _CACHE_COLUMNS = ["objective", "penalty", "vlist", "outputs"]
+
   def _append_cache_row(self, objective: float, penalty: float, vlist: List[Any], outputs: Any, cache: pd.DataFrame = None):
-    cache_frame = self.cache if cache is None else cache
-    cache_address = self.get_cache_address(vlist)
-    cache_frame.loc[cache_address, ["objective", "penalty", "vlist", "outputs"]] = [
-      objective,
-      penalty,
-      copy.deepcopy(vlist),
-      copy.deepcopy(outputs),
-    ]
+    row = [objective, penalty, copy.deepcopy(vlist), copy.deepcopy(outputs)]
+    if cache is not None:
+      cache.loc[self.get_cache_address(vlist), self._CACHE_COLUMNS] = row
+      return
+    # Growing a DataFrame row by row costs more than the evaluation itself: collect the rows (same address ->
+    # latest row, first position) and add them in one go (_flush_cache, at the end of every solve and before reads).
+    self.__dict__.setdefault("_cache_pending", {})[self.get_cache_address(vlist)] = row
+
+  def _flush_cache(self) -> None:
+    pending = self.__dict__.get("_cache_pending")
+    if not pending:
+      return
+    self.__dict__["_cache_pending"] = {}
+    cols = self._CACHE_COLUMNS
+    existing = [a for a in pending if a in self.cache.index]
+    for a in existing:
+      self.cache.loc[a, cols] = pending.pop(a)
+    if pending:
+      new = pd.DataFrame(list(pending.values()), index=list(pending.keys()), columns=cols, dtype=object)
+      new.index.name = self.cache.index.name
+      self.cache = new if len(self.cache) == 0 else pd.concat([self.cache, new])
 
 
   def get_minimizer(self):
@@ -446,6 +463,17 @@ class SubProblem(partitionedProblemData):
           kc += 1
 
   def set_pair(self):
+    # The pairs depend only on the variables' static metadata; evaluate() calls this for every evaluation.
+    key = (self.index,) + tuple((m.index, m.name, m.sp_index, repr(m.link), m.coupling_type)
+                                for m in self.coord.master_vars)
+    cached = self.__dict__.get("_pair_cache")
+    if cached is not None and cached[0] == key:
+      self.coord._linker = cached[1].copy()
+      return
+    self._set_pair_uncached()
+    self.__dict__["_pair_cache"] = (key, self.coord._linker.copy())
+
+  def _set_pair_uncached(self):
     indices1 = []
     indices2 = []
     sp_link =  []
@@ -483,6 +511,16 @@ class SubProblem(partitionedProblemData):
     # self.coord._linker = copy.deepcopy(np.array([indices1[:pair_count], indices2[:pair_count]], dtype=int))
 
   def getLocalIndices(self):
+    link = np.asarray(self.coord._linker)
+    key = (link.shape, link.tobytes(), tuple(v.index for v in self.vars), tuple(r.index for r in self.resps))
+    cached = self.__dict__.get("_local_index_cache")
+    if cached is not None and cached[0] == key:
+      return list(cached[1])
+    out = self._local_indices_uncached()
+    self.__dict__["_local_index_cache"] = (key, list(out))
+    return out
+
+  def _local_indices_uncached(self):
     local_link = []
     for i in range(len(self.coord._linker[0])):
       for j in range(len(self.vars)):
@@ -522,13 +560,30 @@ class SubProblem(partitionedProblemData):
     self.initialize_IL_res_file(pfo)
     
   def Add_IL_res_row(self, r: Dict):
-    with open(self.Il_file, mode='a') as csv_file:
-      keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', f'{"Evaluation #".rjust(30)}', f'{"Max. inconsistency".rjust(30)}', \
-              f'{"Penalty".rjust(30)}', f'{"Objective".rjust(30)}', f'{"Coupling Status".rjust(30)}'] + \
-                [f'{f"{x.name}".rjust(30)}' for x in self.vars] + [f'{f"{y.name}".rjust(30)}' 
-                                                                   for y in self.MDA_process.responses] 
-      writer = csv.DictWriter(csv_file, fieldnames=keys)
-      writer.writerow(r)    # add column names in the CSV file
+    # Rows are written in one go per solve (_flush_il_rows) instead of reopening the file for every evaluation.
+    self.__dict__.setdefault("_il_rows", []).append((self.Il_file, r))
+
+  def _flush_il_rows(self) -> None:
+    rows = self.__dict__.get("_il_rows")
+    if not rows:
+      return
+    self.__dict__["_il_rows"] = []
+    keys = [f'{"Time"}', f'{"Iteration #".rjust(30)}', f'{"Evaluation #".rjust(30)}', f'{"Max. inconsistency".rjust(30)}',
+            f'{"Penalty".rjust(30)}', f'{"Objective".rjust(30)}', f'{"Coupling Status".rjust(30)}']
+    keys += [f'{f"{x.name}".rjust(30)}' for x in self.vars]
+    keys += [f'{f"{y.name}".rjust(30)}' for y in self.MDA_process.responses]
+    k = 0
+    while k < len(rows):
+      path = rows[k][0]
+      with open(path, mode='a') as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=keys)
+        while k < len(rows) and rows[k][0] == path:
+          writer.writerow(rows[k][1])
+          k += 1
+
+  def _flush_buffers(self) -> None:
+    self._flush_il_rows()
+    self._flush_cache()
 
   def _scalarize_hmin(self, value: Any) -> float:
     array = np.atleast_1d(np.asarray(value, dtype=float))
@@ -797,10 +852,13 @@ class SubProblem(partitionedProblemData):
     # TODO: change the name of this routine
     self.coord.update_master_vector_val(self.vars, self.MDA_process.responses, self.sets)
     mvs = self.coord.master_vars
-    for i in range(len(mvs)):
-      for j in range(len(self.vars)):
-        if mvs[i].index == self.vars[j].index:
-          self.vars[j] = copy.deepcopy(mvs[i])
+    by_index = {}
+    for m in mvs:
+      by_index[m.index] = m   # last match wins, as in the former nested loop
+    for j in range(len(self.vars)):
+      m = by_index.get(self.vars[j].index)
+      if m is not None:
+        self.vars[j] = m.clone()
 
     self._append_cache_row(fun[0], self.coord.phi, vlist, self.MDA_process.getOutputs())
     # if self.realistic_objective:
@@ -950,6 +1008,7 @@ class SubProblem(partitionedProblemData):
     finally:
       self._omads_bounds = None
       self.__dict__["_con_memo"] = None
+      self._flush_buffers()
     self.log = log_copy
     self.fmin = outcome.fmin
     self.hmin = outcome.hmin
@@ -965,6 +1024,7 @@ class SubProblem(partitionedProblemData):
       if "psuccess" in outcome.warm_start:
         self.psize_old = outcome.warm_start["psuccess"]
 
+    self._flush_buffers()
     if getattr(self.coord, "is_AI_regularizer", False):
       self._update_ai_regularizer()
     self.log.log_msg(msg=f"Coordination iteration # {iter}: completed subproblem {self.index}", msg_type=MSG_TYPE.INFO.value)

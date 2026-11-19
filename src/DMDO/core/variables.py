@@ -25,11 +25,15 @@
 
 import copy
 from dataclasses import dataclass
+from enum import Enum
 from logging import warning
 
 import numpy as np
 
 from .enums import VAR_TYPE
+
+# Immutable value types a variable may hold (checked by exact type in variableData.clone).
+_ATOMIC_TYPES = frozenset({int, float, str, bool, type(None), np.float64, np.float32, np.int64, np.int32, np.bool_})
 
 
 @dataclass
@@ -65,6 +69,28 @@ class variableData:
     """ TODO: Shrink the other values vector size to the self values vector size"""
     return other
 
+
+  def clone(self) -> "variableData":
+    """Independent copy, equal to ``copy.deepcopy(self)`` for the plain contents a variable holds (scalars,
+    strings, enums and flat lists or arrays of them) but much cheaper; anything else is deep-copied.
+    The coordination copies variables on every subproblem evaluation."""
+    out = object.__new__(type(self))
+    d = self.__dict__.copy()
+    for key, val in d.items():
+      t = type(val)
+      if t in _ATOMIC_TYPES:
+        continue
+      if t is list:
+        if all(type(e) in _ATOMIC_TYPES for e in val):
+          d[key] = list(val)
+        else:
+          d[key] = copy.deepcopy(val)
+      elif t is np.ndarray:
+        d[key] = val.copy()
+      elif not isinstance(val, (np.number, Enum)):
+        d[key] = copy.deepcopy(val)
+    out.__dict__.update(d)
+    return out
 
   def __sub__(self, other):
     if type(other) is not variableData:

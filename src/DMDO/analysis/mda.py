@@ -52,11 +52,17 @@ class MDA(MDA_data):
       self(**data)
 
   def run(self):
+    # Each analysis input gets an independent copy of the variable with the same index (the last one wins, as in
+    # the former all-pairs loop).
+    by_index = {}
+    for v in self.variables:
+      by_index[v.index] = v
     for i in range(self.nAnalyses):
-      for j in range(len(self.variables)):
-        for k in range(len(self.analyses[i].inputs)):
-          if self.analyses[i].inputs[k].index == self.variables[j].index:
-            self.analyses[i].inputs[k] = copy.deepcopy(self.variables[j])
+      inputs = self.analyses[i].inputs
+      for k in range(len(inputs)):
+        src = by_index.get(inputs[k].index)
+        if src is not None:
+          inputs[k] = src.clone() if hasattr(src, "clone") else copy.deepcopy(src)
       self.analyses[i].run()
 
   def validation(self, vType: int):
@@ -66,7 +72,8 @@ class MDA(MDA_data):
           self.term_status.append(self.term_critteria[i])
 
   def setInputs(self, values: List[Any]):
-    self.variables = copy.deepcopy(values)
+    # run() copies every variable it hands to an analysis, so a shallow list is enough here.
+    self.variables = list(values)
 
   def getOutputs(self):
     out = []

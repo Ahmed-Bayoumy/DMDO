@@ -69,3 +69,19 @@ def test_no_system_functions_leaves_q_unchanged():
   assert c.system_penalty(1) == 0.0
   assert list(c.q_extended()) == pytest.approx([0.1, -0.2])
   assert c.max_inconsistency() == pytest.approx(0.2)
+
+
+def test_initial_weight_rule():
+  master = _mv([1.0], [1])
+  h = SystemFunction("h", "eq", lambda x: x[0] - 0.5, inputs=[1])
+  h.bind(master)
+  c = _coord([h], master)
+  c.w, c.v = [0.001, 0.001], [1.0, 1.0]
+  c.w_init_f_hat = None
+  assert c.apply_initial_weight_rule() is False
+  c.w_init_f_hat, c.w_init_alpha = 1.0e4, 0.1
+  assert c.apply_initial_weight_rule() is True
+  # ||q0||_inf = 0.5 (system-wide function); w = sqrt(0.1 * 1e4) / 0.5
+  assert c.w == pytest.approx([np.sqrt(1000.0) / 0.5] * 2)
+  assert c.v == [0.0, 0.0]
+  assert c.w_sw[0] == pytest.approx(np.sqrt(1000.0) / 0.5) and c.v_sw[0] == 0.0

@@ -465,7 +465,9 @@ class MDO(MDO_data):
       yield from run_sweep()
       self.Coordinator.calc_inconsistency()
       notify(hooks, "on_sweep_end", self, iter)
-      if not getattr(self.Coordinator, "single_multiplier_update", False):
+      # Optional initial weight rule (coord w_init_f_hat): the first sweep only measures the inconsistencies.
+      weights_initialized = iter == 0 and self.Coordinator.apply_initial_weight_rule()
+      if not weights_initialized and not getattr(self.Coordinator, "single_multiplier_update", False):
         self.Coordinator.update_multipliers(iter)
 
       dx = self.get_master_vars_difference()
@@ -482,7 +484,8 @@ class MDO(MDO_data):
       notify(hooks, "on_iteration_end", self, record)
 
       # Update Lagrange multipliers and penalty weights
-      self.Coordinator.update_multipliers(iter)
+      if not weights_initialized:
+        self.Coordinator.update_multipliers(iter)
       notify(hooks, "on_multipliers_updated", self, iter)
 
       # Stopping criteria

@@ -104,7 +104,7 @@ On SBJ the subproblem budget decides whether the derivative-free solvers converg
 
 ### SBJ: the four ATC formulations of Tosserams et al. (2010)
 
-Reference [5] decomposes the business jet in four ways (its Fig. 6, reproduced below). `tests/SBJ` contains one problem
+Reference [5] decomposes the business jet in four ways (its Fig. 6, redrawn below). `tests/SBJ` contains one problem
 definition per formulation, `SBJ_a.yaml` to `SBJ_d.yaml`, run with `python run_SBJ.py <a|b|c|d> [working_dir]`.
 Formulations (c) and (d) relax the range constraint (and in (d) also the total weight Wt = We + Ws + Wf) as
 system-wide functions instead of target-response pairs, which the problem definition declares in a
@@ -116,51 +116,76 @@ system-wide functions instead of target-response pairs, which the problem defini
 | **(c) range as a system-wide constraint: 14 pairs + 1 function** | **(d) no aircraft subproblem: 10 pairs + 2 functions** |
 | <img width="400" alt="Fig. 6(c): the range constraint becomes a system-wide function; 14 target-response pairs" src="docs_src/_static/sbj/fig6c.png"> | <img width="400" alt="Fig. 6(d): range and total weight become system-wide functions; propulsion, aerodynamics and structures only; 10 target-response pairs" src="docs_src/_static/sbj/fig6d.png"> |
 
-*Figure: Four ATC formulations of the business jet, reproduced from S. Tosserams et al., J. Mech. Des. 132(5),
-051002, 2010, Fig. 6 [5].*
+*Figure: Four ATC formulations of the business jet. Redrawn for DMDO (TikZ sources in
+`docs_src/_static/sbj/tikz`); adapted from S. Tosserams, M. Kokkolaras, L. F. P. Etman and J. E. Rooda,
+J. Mech. Des. 132(5), 051002, 2010, Fig. 6 [5], https://doi.org/10.1115/1.4001346.*
 
-Each formulation was run once from the reference design of the paper's Table 1. The other settings were:
+**Benchmark (following the paper's Sec. 4.3).** Every formulation was solved from the same 100 starting points,
+drawn uniformly within ±10 % of the reference design of the paper's Table 1. The other settings were:
 
-- coordinator: β = 1.03, γ = 0.75, initial penalty weight 60, inconsistencies scaled by the reference values,
-  one multiplier update per outer iteration;
-- subproblem solvers: SLSQP in every subproblem, except propulsion in (a), (c) and (d), which uses OMADS MADS.
+- sequential (Gauss–Seidel) coordination with one inner iteration per outer iteration;
+- β = 1.03, γ = 0.75, a per-coupling weight update (`normal`) and termination tolerance ε = 10⁻³;
+- inconsistencies scaled by the reference values;
+- initial weights from the objective estimate f̂ = 10 × 10³ lb, with w⁰ = 0.001 and α = 0.1 (coordinator options
+  `w_init`, `w_init_f_hat` and `w_init_alpha`);
+- SciPy SLSQP in every subproblem, in place of the paper's fmincon SQP.
 
-Formulations (a) and (c) use the `max` penalty-update scheme. With the `normal` scheme they stalled: the drag pair
-between propulsion and aerodynamics stayed inconsistent at about 2.5 × 10⁻², because the throttle limit stops
-propulsion from matching the drag without a larger engine scale factor. The weights below come from a full
-multidisciplinary analysis of each final design, not from the subproblem copies.
+Up to 50 runs ran at a time, and any run that took more than 40 minutes was stopped and counted as not converged.
+The all-in-one column is an MDF solution with SLSQP from the same design-variable starts. As in the paper, the
+weight and constraint statistics cover the converged runs only. The weights come from a full multidisciplinary
+analysis of each final design. To reproduce: `python tests/SBJ/bm_SBJ.py --n 100 --workers 50 --timeout 2400`
+(about 4 hours on a 16-core machine).
 
-| Formulation | Update scheme | Outer iterations | Final max. inconsistency | Wt (MDA) | Max. constraint violation | Paper, Table 2: Wt min / mean / max | Paper: mean iterations |
-|---|:---:|:---:|:---:|---:|:---:|:---:|:---:|
-| (a) | max | 197‡ | 1.0 × 10⁻³ | 37,787 lb | 8.3 × 10⁻³ (range 1983 nm) | 34.0 / 34.9 / 39.2 × 10³ lb | 244 |
-| (b) | normal | 295 (converged) | 5.1 × 10⁻⁷ | 35,836 lb | none (range 2003 nm) | 33.9 / 35.0 / 48.5 × 10³ lb | 209 |
-| (c) | max | 169‡ | 1.1 × 10⁻⁴ | **34,625 lb** | 4 × 10⁻⁴ (range 1999 nm) | 33.6 / 34.3 / 38.8 × 10³ lb | 202 |
-| (d) | normal | 234‡ | 8.9 × 10⁻⁴ (lowest 2.0 × 10⁻⁵) | **34,611 lb** | 2 × 10⁻⁴ (range 2000 nm) | 34.0 / 34.7 / 46.0 × 10³ lb | 85 |
+**DMDO** (same layout as the paper's Table 2):
 
-‡ Stopped by hand. The weight had changed by less than 0.1 % over the last 30 or more iterations, while the
-inconsistency kept oscillating between about 10⁻⁵ and 5 × 10⁻³ above the 10⁻⁶ stopping tolerance. The constraint
-violations are of the same order as the paper's (Table 2: up to 0.009).
+| Formulation | | All-in-one | (a) | (b) | (c) | (d) |
+|---|---|:---:|:---:|:---:|:---:|:---:|
+| Coordination | | MDF | Sequential | Sequential | Sequential | Sequential |
+| Converged runs | | 99/100 | 52/100§ | 99/100 | 100/100 | 100/100 |
+| Optimal weight (× 10³ lb) | Min | 34.0 | 34.2 | 34.4 | 34.3 | 34.4 |
+| | Mean | 36.4 | 34.7 | 35.4 | 35.4 | 35.3 |
+| | Max | 38.1 | 38.3 | 38.8 | 38.3 | 38.4 |
+| Maximum constraint violation | Min | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 |
+| | Mean | 0.000 | 0.006 | 0.001 | 0.001 | 0.001 |
+| | Max | 0.000 | 0.013 | 0.008 | 0.005 | 0.004 |
+| Iterations (total) | Min | – | 138 | 132 | 114 | 127 |
+| | Mean | – | 155 | 159 | 143 | 148 |
+| | Max | – | 182 | 199 | 180 | 173 |
 
-All four weights lie within the paper's spread for the same formulation. Formulations (c) and (d) reach the paper's
-most frequent optimum, the MDF design of Table 1 (34.3 × 10³ lb), within 1 %:
+**Tosserams et al. (2010), Table 2** (fmincon, MATLAB):
 
-| Variable | Table 1 (MDF) | (a) | (b) | (c) | (d) |
-|---|---:|---:|---:|---:|---:|
-| t/c | 0.0641 | 0.0611 | 0.0734 | 0.0646 | 0.0659 |
-| AR_w | 2.5 | 2.50 | 2.51 | 2.50 | 2.50 |
-| Λ_w (deg) | 70 | 69.9 | 69.9 | 69.9 | 70.0 |
-| S_ref (ft²) | 667 | 788 | 629 | 681 | 668 |
-| S_ht (ft²) | 99.7 | 139.7 | 78.9 | 102.9 | 82.5 |
-| AR_ht | 2.5 | 2.50 | 4.45 | 2.50 | 3.90 |
-| T | 0.196 | 0.196 | 0.191 | 0.196 | 0.196 |
-| θ (deg) | 19.1 | 11.2 | 8.5 | 18.2 | 12.7 |
-| ESF | 0.75 | 0.85 | 0.83 | 0.78 | 0.77 |
-| L/D | 7.03 | 6.88 | 6.80 | 6.93 | 6.93 |
-| Ws / Wf / We (10³ lb) | 17.5 / 10.3 / 6.49 | 19.0 / 11.5 / 7.38 | 17.6 / 11.1 / 7.19 | 17.4 / 10.5 / 6.68 | 17.5 / 10.5 / 6.63 |
+| Formulation | | All-in-one | (a) | (b) | (c) | (d) |
+|---|---|:---:|:---:|:---:|:---:|:---:|
+| Converged runs | | 100/100 | 98/100 | 100/100 | 89/100 | 94/100 |
+| Optimal weight (× 10³ lb) | Min | 33.6 | 34.0 | 33.9 | 33.6 | 34.0 |
+| | Mean | 34.7 | 34.9 | 35.0 | 34.3 | 34.7 |
+| | Max | 38.1 | 39.2 | 48.5 | 38.8 | 46.0 |
+| Maximum constraint violation | Min | 0.000 | 0.000 | 0.000 | 0.000 | 0.000 |
+| | Mean | 0.000 | 0.001 | 0.002 | 0.002 | 0.003 |
+| | Max | 0.001 | 0.009 | 0.009 | 0.006 | 0.006 |
+| Iterations (total) | Min | – | 181 | 166 | 145 | 76 |
+| | Mean | – | 244 | 209 | 202 | 85 |
+| | Max | – | 283 | 261 | 242 | 131 |
 
-Formulation (a) ends in the heavier local optimum: a larger wing (S_ref = 788 ft²) with 9-inch bottom skin cores.
-The paper also finds this optimum, at about 38 × 10³ lb. The paper's statistics come from 100 random starting points
-per formulation; the results here are single runs.
+§ None of the (a) runs diverged; all 48 non-converged runs were stopped at the 40-minute limit. Formulation (a) has
+the most expensive subproblem (aircraft holds 15 copies and 26 pairs), so its outer iterations take about twice as
+long. When stopped, those runs had reached 129–190 iterations with a median inconsistency of 2.7 × 10⁻³, and 45 of the
+48 were below 5 × 10⁻³. Its iteration statistics therefore cover only the faster half of the runs. One (b) run was
+also stopped at the limit.
+
+All four formulations converge to the same two optima as the paper: the Table 1 design at about 34.3 × 10³ lb and a
+heavier design at about 38 × 10³ lb (a larger wing with 9-inch bottom skin cores).
+
+| Converged runs that end at | All-in-one | (a) | (b) | (c) | (d) |
+|---|:---:|:---:|:---:|:---:|:---:|
+| ≈ 34.3 × 10³ lb (below 36 × 10³ lb) | 43 | 50 | 77 | 80 | 78 |
+| ≈ 38 × 10³ lb (above 37 × 10³ lb) | 56 | 2 | 22 | 20 | 21 |
+
+The ranges of the optimal weights (34.0–38.8 × 10³ lb) and of the constraint violations (at most 0.013) match the
+paper's. The formulations with fewer pairs need fewer outer iterations: (c) and (d) average 143 and 148, against
+159 for (b). The paper's (d) needs far fewer iterations (85) than DMDO's (148). One possible cause is the initial
+weights: the paper sets one per coupling, while DMDO uses a single weight for all couplings. Unlike the paper's (b) and (d), no DMDO run ends above
+38.8 × 10³ lb.
 
 ## Features
 

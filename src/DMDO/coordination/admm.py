@@ -107,6 +107,8 @@ class coordinationData:
   rollback_gap: int = 5
   rollback_trigger: str = "event"
   w_init: float = 1.0
+  w_init_f_hat: Optional[float] = None
+  w_init_alpha: float = 0.1
   budget_feasible_only: bool = False
   adapt_trigger: str = "forecast"
   trigger_rise: float = 0.3
@@ -230,6 +232,8 @@ class ADMM(ADMM_data):
     # accepted the forecast; the rollback's own objective test then plays the role of the non-improvement gate.
     self.rollback_trigger = "event"
     self.w_init = 1.0
+    self.w_init_f_hat = None  # objective estimate for the initial weight rule (apply_initial_weight_rule)
+    self.w_init_alpha = 0.1
     self.budget_feasible_only = False  # expand only subproblems whose last solve was feasible
     # Action trigger: "forecast" (decisor accepts the one-step forecast) or "threshold" (q_max rose by >= trigger_rise
     # decades). ni_gate "objective_drop" uses the harm gate (_harm_gate). Validated on recorded no-AI histories.
@@ -964,12 +968,12 @@ class ADMM(ADMM_data):
   def update_master_vector_val(self, vars: List[variableData], resps: List[variableData], sets):
     if self.master_vars:
       for i in range(len(vars)):
-        self.master_vars[vars[i].index-1] = copy.deepcopy(vars[i])
+        self.master_vars[vars[i].index-1] = vars[i].clone()
         # self.master_vars[vars[i].index-1].value = vars[i].value 
         # #if (typ != "c" and typ != "d") else sets[vars[i].set].index(vars[i].value)
       if resps is not None:
         for i in range(len(resps)):
-          self.master_vars[resps[i].index-1] = copy.deepcopy(resps[i])
+          self.master_vars[resps[i].index-1] = resps[i].clone()
           # self.master_vars[resps[i].index-1].value = resps[i].value 
           # #if (typ != "c" and typ != "d") else sets[resps[i].set].index(resps[i].value)
     else:
@@ -978,10 +982,10 @@ class ADMM(ADMM_data):
   def update_master_vector(self, vars: List[variableData], resps: List[variableData]):
     if self.master_vars:
       for i in range(len(vars)):
-        self.master_vars[vars[i].index-1] = copy.deepcopy(vars[i])
+        self.master_vars[vars[i].index-1] = vars[i].clone()
       if resps is not None:
         for i in range(len(resps)):
-          self.master_vars[resps[i].index-1] = copy.deepcopy(resps[i])
+          self.master_vars[resps[i].index-1] = resps[i].clone()
     else:
       raise Exception(IOError, "Master variables vector have to be non-empty to calculate inconsistencies!")
 
@@ -1055,6 +1059,32 @@ class ADMM(ADMM_data):
     w_cap = float(getattr(self, "penalty_w_cap", np.inf))
     if np.isfinite(w_cap):
       self.w_sw = np.minimum(self.w_sw, w_cap)
+
+  def apply_initial_weight_rule(self) -> bool:
+    """Initial penalty weights from an objective estimate (Tosserams et al. 2008/2010; coord ``w_init_f_hat``).
+
+    The first outer iteration is solved with the small weight ``w_init`` (w0) and zero multipliers; its inconsistency
+    q0 then sets every weight to w = sqrt(alpha |f_hat|) / ||q0||_inf (``w_init_alpha``, default 0.1), so that the
+    initial penalty is a fraction alpha of the expected objective. Uses the max-norm of q0 for all weights; the
+    per-component form would give unbounded weights for couplings that happen to be consistent after the first sweep.
+    Returns True when the weights were set (the regular multiplier update is skipped for that iteration).
+    """
+    f_hat = getattr(self, "w_init_f_hat", None)
+    if f_hat is None:
+      return False
+    if self._sw_ready():
+      self.q_sw = self.calc_system_functions()
+    q0 = self.max_inconsistency()
+    if not np.isfinite(q0) or q0 <= 0.0:
+      return False
+    w = float(np.sqrt(float(getattr(self, "w_init_alpha", 0.1)) * abs(float(f_hat))) / q0)
+    self.w = [w] * len(self.w)
+    self.v = [0.0] * len(self.v)
+    if self._sw_ready():
+      self.w_sw = np.full(len(self.w_sw), w)
+      self.v_sw = np.zeros(len(self.v_sw))
+    self.w_init = w
+    return True
 
   def q_extended(self) -> np.ndarray:
     """Extended inconsistency vector [c; g0 + s; h0] (the pair part alone when there are no system-wide functions)."""

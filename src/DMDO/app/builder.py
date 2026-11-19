@@ -75,6 +75,8 @@ _AI_OPTION_KEYS = (
   "rollback_gap",
   "rollback_trigger",
   "w_init",
+  "w_init_f_hat",
+  "w_init_alpha",
   "budget_feasible_only",
   "adapt_trigger",
   "trigger_rise",

@@ -176,14 +176,19 @@ coord:
     beta: 1.03
     gamma: 0.75
     nsp: 4
-    budget: 500
+    budget: 1000
     index_of_master_SP: 1
     display: true
     # q = (copy - copy) / reference, the paper's scaling (variables scaled so the Table 1 reference is 1).
     scaling: reference
-    w_init: 60
+    # Initial penalty weights by the rule of the paper's Ref. [11] (Sec. 4.3): after the first sweep
+    # w = sqrt(alpha * |f_hat|) / max|q|, with f_hat = 10 (x10^3 lb) on the scaled objective, alpha = 0.1;
+    # w_init is the weight of that first sweep (w0 = 0.001).
+    w_init: 0.001
+    w_init_f_hat: 1.0e+4
+    w_init_alpha: 0.1
     mode: serial
-    M_update_scheme: max
+    M_update_scheme: normal
     store_q_io: true
     # One multiplier/penalty update per outer iteration (method of multipliers, as in NoHiMDO and the paper).
     single_multiplier_update: true
@@ -248,7 +253,16 @@ subproblem:
     display: false
     psize: 1.
     pupdate: DEFAULT
-    solver: mads
+    solver: scipy
+    scipy:
+      method: SLSQP
+      is_con: true
+      normalize: true
+      cache_constraints: true
+      restore_feasibility: true
+      scale_objective: true
+      tol: 1.0e-8
+      options: {maxiter: 100, ftol: 1.0e-9, eps: 1.0e-7, disp: false}
     save_results: true
     configurations: CSP1
 
@@ -276,7 +290,7 @@ subproblem:
       restore_feasibility: true
       scale_objective: true
       tol: 1.0e-8
-      options: {maxiter: 50, ftol: 1.0e-9, eps: 1.0e-7, disp: false}
+      options: {maxiter: 100, ftol: 1.0e-9, eps: 1.0e-7, disp: false}
     save_results: true
     save_all_best: false
     configurations: CSP1
@@ -322,7 +336,8 @@ MDO:
   fmin: inf
   hmin: inf
   display: true
-  inc_stop: 1.0e-6
+  # Paper stopping criterion (Sec. 4.3): max inconsistency below 1e-3.
+  inc_stop: 1.0e-3
   stop: "Iteration budget exhausted"
   tab_inc: []
   noprogress_stop: 100
@@ -355,4 +370,4 @@ CONFIG:
       s_method: LH
       ns: 10
       visualize: false
-      criterion: null
+      criterion: null
