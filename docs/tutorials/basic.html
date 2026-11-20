@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>The basic problem from YAML &#8212; DMDO 2612.0</title>
+    <title>The basic problem from YAML &#8212; DMDO 2612.2</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=d587bd99"></script>
+    <script src="../_static/documentation_options.js?v=4607b3ea"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -59,7 +59,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2612.0" />
+  <meta name="docsearch:version" content="2612.2" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -129,8 +129,8 @@
     
     
     
-    <img src="../_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.0 - Home"/>
-    <img src="../_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.0 - Home"/>
+    <img src="../_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.2 - Home"/>
+    <img src="../_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.2 - Home"/>
   
   
 </a></div>
@@ -173,16 +173,16 @@
 </li>
 
 
-<li class="nav-item current active">
-  <a class="nav-link nav-internal" href="index.html">
-    Tutorials
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../architecture_results.html">
+    Testing the MDO architectures
   </a>
 </li>
 
 
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="../user_guide/problem_definition.html">
-    Problem definition
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Tutorials
   </a>
 </li>
 
@@ -194,6 +194,20 @@
                 </button>
                 <ul id="pst-nav-more-links" class="dropdown-menu">
                     
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../user_guide/problem_definition.html">
+    Problem definition
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../user_guide/architectures.html">
+    MDO architectures
+  </a>
+</li>
+
+
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="../user_guide/outputs.html">
     Outputs
@@ -336,6 +350,13 @@
 </li>
 
 
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../architecture_results.html">
+    Testing the MDO architectures
+  </a>
+</li>
+
+
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
     Tutorials
@@ -346,6 +367,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../user_guide/problem_definition.html">
     Problem definition
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../user_guide/architectures.html">
+    MDO architectures
   </a>
 </li>
 
@@ -523,7 +551,28 @@ through what DMDO prints and writes.</p>
 <h2>The analyses<a class="headerlink" href="#the-analyses" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">examples/basic_disciplines.py</span></code> writes the two analyses as <a class="reference internal" href="../api/ports.html#DMDO.Discipline" title="DMDO.Discipline"><code class="xref py py-class docutils literal notranslate"><span class="pre">Discipline</span></code></a> objects (inputs and outputs
 keyed by variable name) and the subproblem objectives as plain functions:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#  This program is free software: you can redistribute it and/or modify it under the  #</span>
+<span class="c1">#  terms of the GNU General Public License as published by the Free Software          #</span>
+<span class="c1">#  Foundation, either version 3 of the License, or (at your option) any later         #</span>
+<span class="c1">#  version.                                                                           #</span>
+<span class="c1">#                                                                                     #</span>
+<span class="c1">#  This program is distributed in the hope that it will be useful, but WITHOUT ANY    #</span>
+<span class="c1">#  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A    #</span>
+<span class="c1">#  PARTICULAR PURPOSE.  See the GNU General Public License for more details.          #</span>
+<span class="c1">#                                                                                     #</span>
+<span class="c1">#  You should have received a copy of the GNU General Public License along            #</span>
+<span class="c1">#  with this program. If not, see &lt;http://www.gnu.org/licenses/&gt;.                     #</span>
+<span class="c1">#                                                                                     #</span>
+<span class="c1">#  You can find information on simple_mads at                                         #</span>
+<span class="c1">#  https://github.com/Ahmed-Bayoumy/DMDO                                              #</span>
+<span class="c1"># ------------------------------------------------------------------------------------#</span>
+<span class="sd">"""Analyses and objectives of the basic two-subproblem example (examples/basic_problem.yaml).</span>
+
+<span class="sd">The two analyses are written as :class:`DMDO.Discipline` objects (named inputs in, named outputs out), the form an</span>
+<span class="sd">adapter around a model from another framework takes. They live in an importable module so that worker processes</span>
+<span class="sd">can unpickle them.</span>
+<span class="sd">"""</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">Analysis1</span><span class="p">:</span>

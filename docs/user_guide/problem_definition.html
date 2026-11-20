@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Problem definition &#8212; DMDO 2612.0</title>
+    <title>Problem definition &#8212; DMDO 2612.2</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=d587bd99"></script>
+    <script src="../_static/documentation_options.js?v=4607b3ea"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -54,12 +54,12 @@
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="Outputs" href="outputs.html" />
+    <link rel="next" title="MDO architectures" href="architectures.html" />
     <link rel="prev" title="The post-processing dashboard" href="../tutorials/dashboard.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2612.0" />
+  <meta name="docsearch:version" content="2612.2" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -129,8 +129,8 @@
     
     
     
-    <img src="../_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.0 - Home"/>
-    <img src="../_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.0 - Home"/>
+    <img src="../_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.2 - Home"/>
+    <img src="../_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.2 - Home"/>
   
   
 </a></div>
@@ -174,15 +174,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../tutorials/index.html">
-    Tutorials
+  <a class="nav-link nav-internal" href="../architecture_results.html">
+    Testing the MDO architectures
   </a>
 </li>
 
 
-<li class="nav-item current active">
-  <a class="nav-link nav-internal" href="#" aria-current="page">
-    Problem definition
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../tutorials/index.html">
+    Tutorials
   </a>
 </li>
 
@@ -194,6 +194,20 @@
                 </button>
                 <ul id="pst-nav-more-links" class="dropdown-menu">
                     
+<li class=" current active">
+  <a class="nav-link dropdown-item nav-internal" href="#" aria-current="page">
+    Problem definition
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="architectures.html">
+    MDO architectures
+  </a>
+</li>
+
+
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="outputs.html">
     Outputs
@@ -337,6 +351,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="../architecture_results.html">
+    Testing the MDO architectures
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="../tutorials/index.html">
     Tutorials
   </a>
@@ -346,6 +367,13 @@
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="#" aria-current="page">
     Problem definition
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="architectures.html">
+    MDO architectures
   </a>
 </li>
 
@@ -622,6 +650,10 @@ local variable.</p></td>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">responses</span></code></p></td>
 <td><p>Variable keys the analyses compute.</p></td>
 </tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">solver</span></code></p></td>
+<td><p>Optional, <code class="docutils literal notranslate"><span class="pre">MON:</span> <span class="pre">MDF</span></code> only: <code class="docutils literal notranslate"><span class="pre">GS</span></code> (default), <code class="docutils literal notranslate"><span class="pre">Jacobi</span></code> or <code class="docutils literal notranslate"><span class="pre">Newton</span></code> (or a mapping with options) for the
+MDA’s feedback loops; see <a class="reference internal" href="architectures.html"><span class="doc">MDO architectures</span></a>.</p></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -754,15 +786,26 @@ optimizer; otherwise they are penalized.</p></td>
 <td><p>Initial OMADS frame size, and how it carries over between outer iterations (<code class="docutils literal notranslate"><span class="pre">last</span></code>, <code class="docutils literal notranslate"><span class="pre">success</span></code>,
 <code class="docutils literal notranslate"><span class="pre">max</span></code>, <code class="docutils literal notranslate"><span class="pre">default</span></code>).</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fmin_nop</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">start_point</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">warm</span></code></p></td>
+<td><p>Where every inner solve starts: <code class="docutils literal notranslate"><span class="pre">warm</span></code> (the last solution), <code class="docutils literal notranslate"><span class="pre">initial</span></code> (the <code class="docutils literal notranslate"><span class="pre">bl</span></code> values of the
+subproblem’s design variables, every time) or a mapping <code class="docutils literal notranslate"><span class="pre">{variable</span> <span class="pre">key:</span> <span class="pre">value}</span></code> such as
+<code class="docutils literal notranslate"><span class="pre">{v27:</span> <span class="pre">100000.0,</span> <span class="pre">v37:</span> <span class="pre">3.0}</span></code> (these values; design variables not listed start from their <code class="docutils literal notranslate"><span class="pre">bl</span></code>). Keys must
+be in the subproblem’s <code class="docutils literal notranslate"><span class="pre">vars</span></code>; vector variables take a list of <code class="docutils literal notranslate"><span class="pre">dim</span></code> values. A variable name can be used
+instead of a key (a name shared by several variables then takes one value for all of them, or a list with
+one value each in the order of <code class="docutils literal notranslate"><span class="pre">vars</span></code>). Only the start point is fixed: the frame size still follows
+<code class="docutils literal notranslate"><span class="pre">pupdate</span></code> (use <code class="docutils literal notranslate"><span class="pre">pupdate:</span> <span class="pre">default</span></code> to reset it too). In Python: <code class="docutils literal notranslate"><span class="pre">SubProblem.set_start_point(...)</span></code>, with
+variable indices (<code class="docutils literal notranslate"><span class="pre">variableData.index</span></code>) or names as keys.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">fmin_nop</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">inf</span></code></p></td>
 <td><p>Initial best objective.</p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">freal</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">freal</span></code></p></td>
 <td><p>none</p></td>
 <td><p>A reference value of the objective, used to report the relative objective error of the master subproblem.</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">display</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">display</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">False</span></code></p></td>
 <td><p>Console output of the inner solver.</p></td>
 </tr>
@@ -774,7 +817,7 @@ optimizer; otherwise they are penalized.</p></td>
 <h2><code class="docutils literal notranslate"><span class="pre">CONFIG</span></code>: OMADS settings<a class="headerlink" href="#config-omads-settings" title="Link to this heading">#</a></h2>
 <p>Named blocks of OMADS options, referenced by <code class="docutils literal notranslate"><span class="pre">configurations</span></code>. Each has an <code class="docutils literal notranslate"><span class="pre">options</span></code> part (<code class="docutils literal notranslate"><span class="pre">seed</span></code>, <code class="docutils literal notranslate"><span class="pre">budget</span></code>,
 <code class="docutils literal notranslate"><span class="pre">tol</span></code>, <code class="docutils literal notranslate"><span class="pre">psize_init</span></code>, <code class="docutils literal notranslate"><span class="pre">opportunistic</span></code>, <code class="docutils literal notranslate"><span class="pre">rich_direction</span></code>, <code class="docutils literal notranslate"><span class="pre">check_cache</span></code>, <code class="docutils literal notranslate"><span class="pre">store_cache</span></code>, …) and a
-<code class="docutils literal notranslate"><span class="pre">search</span></code> part (<code class="docutils literal notranslate"><span class="pre">type</span></code>, <code class="docutils literal notranslate"><span class="pre">s_method</span></code>, <code class="docutils literal notranslate"><span class="pre">ns</span></code>); see the OMADS documentation <span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id26" title="Ahmed H. Bayoumy. OMADS: optimization using mesh adaptive direct search. 2022. URL: https://github.com/Ahmed-Bayoumy/OMADS, doi:10.5281/zenodo.23407559.">Bayoumy, 2022</a>]</span> for their meaning.</p>
+<code class="docutils literal notranslate"><span class="pre">search</span></code> part (<code class="docutils literal notranslate"><span class="pre">type</span></code>, <code class="docutils literal notranslate"><span class="pre">s_method</span></code>, <code class="docutils literal notranslate"><span class="pre">ns</span></code>); see the OMADS documentation <span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id27" title="Ahmed H. Bayoumy. OMADS: optimization using mesh adaptive direct search. 2022. URL: https://github.com/Ahmed-Bayoumy/OMADS, doi:10.5281/zenodo.23407559.">Bayoumy, 2022</a>]</span> for their meaning.</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">CONFIG</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">CSP1</span><span class="p">:</span>
 <span class="w">    </span><span class="nt">options</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">seed</span><span class="p">:</span><span class="w"> </span><span class="nv">12345</span><span class="p p-Indicator">,</span><span class="nt"> budget</span><span class="p">:</span><span class="w"> </span><span class="nv">250</span><span class="p p-Indicator">,</span><span class="nt"> tol</span><span class="p">:</span><span class="w"> </span><span class="nv">1.0e-9</span><span class="p p-Indicator">,</span><span class="nt"> psize_init</span><span class="p">:</span><span class="w"> </span><span class="nv">2.0</span><span class="p p-Indicator">,</span><span class="nt"> opportunistic</span><span class="p">:</span><span class="w"> </span><span class="nv">False</span><span class="p p-Indicator">,</span>
@@ -827,8 +870,9 @@ optimizer; otherwise they are penalized.</p></td>
 <td><p>Initial values of the run’s records.</p></td>
 </tr>
 <tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">architecture</span></code></p></td>
-<td><p><code class="docutils literal notranslate"><span class="pre">IDF</span></code></p></td>
-<td><p>Informational; DMDO solves the distributed NHATC formulation of <a class="reference internal" href="../background.html"><span class="doc">Background</span></a>.</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">DIST:</span> <span class="pre">{IDF:</span> <span class="pre">NHATC}</span></code></p></td>
+<td><p>Nested keys selecting the architecture: <code class="docutils literal notranslate"><span class="pre">DIST:</span> <span class="pre">{IDF:</span> <span class="pre">NHATC}</span></code>, <code class="docutils literal notranslate"><span class="pre">DIST:</span> <span class="pre">{IDF:</span> <span class="pre">ATC}</span></code> or <code class="docutils literal notranslate"><span class="pre">MON:</span> <span class="pre">MDF</span></code>. Any
+other value warns once and uses the default; see <a class="reference internal" href="architectures.html"><span class="doc">MDO architectures</span></a>.</p></td>
 </tr>
 </tbody>
 </table>
@@ -861,11 +905,11 @@ attached to the built problem.</p>
       </div>
     </a>
     <a class="right-next"
-       href="outputs.html"
+       href="architectures.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Outputs</p>
+        <p class="prev-next-title">MDO architectures</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

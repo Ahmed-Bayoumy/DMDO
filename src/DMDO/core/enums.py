@@ -115,7 +115,7 @@ eps_fio = []
 eval_id = 0
 
 user = USER
-VERSION_NUMBER = "2601"
+VERSION_NUMBER = "2612.2"
 def check_space(string: str) -> int:
   if string.isspace():
     return string.count(" ")

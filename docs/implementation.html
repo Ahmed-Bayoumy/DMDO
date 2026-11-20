@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Implementation &#8212; DMDO 2612.0</title>
+    <title>Implementation &#8212; DMDO 2612.2</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=d587bd99"></script>
+    <script src="_static/documentation_options.js?v=4607b3ea"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -59,7 +59,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2612.0" />
+  <meta name="docsearch:version" content="2612.2" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -129,8 +129,8 @@
     
     
     
-    <img src="_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.0 - Home"/>
-    <img src="_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.0 - Home"/>
+    <img src="_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.2 - Home"/>
+    <img src="_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.2 - Home"/>
   
   
 </a></div>
@@ -174,15 +174,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="tutorials/index.html">
-    Tutorials
+  <a class="nav-link nav-internal" href="architecture_results.html">
+    Testing the MDO architectures
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="user_guide/problem_definition.html">
-    Problem definition
+  <a class="nav-link nav-internal" href="tutorials/index.html">
+    Tutorials
   </a>
 </li>
 
@@ -194,6 +194,20 @@
                 </button>
                 <ul id="pst-nav-more-links" class="dropdown-menu">
                     
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="user_guide/problem_definition.html">
+    Problem definition
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="user_guide/architectures.html">
+    MDO architectures
+  </a>
+</li>
+
+
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="user_guide/outputs.html">
     Outputs
@@ -337,6 +351,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="architecture_results.html">
+    Testing the MDO architectures
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="tutorials/index.html">
     Tutorials
   </a>
@@ -346,6 +367,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="user_guide/problem_definition.html">
     Problem definition
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="user_guide/architectures.html">
+    MDO architectures
   </a>
 </li>
 
@@ -635,7 +663,7 @@ and installed packages can contribute entries without any code change in DMDO:</
 <h2>Subproblem solvers<a class="headerlink" href="#subproblem-solvers" title="Link to this heading">#</a></h2>
 <p>A subproblem translates its state into a <a class="reference internal" href="api/ports.html#DMDO.SolverRequest" title="DMDO.SolverRequest"><code class="xref py py-class docutils literal notranslate"><span class="pre">SolverRequest</span></code></a> and hands it to its solver strategy:</p>
 <dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">mads</span></code>, <code class="docutils literal notranslate"><span class="pre">poll</span></code>, <code class="docutils literal notranslate"><span class="pre">search</span></code></dt><dd><p>OMADS <span class="bibtex-citation" id="id1">[<a class="reference internal" href="references.html#id26" title="Ahmed H. Bayoumy. OMADS: optimization using mesh adaptive direct search. 2022. URL: https://github.com/Ahmed-Bayoumy/OMADS, doi:10.5281/zenodo.23407559.">Bayoumy, 2022</a>]</span>: the complete Mesh Adaptive Direct Search algorithm <span class="bibtex-citation" id="id2">[<a class="reference internal" href="references.html#id25" title="Charles Audet and Jr. Dennis, John E. Mesh adaptive direct search algorithms for constrained optimization. SIAM Journal on Optimization, 17(1):188–217, 2006. doi:10.1137/040603371.">Audet and Dennis, 2006</a>]</span>, its poll
+<dt><code class="docutils literal notranslate"><span class="pre">mads</span></code>, <code class="docutils literal notranslate"><span class="pre">poll</span></code>, <code class="docutils literal notranslate"><span class="pre">search</span></code></dt><dd><p>OMADS <span class="bibtex-citation" id="id1">[<a class="reference internal" href="references.html#id27" title="Ahmed H. Bayoumy. OMADS: optimization using mesh adaptive direct search. 2022. URL: https://github.com/Ahmed-Bayoumy/OMADS, doi:10.5281/zenodo.23407559.">Bayoumy, 2022</a>]</span>: the complete Mesh Adaptive Direct Search algorithm <span class="bibtex-citation" id="id2">[<a class="reference internal" href="references.html#id26" title="Charles Audet and Jr. Dennis, John E. Mesh adaptive direct search algorithms for constrained optimization. SIAM Journal on Optimization, 17(1):188–217, 2006. doi:10.1137/040603371.">Audet and Dennis, 2006</a>]</span>, its poll
 step alone, or its sampling search alone. Derivative-free, suitable for noisy, non-smooth or failing analyses.
 Options come from the subproblem’s <code class="docutils literal notranslate"><span class="pre">CONFIG</span></code> entry; the frame size of the previous outer iteration warm-starts
 the next one.</p>

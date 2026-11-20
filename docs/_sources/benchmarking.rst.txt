@@ -193,6 +193,281 @@ campaigns rather than from recorded regression traces. All constraints use the p
 * With only 50 evaluations per solve, MADS does not reach an inconsistency of :math:`10^{-3}` within 100 outer
   iterations: the structures subproblem, with 72 constraints, needs the larger budget.
 
+The four ATC formulations of Tosserams et al.
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+:cite:t:`tosserams2010nonhierarchical` decompose the business jet in four ways (:numref:`F-sbj-formulations` and the three figures after it):
+
+(a) hierarchical, with aircraft coordinating the other three subproblems (26 target-response pairs);
+(b) non-hierarchical (16 pairs);
+(c) like (b), but with the range constraint relaxed as a system-wide function (14 pairs and 1 function);
+(d) without the aircraft subproblem, with the range constraint and the weight balance
+    :math:`W_t = W_e + W_s + W_f` as system-wide functions (10 pairs and 2 functions).
+
+``tests/SBJ`` contains one problem definition per formulation, ``SBJ_a.yaml`` to ``SBJ_d.yaml``. Formulations (c)
+and (d) declare their system-wide functions in the ``system_functions`` section. Each such function is relaxed
+with its own multiplier and penalty weight, :math:`\phi(g + s)` with a slack :math:`s \ge 0` for an inequality and
+:math:`\phi(h)` for an equality, and is added to the objective of every subproblem whose variables it depends on.
+
+.. _F-sbj-formulations:
+.. figure:: _static/sbj/fig6a.png
+   :width: 48%
+
+   Formulation (a): hierarchical.
+
+.. figure:: _static/sbj/fig6b.png
+   :width: 48%
+
+   Formulation (b): non-hierarchical.
+
+.. figure:: _static/sbj/fig6c.png
+   :width: 48%
+
+   Formulation (c): range constraint as a system-wide function.
+
+.. figure:: _static/sbj/fig6d.png
+   :width: 48%
+
+   Formulation (d): range and total-weight constraints as system-wide functions.
+
+*Four ATC formulations of the business jet, redrawn for DMDO (TikZ sources in* ``docs_src/_static/sbj/tikz``\ *);
+adapted from Fig. 6 of* :cite:t:`tosserams2010nonhierarchical`\ *.*
+
+**Setup** (following Sec. 4.3 of the paper). Every formulation is solved from the same 100 starting points, drawn
+uniformly within :math:`\pm 10\,\%` of the reference design of the paper's Table 1; all copies of a quantity start
+from the same value. The other settings are:
+
+* sequential (Gauss–Seidel) coordination, with one inner iteration per outer iteration;
+* :math:`\beta = 1.03`, :math:`\gamma = 0.75`, a per-coupling weight update (``normal``) and termination tolerance
+  :math:`\varepsilon = 10^{-3}`;
+* inconsistencies scaled by the reference values;
+* SciPy SLSQP in every subproblem, in place of the paper's MATLAB ``fmincon`` SQP.
+
+The initial weights follow the paper's rule with objective estimate :math:`\hat f = 10\times10^{3}` lb,
+:math:`w^0 = 0.001` and :math:`\alpha = 0.1` (coordinator options ``w_init``, ``w_init_f_hat`` and
+``w_init_alpha``). The first outer iteration uses :math:`w^0`; every weight is then set to
+:math:`\sqrt{\alpha |\hat f|}/\lVert q^0\rVert_\infty`.
+
+Up to 50 runs ran at a time, and a run that took more than 40 minutes was stopped and counted as not converged. The
+all-in-one column is an MDF solution with SLSQP from the same design-variable starts. As in the paper, the weight,
+constraint-violation and iteration statistics cover the converged runs only. The weight and the constraint violation
+come from a full multidisciplinary analysis of each final design. The campaign is reproduced (about 4 hours on a
+16-core machine) by:
+
+.. code-block:: console
+
+   $ python tests/SBJ/bm_SBJ.py --n 100 --workers 50 --timeout 2400
+
+.. list-table:: DMDO results for the four formulations, 100 random starting points (layout of Table 2 of :cite:t:`tosserams2010nonhierarchical`)
+   :header-rows: 1
+   :widths: 30 8 12 12 12 12 12
+
+   * - Formulation
+     -
+     - All-in-one
+     - \(a\)
+     - \(b\)
+     - \(c\)
+     - \(d\)
+   * - Coordination
+     -
+     - MDF
+     - Sequential
+     - Sequential
+     - Sequential
+     - Sequential
+   * - Converged runs
+     -
+     - 99/100
+     - 52/100 [#a-time]_
+     - 99/100
+     - 100/100
+     - 100/100
+   * - Optimal weight (:math:`\times 10^3` lb)
+     - Min
+     - 34.0
+     - 34.2
+     - 34.4
+     - 34.3
+     - 34.4
+   * -
+     - Mean
+     - 36.4
+     - 34.7
+     - 35.4
+     - 35.4
+     - 35.3
+   * -
+     - Max
+     - 38.1
+     - 38.3
+     - 38.8
+     - 38.3
+     - 38.4
+   * - Maximum constraint violation
+     - Min
+     - 0.000
+     - 0.000
+     - 0.000
+     - 0.000
+     - 0.000
+   * -
+     - Mean
+     - 0.000
+     - 0.006
+     - 0.001
+     - 0.001
+     - 0.001
+   * -
+     - Max
+     - 0.000
+     - 0.013
+     - 0.008
+     - 0.005
+     - 0.004
+   * - Iterations (total)
+     - Min
+     - –
+     - 138
+     - 132
+     - 114
+     - 127
+   * -
+     - Mean
+     - –
+     - 155
+     - 159
+     - 143
+     - 148
+   * -
+     - Max
+     - –
+     - 182
+     - 199
+     - 180
+     - 173
+
+.. list-table:: Reference: Table 2 of :cite:t:`tosserams2010nonhierarchical` (MATLAB ``fmincon``)
+   :header-rows: 1
+   :widths: 30 8 12 12 12 12 12
+
+   * - Formulation
+     -
+     - All-in-one
+     - \(a\)
+     - \(b\)
+     - \(c\)
+     - \(d\)
+   * - Converged runs
+     -
+     - 100/100
+     - 98/100
+     - 100/100
+     - 89/100
+     - 94/100
+   * - Optimal weight (:math:`\times 10^3` lb)
+     - Min
+     - 33.6
+     - 34.0
+     - 33.9
+     - 33.6
+     - 34.0
+   * -
+     - Mean
+     - 34.7
+     - 34.9
+     - 35.0
+     - 34.3
+     - 34.7
+   * -
+     - Max
+     - 38.1
+     - 39.2
+     - 48.5
+     - 38.8
+     - 46.0
+   * - Maximum constraint violation
+     - Min
+     - 0.000
+     - 0.000
+     - 0.000
+     - 0.000
+     - 0.000
+   * -
+     - Mean
+     - 0.000
+     - 0.001
+     - 0.002
+     - 0.002
+     - 0.003
+   * -
+     - Max
+     - 0.001
+     - 0.009
+     - 0.009
+     - 0.006
+     - 0.006
+   * - Iterations (total)
+     - Min
+     - –
+     - 181
+     - 166
+     - 145
+     - 76
+   * -
+     - Mean
+     - –
+     - 244
+     - 209
+     - 202
+     - 85
+   * -
+     - Max
+     - –
+     - 283
+     - 261
+     - 242
+     - 131
+
+.. [#a-time] None of the (a) runs diverged: all 48 non-converged runs were stopped at the 40-minute limit.
+   Formulation (a) has the most expensive subproblem (aircraft holds 15 copies and 26 pairs), so its outer
+   iterations take about twice as long. When stopped, those runs had reached 129–190 iterations with a median
+   inconsistency of :math:`2.7\times10^{-3}`, and 45 of the 48 were below :math:`5\times10^{-3}`. Its iteration
+   statistics therefore cover only the faster half of the runs. One (b) run was also stopped at the limit.
+
+All four formulations converge to the same two optima as the paper: the Table 1 design at about
+:math:`34.3\times10^3` lb, and a heavier design at about :math:`38\times10^3` lb with a larger wing and 9-inch
+bottom skin cores.
+
+.. list-table:: Converged runs per optimum
+   :header-rows: 1
+   :widths: 40 12 12 12 12 12
+
+   * - Final weight
+     - All-in-one
+     - \(a\)
+     - \(b\)
+     - \(c\)
+     - \(d\)
+   * - :math:`\approx 34.3\times10^3` lb (below :math:`36\times10^3`)
+     - 43
+     - 50
+     - 77
+     - 80
+     - 78
+   * - :math:`\approx 38\times10^3` lb (above :math:`37\times10^3`)
+     - 56
+     - 2
+     - 22
+     - 20
+     - 21
+
+The ranges of the optimal weights (:math:`34.0`–:math:`38.8\times10^3` lb) and of the constraint violations (at
+most 0.013) match the paper's. The formulations with fewer pairs need fewer outer iterations: (c) and (d) average
+143 and 148, against 159 for (b). The paper's (d) needs far fewer iterations (85) than DMDO's (148). One possible
+cause is the initial weights: the paper sets one per coupling, while DMDO uses a single weight for all couplings.
+Unlike the paper's (b) and (d), no DMDO run ends above :math:`38.8\times10^3` lb.
+
 Regression suite
 ================
 

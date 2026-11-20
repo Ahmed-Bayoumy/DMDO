@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../" data-theme="light">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>MDO architectures &#8212; DMDO 2612.2</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../_static/proof.css?v=8c6b312c" />
+    <link rel="stylesheet" type="text/css" href="../_static/sphinx-design.min.css?v=6a604523" />
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.min.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/custom.css?v=1819abab" />
+  
+  <!-- So that users can add custom icons -->
+  <script defer src="../_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
+
+    <script src="../_static/documentation_options.js?v=4607b3ea"></script>
+    <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../_static/copybutton.js?v=fd10adb8"></script>
+    <script data-sd-tabs-storage-prefix="sphinx-design-tab-id-" src="../_static/design-tabs.js?v=fcb327ea"></script>
+    <script src="https://cdn.jsdelivr.net/npm/pseudocode@latest/build/pseudocode.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'user_guide/architectures';</script>
+    <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Outputs" href="outputs.html" />
+    <link rel="prev" title="Problem definition" href="problem_definition.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="2612.2" />
+  
+    
+    <script src="../_static/searchtools.js"></script>
+    <script src="../_static/language_data.js"></script>
+    <script src="../searchindex.js"></script>
+  
+  </head>
+  <body data-default-mode="light">
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+
+  
+  <div id="pst-scroll-pixel-helper"></div>
+  
+  <button type="button" class="btn rounded-pill" id="pst-back-to-top">
+    <i class="fa-solid fa-arrow-up"></i>Back to top</button>
+  
+  
+  
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+  
+    
+    
+    
+    <img src="../_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.2 - Home"/>
+    <img src="../_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.2 - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../getting_started.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../background.html">
+    Background
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../implementation.html">
+    Implementation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../benchmarking.html">
+    Benchmarking
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../architecture_results.html">
+    Testing the MDO architectures
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+            <li class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button"
+                data-bs-toggle="dropdown" aria-expanded="false"
+                aria-controls="pst-nav-more-links">
+                    More
+                </button>
+                <ul id="pst-nav-more-links" class="dropdown-menu">
+                    
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="problem_definition.html">
+    Problem definition
+  </a>
+</li>
+
+
+<li class=" current active">
+  <a class="nav-link dropdown-item nav-internal" href="#" aria-current="page">
+    MDO architectures
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="outputs.html">
+    Outputs
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../api/index.html">
+    API reference
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../references.html">
+    References
+  </a>
+</li>
+
+                </ul>
+            </li>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Ahmed-Bayoumy/DMDO" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button type="button" class="btn search-button-field search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+ <i class="fa-solid fa-magnifying-glass"></i>
+ <span class="search-button__default-text">Search</span>
+ <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd class="kbd-shortcut__modifier">K</kbd></span>
+</button>
+    </div>
+  
+
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../getting_started.html">
+    Getting started
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../background.html">
+    Background
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../implementation.html">
+    Implementation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../benchmarking.html">
+    Benchmarking
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../architecture_results.html">
+    Testing the MDO architectures
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../tutorials/index.html">
+    Tutorials
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="problem_definition.html">
+    Problem definition
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="#" aria-current="page">
+    MDO architectures
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="outputs.html">
+    Outputs
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../api/index.html">
+    API reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../references.html">
+    References
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
+  <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
+  </button>
+  <ul class="dropdown-menu dropdown-menu-end">
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
+  </ul>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/Ahmed-Bayoumy/DMDO" title="GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-square-github fa-lg" aria-hidden="true"></i><span class="visually-hidden">GitHub</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"></div>
+</nav></div>
+        <div class="sidebar-primary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hierarchical-atc">Hierarchical ATC</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#monolithic-mdf">Monolithic MDF</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#feedback-detection-and-mda-solvers">Feedback detection and MDA solvers</a></li>
+</ul>
+  </nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+<nav aria-label="Breadcrumb" class="d-print-none">
+  <ul class="bd-breadcrumbs">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-house"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page"><span class="ellipsis">MDO architectures</span></li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article">
+                  
+  <section id="mdo-architectures">
+<h1>MDO architectures<a class="headerlink" href="#mdo-architectures" title="Link to this heading">#</a></h1>
+<p>The <code class="docutils literal notranslate"><span class="pre">architecture</span></code> key of the <code class="docutils literal notranslate"><span class="pre">MDO</span></code> block selects how the problem is solved. Its value is a path of nested
+YAML keys and nothing else; the options stay in the blocks that already exist.</p>
+<div class="pst-scrollable-table-container"><table class="dmdo-ref table">
+<colgroup>
+<col style="width: 30.0%" />
+<col style="width: 70.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p><code class="docutils literal notranslate"><span class="pre">architecture</span></code></p></th>
+<th class="head"><p>Method</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">DIST:</span> <span class="pre">{IDF:</span> <span class="pre">NHATC}</span></code></p></td>
+<td><p>Distributed non-hierarchical ATC, augmented-Lagrangian coordination (<a class="reference internal" href="../background.html"><span class="doc">Background</span></a>). <strong>Default.</strong></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">DIST:</span> <span class="pre">{IDF:</span> <span class="pre">ATC}</span></code></p></td>
+<td><p>Distributed hierarchical ATC: the links must form a tree below the <code class="docutils literal notranslate"><span class="pre">is_main</span></code> subproblem; solved level by
+level with the same ADMM coordinator.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">MON:</span> <span class="pre">MDF</span></code></p></td>
+<td><p>Monolithic MDF: every subproblem is a standalone problem whose MDA is converged at each evaluation.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>In YAML:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MDO</span><span class="p">:</span>
+  <span class="n">architecture</span><span class="p">:</span>
+    <span class="n">MON</span><span class="p">:</span> <span class="n">MDF</span>
+
+<span class="n">MDO</span><span class="p">:</span>
+  <span class="n">architecture</span><span class="p">:</span>
+    <span class="n">DIST</span><span class="p">:</span>
+      <span class="n">IDF</span><span class="p">:</span> <span class="n">NHATC</span>        <span class="c1"># or ATC</span>
+</pre></div>
+</div>
+<p>Any other value (for example the plain string <code class="docutils literal notranslate"><span class="pre">IDF</span></code> of older problem files) logs one warning at the start of the
+run and selects the default <code class="docutils literal notranslate"><span class="pre">DIST:</span> <span class="pre">IDF:</span> <span class="pre">NHATC</span></code>, which runs exactly as before. Leaving the key out selects the
+default without a warning. <code class="docutils literal notranslate"><span class="pre">MON:</span> <span class="pre">IDF</span></code> and BLISS are recognised but not supported; naming them is an error.</p>
+<section id="hierarchical-atc">
+<h2>Hierarchical ATC<a class="headerlink" href="#hierarchical-atc" title="Link to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">DIST:</span> <span class="pre">{IDF:</span> <span class="pre">ATC}</span></code> is analytical target cascading <span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id16" title="Nestor Michelena, Hyung Min Kim, and P. Y. Papalambros. A system partitioning and optimization approach to target cascading. In Proceedings of the 12th International Conference on Engineering Design, volume 2, 1109–1112. Munich, 1999.">Michelena <em>et al.</em>, 1999</a>, <a class="reference internal" href="../references.html#id17" title="Hyung Min Kim, Nestor F. Michelena, Panos Y. Papalambros, and Tao Jiang. Target cascading in optimal system design. Journal of Mechanical Design, 125(3):474–480, 2003.">Kim <em>et al.</em>, 2003</a>]</span> on a tree of
+subproblems. Nothing new is added to the problem
+definition; the tree comes from the blocks that already exist:</p>
+<ul class="simple">
+<li><p>The subproblem with <code class="docutils literal notranslate"><span class="pre">is_main:</span> <span class="pre">True</span></code> is the system-level element, the root of the tree.</p></li>
+<li><p>The subproblems linked to the root (through the <code class="docutils literal notranslate"><span class="pre">link</span></code> entries of their variables) are its children, the
+subproblems linked to those are the next level, and so on. Every target/response pair therefore connects a parent
+to one of its children.</p></li>
+<li><p>The links must form a tree. A cycle, such as three subproblems that are all linked to each other, or a link
+between two siblings, is rejected when the problem is built, with the offending link in the message; use
+<code class="docutils literal notranslate"><span class="pre">DIST:</span> <span class="pre">{IDF:</span> <span class="pre">NHATC}</span></code> for such problems. A subproblem that is not linked to the tree is rejected as well.</p></li>
+</ul>
+<p>The coordination is the ADMM coordinator of the <code class="docutils literal notranslate"><span class="pre">coord</span></code> block (<code class="docutils literal notranslate"><span class="pre">type:</span> <span class="pre">ADMM</span></code>) that the subproblems name in their
+<code class="docutils literal notranslate"><span class="pre">coordinator</span></code> key: augmented-Lagrangian relaxation <code class="docutils literal notranslate"><span class="pre">v</span> <span class="pre">q</span> <span class="pre">+</span> <span class="pre">|w</span> <span class="pre">q|^2</span></code> of the parent-child pairs and method-of-
+multipliers updates (<code class="docutils literal notranslate"><span class="pre">beta</span></code>, <code class="docutils literal notranslate"><span class="pre">gamma</span></code>, <code class="docutils literal notranslate"><span class="pre">M_update_scheme</span></code>, <code class="docutils literal notranslate"><span class="pre">budget</span></code>, …). This is the alternating-direction
+ATC of Tosserams et al. <span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id11" title="Simon Tosserams, L. F. Pascal Etman, Panos Y. Papalambros, and J. E. Rooda. An augmented Lagrangian relaxation for analytical target cascading using the alternating direction method of multipliers. Structural and Multidisciplinary Optimization, 31(3):176–189, 2006.">Tosserams <em>et al.</em>, 2006</a>]</span>: one pass over the hierarchy per outer iteration, then the multiplier update. The
+subproblem blocks are unchanged; their <code class="docutils literal notranslate"><span class="pre">budget</span></code> and solver <code class="docutils literal notranslate"><span class="pre">tol</span></code> govern each solve.</p>
+<p>Each outer iteration solves the tree level by level from the root down. The subproblems of one level share no pairs,
+so they are solved as one batch from the same coordinator state (in parallel with <code class="docutils literal notranslate"><span class="pre">mode:</span> <span class="pre">parallel</span></code> or a parallel
+executor) and their results are merged before the next level, which sees the targets its parents just set. The
+<code class="docutils literal notranslate"><span class="pre">sweep</span></code> option of <code class="xref py py-meth docutils literal notranslate"><span class="pre">DMDO.MDO.run()</span></code> does not apply. With <a class="reference internal" href="../api/session.html#DMDO.Session" title="DMDO.Session"><code class="xref py py-class docutils literal notranslate"><span class="pre">DMDO.Session</span></code></a>, every <code class="docutils literal notranslate"><span class="pre">ask()</span></code> returns the
+tasks of one level. The tree and the solve order are written to the log, for example
+<code class="docutils literal notranslate"><span class="pre">DIST:</span> <span class="pre">IDF:</span> <span class="pre">ATC</span> <span class="pre">hierarchy:</span> <span class="pre">[SP2]</span> <span class="pre">-&gt;</span> <span class="pre">[SP1,</span> <span class="pre">SP3]</span></code>.</p>
+<p>The SBJ formulations (a) (<code class="docutils literal notranslate"><span class="pre">tests/SBJ/SBJ_a.yaml</span></code>, aircraft at the root with three children) and (d)
+(<code class="docutils literal notranslate"><span class="pre">SBJ_d.yaml</span></code>, aerodynamics at the root) are trees; (b) and (c) contain cycles and need NHATC.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>By default the coordinator updates the multipliers twice per outer iteration (kept for reproducibility of
+earlier runs). For ATC set <code class="docutils literal notranslate"><span class="pre">single_multiplier_update:</span> <span class="pre">true</span></code> in the <code class="docutils literal notranslate"><span class="pre">coord</span></code> block, as the SBJ files do: with the
+double update the penalty weights can grow until the subproblem solves can no longer reduce the inconsistencies.</p>
+</div>
+</section>
+<section id="monolithic-mdf">
+<h2>Monolithic MDF<a class="headerlink" href="#monolithic-mdf" title="Link to this heading">#</a></h2>
+<p>Each subproblem of the <code class="docutils literal notranslate"><span class="pre">MDO.subproblems</span></code> list is solved on its own; there is no coordinator, so <code class="docutils literal notranslate"><span class="pre">coord</span></code> blocks and
+the <code class="docutils literal notranslate"><span class="pre">coordinator</span></code> keys are not needed (and are ignored if present). A subproblem’s variables may not be linked to
+another subproblem (<code class="docutils literal notranslate"><span class="pre">link</span></code> must be <code class="docutils literal notranslate"><span class="pre">null</span></code>): put every analysis of the problem into the subproblem’s MDA.</p>
+<ul class="simple">
+<li><p>The subproblem’s <code class="docutils literal notranslate"><span class="pre">vars</span></code> are the design variables; its solver settings (<code class="docutils literal notranslate"><span class="pre">solver</span></code>, <code class="docutils literal notranslate"><span class="pre">scipy</span></code> or
+<code class="docutils literal notranslate"><span class="pre">configurations</span></code>, <code class="docutils literal notranslate"><span class="pre">budget</span></code>) drive the optimisation, as in the distributed case.</p></li>
+<li><p>At every evaluation the subproblem’s MDA converges its feedback loops (below), then <code class="docutils literal notranslate"><span class="pre">opt(x,</span> <span class="pre">y)</span></code> returns the
+objective and the constraints <code class="docutils literal notranslate"><span class="pre">g</span> <span class="pre">&lt;=</span> <span class="pre">0</span></code>. The bounds of the MDA <code class="docutils literal notranslate"><span class="pre">responses</span></code> (except <code class="docutils literal notranslate"><span class="pre">dummy</span></code> and constants) are
+added as constraints. An evaluation whose MDA does not converge is reported as failed (objective <code class="docutils literal notranslate"><span class="pre">+inf</span></code>).</p></li>
+<li><p><code class="xref py py-meth docutils literal notranslate"><span class="pre">DMDO.MDO.run()</span></code> returns <code class="docutils literal notranslate"><span class="pre">{&quot;architecture&quot;:</span> <span class="pre">&quot;MON:</span> <span class="pre">MDF&quot;,</span> <span class="pre">&quot;subproblems&quot;:</span> <span class="pre">[...]}</span></code> with, per subproblem, the
+best <code class="docutils literal notranslate"><span class="pre">x</span></code> and <code class="docutils literal notranslate"><span class="pre">y</span></code>, <code class="docutils literal notranslate"><span class="pre">fmin</span></code>, <code class="docutils literal notranslate"><span class="pre">hmin</span></code>, <code class="docutils literal notranslate"><span class="pre">feasible</span></code>, the number of evaluations and the MDA iterations and
+analysis evaluations. Every evaluation is written to <code class="docutils literal notranslate"><span class="pre">&lt;post_dir&gt;/MDF_history.csv</span></code>
+(<code class="docutils literal notranslate"><span class="pre">MDF_SP&lt;i&gt;_history.csv</span></code> with several subproblems).</p></li>
+<li><p>There is no outer loop to step through, so <a class="reference internal" href="../api/session.html#DMDO.Session" title="DMDO.Session"><code class="xref py py-class docutils literal notranslate"><span class="pre">DMDO.Session</span></code></a> (ask/tell) does not apply.</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">examples/sellar_mdf.yaml</span></code> and <code class="docutils literal notranslate"><span class="pre">examples/sellar_mdf.py</span></code> solve the Sellar problem this way
+(f* = 3.18339 at x = 0, z = (1.9776, 0)).</p>
+</section>
+<section id="feedback-detection-and-mda-solvers">
+<h2>Feedback detection and MDA solvers<a class="headerlink" href="#feedback-detection-and-mda-solvers" title="Link to this heading">#</a></h2>
+<p>Inside one MDA block, analysis A feeds analysis B when a variable key in A’s <code class="docutils literal notranslate"><span class="pre">outputs</span></code> is also in B’s <code class="docutils literal notranslate"><span class="pre">inputs</span></code>.
+The match is by variable key (the variable’s unique index), never by name. The strongly connected components of
+that graph are the feedback loops: two or more analyses that depend on each other, or an analysis that reads its own
+output (for example <code class="docutils literal notranslate"><span class="pre">inputs:</span> <span class="pre">[v3]</span></code> and <code class="docutils literal notranslate"><span class="pre">outputs:</span> <span class="pre">[v3]</span></code>). Only those loops are converged by the MDA solver; the
+other analyses are feed-forward and run once, in dependency order, whatever their order in <code class="docutils literal notranslate"><span class="pre">analyses</span></code>.</p>
+<p>The solver is chosen per MDA block with the optional <code class="docutils literal notranslate"><span class="pre">solver</span></code> key. It is used only by <code class="docutils literal notranslate"><span class="pre">MON:</span> <span class="pre">MDF</span></code> (and ignored,
+with an info line, otherwise); without the key, or for an MDA without feedback, nothing changes.</p>
+<div class="pst-scrollable-table-container"><table class="dmdo-ref table">
+<colgroup>
+<col style="width: 18.0%" />
+<col style="width: 82.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p><code class="docutils literal notranslate"><span class="pre">solver</span></code></p></th>
+<th class="head"><p>Method</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">GS</span></code> (default)</p></td>
+<td><p>Nonlinear block Gauss-Seidel: each analysis uses the latest outputs of the analyses before it.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">Jacobi</span></code></p></td>
+<td><p>Nonlinear block Jacobi: every analysis of a sweep uses the outputs of the previous sweep.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">Newton</span></code></p></td>
+<td><p>Newton’s method on the residual <code class="docutils literal notranslate"><span class="pre">R(y)</span> <span class="pre">=</span> <span class="pre">y</span> <span class="pre">-</span> <span class="pre">F(y)</span></code> of the loop couplings, forward-difference Jacobian and a
+backtracking step. Fewest iterations; each one costs <code class="docutils literal notranslate"><span class="pre">n</span> <span class="pre">+</span> <span class="pre">1</span></code> sweeps for <code class="docutils literal notranslate"><span class="pre">n</span></code> scalar couplings.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Options are given as a mapping, <code class="docutils literal notranslate"><span class="pre">solver:</span> <span class="pre">{name:</span> <span class="pre">Newton,</span> <span class="pre">tol:</span> <span class="pre">1.0e-12,</span> <span class="pre">maxiter:</span> <span class="pre">50}</span></code>:</p>
+<div class="pst-scrollable-table-container"><table class="dmdo-ref table">
+<colgroup>
+<col style="width: 22.0%" />
+<col style="width: 18.0%" />
+<col style="width: 60.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Option</p></th>
+<th class="head"><p>Default</p></th>
+<th class="head"><p>Meaning</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">tol</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1e-10</span></code></p></td>
+<td><p>Convergence on the scaled residual <code class="docutils literal notranslate"><span class="pre">max_i</span> <span class="pre">|y_i</span> <span class="pre">-</span> <span class="pre">F_i(y)|</span> <span class="pre">/</span> <span class="pre">max(1,</span> <span class="pre">|y_i|)</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">maxiter</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">100</span></code></p></td>
+<td><p>Iteration limit; the MDA is reported as not converged when it is reached.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">relaxation</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1.0</span></code></p></td>
+<td><p>GS and Jacobi: <code class="docutils literal notranslate"><span class="pre">y</span> <span class="pre">&lt;-</span> <span class="pre">y</span> <span class="pre">+</span> <span class="pre">relaxation</span> <span class="pre">(F(y)</span> <span class="pre">-</span> <span class="pre">y)</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">fd_step</span></code>, <code class="docutils literal notranslate"><span class="pre">max_backtracks</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">1e-7</span></code>, <code class="docutils literal notranslate"><span class="pre">8</span></code></p></td>
+<td><p>Newton: relative finite-difference step and the number of step halvings.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>Example (Sellar, both analyses in one MDA):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">MDA</span><span class="p">:</span>
+  <span class="n">MDA1</span><span class="p">:</span>
+    <span class="n">index</span><span class="p">:</span> <span class="mi">1</span>
+    <span class="n">nAnalyses</span><span class="p">:</span> <span class="mi">2</span>
+    <span class="n">analyses</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>           <span class="c1"># DA1: y1 = f(x, z, y2), DA2: y2 = f(z, y1) -&gt; loop {DA1, DA2}</span>
+    <span class="n">variables</span><span class="p">:</span> <span class="p">[</span><span class="n">v0</span><span class="p">,</span> <span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">]</span>
+    <span class="n">responses</span><span class="p">:</span> <span class="p">[</span><span class="n">v3</span><span class="p">,</span> <span class="n">v4</span><span class="p">]</span>
+    <span class="n">solver</span><span class="p">:</span> <span class="n">Newton</span>
+</pre></div>
+</div>
+<p>Further solvers can be registered in <a class="reference internal" href="../api/architectures.html#DMDO.registry.mda_solvers" title="DMDO.registry.mda_solvers"><code class="xref py py-data docutils literal notranslate"><span class="pre">DMDO.registry.mda_solvers</span></code></a> (subclasses of
+<a class="reference internal" href="../api/architectures.html#DMDO.analysis.mda_solvers.MDASolver" title="DMDO.analysis.mda_solvers.MDASolver"><code class="xref py py-class docutils literal notranslate"><span class="pre">DMDO.analysis.mda_solvers.MDASolver</span></code></a>) or through the <code class="docutils literal notranslate"><span class="pre">dmdo.mda_solvers</span></code> entry point.</p>
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="problem_definition.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Problem definition</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="outputs.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Outputs</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+
+  <p class="copyright">
+    
+      © Copyright 2022-2026, Ahmed H. Bayoumy.
+      <br/>
+    
+  </p>
+</div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 9.1.1.
+  </p>
+</div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

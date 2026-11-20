@@ -912,7 +912,7 @@ wheels = [
 
 [[package]]
 name = "dmdo"
-version = "2612.1"
+version = "2612.2"
 source = { editable = "." }
 dependencies = [
     { name = "dash" },

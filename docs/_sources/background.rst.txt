@@ -34,6 +34,11 @@ classification of :cite:t:`tosserams2009classification`, ATC is an alternating m
 and open consistency constraints: every subproblem satisfies its own constraints at every iteration, while the
 consistency between subproblems is reached only at convergence of the coordination.
 
+NHATC is the default architecture. The ``MDO.architecture`` key also selects hierarchical ATC on a tree of
+subproblems, coordinated with the same augmented Lagrangian method :cite:p:`tosserams2006augmented`, and monolithic
+MDF with Gauss–Seidel, Jacobi or Newton MDA solvers, for example to compute an all-in-one reference optimum; see
+:doc:`user_guide/architectures` and :doc:`architecture_results`.
+
 When to use DMDO
 ================
 
