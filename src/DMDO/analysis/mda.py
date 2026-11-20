@@ -28,10 +28,11 @@ import copy
 from dataclasses import dataclass
 from genericpath import isfile
 import json
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List
 
 from .da import DA
 from ..core.protocols import Process_data
+from .mda_solvers import Component, MDAResult, MDASolver, coupling_components, create_mda_solver
 
 
 @dataclass
@@ -39,6 +40,26 @@ class MDA_data(Process_data):
   nAnalyses: int
   analyses: List[DA]
   index: int = None
+  #: ``MDA.<id>.solver`` of the problem definition (a name or a mapping); used only by ``MON: MDF``
+  #: (:meth:`run_coupled`). ``None`` means Gauss-Seidel.
+  solver: Any = None
+
+
+def evaluate_analysis(da: DA, state: Dict[int, Any]) -> Dict[int, Any]:
+  """Run one analysis with the inputs found in ``state`` (keyed by variable index); return its outputs by index.
+
+  Inputs are replaced by independent copies (as :meth:`MDA.run` does), so the shared variable objects are not
+  modified through them."""
+  inputs = da.inputs
+  for k in range(len(inputs)):
+    idx = inputs[k].index
+    if idx in state:
+      v = inputs[k].clone() if hasattr(inputs[k], "clone") else copy.deepcopy(inputs[k])
+      v.value = copy.deepcopy(state[idx])
+      inputs[k] = v
+  da.run()
+  return {o.index: copy.deepcopy(o.value) for o in da.outputs}
+
 
 @dataclass
 class MDA(MDA_data):
@@ -64,6 +85,44 @@ class MDA(MDA_data):
         if src is not None:
           inputs[k] = src.clone() if hasattr(src, "clone") else copy.deepcopy(src)
       self.analyses[i].run()
+
+  def components(self) -> List[Component]:
+    """The analyses grouped into feed-forward and feedback components, in dependency order."""
+    key = tuple(id(da) for da in self.analyses)
+    cached = self.__dict__.get("_components")
+    if cached is None or cached[0] != key:
+      cached = (key, coupling_components(self.analyses))
+      self.__dict__["_components"] = cached
+    return cached[1]
+
+  def has_feedback(self) -> bool:
+    return any(c.feedback for c in self.components())
+
+  def mda_solver(self) -> MDASolver:
+    cached = self.__dict__.get("_mda_solver")
+    if cached is None or cached[0] is not self.solver:
+      cached = (self.solver, create_mda_solver(self.solver))
+      self.__dict__["_mda_solver"] = cached
+    return cached[1]
+
+  def run_coupled(self, state: Dict[int, Any], evaluate: Callable = evaluate_analysis) -> MDAResult:
+    """Converge the analyses on ``state`` (variable index -> value), updated in place.
+
+    Feed-forward analyses run once in dependency order; each feedback loop is converged with :attr:`solver`."""
+    total = MDAResult()
+    for comp in self.components():
+      if not comp.feedback:
+        for da in comp.analyses:
+          state.update(evaluate(da, state))
+          total.evaluations += 1
+        continue
+      res = self.mda_solver().solve(comp, state, evaluate)
+      total.loops.append(res)
+      total.evaluations += res.evaluations
+      total.iterations = max(total.iterations, res.iterations)
+      total.residual = max(total.residual, res.residual)
+      total.converged = total.converged and res.converged
+    return total
 
   def validation(self, vType: int):
     self.term_status = []

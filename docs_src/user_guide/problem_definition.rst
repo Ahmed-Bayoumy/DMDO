@@ -96,6 +96,9 @@ One entry per variable **copy**; each entry is a list:
      - Variable keys the analyses read from the subproblem.
    * - ``responses``
      - Variable keys the analyses compute.
+   * - ``solver``
+     - Optional, ``MON: MDF`` only: ``GS`` (default), ``Jacobi`` or ``Newton`` (or a mapping with options) for the
+       MDA's feedback loops; see :doc:`architectures`.
 
 ``coord``: the coordinator
 ==========================
@@ -259,8 +262,9 @@ Named blocks of OMADS options, referenced by ``configurations``. Each has an ``o
      - ``inf``, ``inf``, ``[]``
      - Initial values of the run's records.
    * - ``architecture``
-     - ``IDF``
-     - Informational; DMDO solves the distributed NHATC formulation of :doc:`../background`.
+     - ``DIST: {IDF: NHATC}``
+     - Nested keys selecting the architecture: ``DIST: {IDF: NHATC}``, ``DIST: {IDF: ATC}`` or ``MON: MDF``. Any
+       other value warns once and uses the default; see :doc:`architectures`.
 
 ``Sets`` and ``USER``
 =====================

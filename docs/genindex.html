@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Index &#8212; DMDO 2612.0</title>
+    <title>Index &#8212; DMDO 2612.1</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=d587bd99"></script>
+    <script src="_static/documentation_options.js?v=71ff3980"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -55,7 +55,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2612.0" />
+  <meta name="docsearch:version" content="2612.1" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -125,8 +125,8 @@
     
     
     
-    <img src="_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.0 - Home"/>
-    <img src="_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.0 - Home"/>
+    <img src="_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.1 - Home"/>
+    <img src="_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.1 - Home"/>
   
   
 </a></div>
@@ -170,15 +170,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="tutorials/index.html">
-    Tutorials
+  <a class="nav-link nav-internal" href="architecture_results.html">
+    Testing the MDO architectures
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="user_guide/problem_definition.html">
-    Problem definition
+  <a class="nav-link nav-internal" href="tutorials/index.html">
+    Tutorials
   </a>
 </li>
 
@@ -190,6 +190,20 @@
                 </button>
                 <ul id="pst-nav-more-links" class="dropdown-menu">
                     
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="user_guide/problem_definition.html">
+    Problem definition
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="user_guide/architectures.html">
+    MDO architectures
+  </a>
+</li>
+
+
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="user_guide/outputs.html">
     Outputs
@@ -335,6 +349,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="architecture_results.html">
+    Testing the MDO architectures
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="tutorials/index.html">
     Tutorials
   </a>
@@ -344,6 +365,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="user_guide/problem_definition.html">
     Problem definition
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="user_guide/architectures.html">
+    MDO architectures
   </a>
 </li>
 
@@ -450,9 +478,13 @@
  | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
  | <a href="#F"><strong>F</strong></a>
+ | <a href="#G"><strong>G</strong></a>
+ | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
+ | <a href="#J"><strong>J</strong></a>
  | <a href="#L"><strong>L</strong></a>
  | <a href="#M"><strong>M</strong></a>
+ | <a href="#N"><strong>N</strong></a>
  | <a href="#O"><strong>O</strong></a>
  | <a href="#P"><strong>P</strong></a>
  | <a href="#R"><strong>R</strong></a>
@@ -464,6 +496,12 @@
 <h2 id="A">A</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/architectures.html#DMDO.ArchitectureError">ArchitectureError</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/architectures.html#DMDO.ArchitectureSpec">ArchitectureSpec (class in DMDO)</a>
+</li>
       <li><a href="api/session.html#DMDO.Session.ask">ask() (DMDO.Session method)</a>
 </li>
   </ul></td>
@@ -473,6 +511,8 @@
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/extension.html#DMDO.BaseSolver">BaseSolver (class in DMDO)</a>
+</li>
+      <li><a href="api/architectures.html#DMDO.architectures.atc.build_hierarchy">build_hierarchy() (in module DMDO.architectures.atc)</a>
 </li>
       <li><a href="api/session.html#DMDO.build_mdo">build_mdo() (in module DMDO)</a>
 </li>
@@ -503,17 +543,23 @@
 </li>
       <li><a href="api/session.html#DMDO.Session.close">close() (DMDO.Session method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/service.html#DMDO.service.TaskQueue.complete">complete() (DMDO.service.TaskQueue method)</a>
 </li>
+      <li><a href="api/architectures.html#DMDO.analysis.mda_solvers.Component">Component (class in DMDO.analysis.mda_solvers)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/extension.html#DMDO.CoordinationPolicy.compute_scales">compute_scales() (DMDO.CoordinationPolicy method)</a>
 </li>
       <li><a href="api/extension.html#DMDO.ConsoleReporter">ConsoleReporter (class in DMDO)</a>
 </li>
       <li><a href="api/workflow.html#DMDO.DMDO.MDO.MDO.coordinate">coordinate() (DMDO.DMDO.MDO.MDO method)</a>
 </li>
+      <li><a href="api/architectures.html#DMDO.analysis.mda_solvers.coupling_components">coupling_components() (in module DMDO.analysis.mda_solvers)</a>
+</li>
       <li><a href="api/workflow.html#DMDO.create_executor">create_executor() (in module DMDO)</a>
+</li>
+      <li><a href="api/architectures.html#DMDO.analysis.mda_solvers.create_mda_solver">create_mda_solver() (in module DMDO.analysis.mda_solvers)</a>
 </li>
       <li><a href="api/service.html#DMDO.service.Client.create_session">create_session() (DMDO.service.Client method)</a>
 </li>
@@ -523,10 +569,33 @@
 <h2 id="D">D</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/architectures.html#DMDO.architectures.DEFAULT_ARCHITECTURE">DEFAULT_ARCHITECTURE (in module DMDO.architectures)</a>
+</li>
       <li><a href="api/ports.html#DMDO.Discipline">Discipline (class in DMDO)</a>
 </li>
       <li><a href="api/problem.html#DMDO.ADMM">DMDO.ADMM (built-in class)</a>
 </li>
+      <li>
+    DMDO.analysis.mda_solvers
+
+      <ul>
+        <li><a href="api/architectures.html#module-DMDO.analysis.mda_solvers">module</a>
+</li>
+      </ul></li>
+      <li>
+    DMDO.architectures.atc
+
+      <ul>
+        <li><a href="api/architectures.html#module-DMDO.architectures.atc">module</a>
+</li>
+      </ul></li>
+      <li>
+    DMDO.architectures.mdf
+
+      <ul>
+        <li><a href="api/architectures.html#module-DMDO.architectures.mdf">module</a>
+</li>
+      </ul></li>
       <li><a href="api/extension.html#DMDO.blackboxes">DMDO.blackboxes (built-in variable)</a>
 </li>
       <li><a href="api/extension.html#DMDO.CoordinationHistoryRecorder">DMDO.CoordinationHistoryRecorder (built-in class)</a>
@@ -539,6 +608,8 @@
 </li>
       <li><a href="api/extension.html#DMDO.executors">DMDO.executors (built-in variable)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     DMDO.main()
 
@@ -550,8 +621,6 @@
 </li>
       <li><a href="api/workflow.html#DMDO.MDO">DMDO.MDO (built-in class)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/extension.html#DMDO.NeutralPolicy">DMDO.NeutralPolicy (built-in class)</a>
 </li>
       <li><a href="api/extension.html#DMDO.policies">DMDO.policies (built-in variable)</a>
@@ -608,6 +677,26 @@
   </ul></td>
 </tr></table>
 
+<h2 id="G">G</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/architectures.html#DMDO.analysis.mda_solvers.GaussSeidelSolver">GaussSeidelSolver (class in DMDO.analysis.mda_solvers)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="H">H</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/architectures.html#DMDO.architectures.atc.Hierarchy">Hierarchy (class in DMDO.architectures.atc)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/architectures.html#DMDO.architectures.atc.HierarchyError">HierarchyError</a>
+</li>
+  </ul></td>
+</tr></table>
+
 <h2 id="I">I</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
@@ -618,6 +707,14 @@
       <li><a href="api/session.html#DMDO.Session.iteration">iteration (DMDO.Session property)</a>
 </li>
       <li><a href="api/ports.html#DMDO.IterationRecord">IterationRecord (class in DMDO)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="J">J</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/architectures.html#DMDO.analysis.mda_solvers.JacobiSolver">JacobiSolver (class in DMDO.analysis.mda_solvers)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -633,7 +730,36 @@
 <h2 id="M">M</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/architectures.html#DMDO.registry.mda_solvers">mda_solvers (in module DMDO.registry)</a>
+</li>
+      <li><a href="api/architectures.html#DMDO.analysis.mda_solvers.MDAResult">MDAResult (class in DMDO.analysis.mda_solvers)</a>
+</li>
+      <li><a href="api/architectures.html#DMDO.analysis.mda_solvers.MDASolver">MDASolver (class in DMDO.analysis.mda_solvers)</a>
+</li>
+      <li><a href="api/architectures.html#DMDO.architectures.mdf.MDFResult">MDFResult (class in DMDO.architectures.mdf)</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li>
+    module
+
+      <ul>
+        <li><a href="api/architectures.html#module-DMDO.analysis.mda_solvers">DMDO.analysis.mda_solvers</a>
+</li>
+        <li><a href="api/architectures.html#module-DMDO.architectures.atc">DMDO.architectures.atc</a>
+</li>
+        <li><a href="api/architectures.html#module-DMDO.architectures.mdf">DMDO.architectures.mdf</a>
+</li>
+      </ul></li>
       <li><a href="api/extension.html#DMDO.CoordinationPolicy.multiplier_scales">multiplier_scales() (DMDO.CoordinationPolicy method)</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="N">N</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/architectures.html#DMDO.analysis.mda_solvers.NewtonSolver">NewtonSolver (class in DMDO.analysis.mda_solvers)</a>
 </li>
   </ul></td>
 </tr></table>
@@ -665,10 +791,12 @@
 <h2 id="P">P</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="api/extension.html#DMDO.BaseSolver.prepare_settings">prepare_settings() (DMDO.BaseSolver method)</a>
+      <li><a href="api/architectures.html#DMDO.parse_architecture">parse_architecture() (in module DMDO)</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="api/extension.html#DMDO.BaseSolver.prepare_settings">prepare_settings() (DMDO.BaseSolver method)</a>
+</li>
       <li><a href="api/workflow.html#DMDO.ProcessExecutor">ProcessExecutor (class in DMDO)</a>
 </li>
   </ul></td>
@@ -691,10 +819,10 @@
 </li>
       <li><a href="api/ports.html#DMDO.SubproblemSolver.report_hmin">report_hmin() (DMDO.SubproblemSolver method)</a>
 </li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/session.html#DMDO.Session.request_stop">request_stop() (DMDO.Session method)</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="api/session.html#DMDO.Session.result">result() (DMDO.Session method)</a>
 </li>
       <li><a href="api/workflow.html#DMDO.DMDO.MDO.MDO.run">run() (DMDO.DMDO.MDO.MDO method)</a>
@@ -705,6 +833,10 @@
         <li><a href="api/session.html#DMDO.Session.run">(DMDO.Session method)</a>
 </li>
       </ul></li>
+      <li><a href="api/architectures.html#DMDO.MDA.run_coupled">run_coupled() (DMDO.MDA method)</a>
+</li>
+      <li><a href="api/architectures.html#DMDO.architectures.mdf.run_mdf">run_mdf() (in module DMDO.architectures.mdf)</a>
+</li>
       <li><a href="api/service.html#DMDO.service.run_worker">run_worker() (in module DMDO.service)</a>
 </li>
       <li><a href="api/session.html#DMDO.RunResult">RunResult (class in DMDO)</a>
@@ -726,6 +858,8 @@
       <li><a href="api/session.html#DMDO.Session">Session (class in DMDO)</a>
 </li>
       <li><a href="api/session.html#DMDO.SessionError">SessionError</a>
+</li>
+      <li><a href="api/problem.html#DMDO.SubProblem.set_start_point">set_start_point() (DMDO.SubProblem method)</a>
 </li>
       <li><a href="api/ports.html#DMDO.SubproblemSolver.solve">solve() (DMDO.SubproblemSolver method)</a>
 </li>

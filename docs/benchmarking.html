@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Benchmarking &#8212; DMDO 2612.0</title>
+    <title>Benchmarking &#8212; DMDO 2612.1</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=d587bd99"></script>
+    <script src="_static/documentation_options.js?v=71ff3980"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -54,12 +54,12 @@
     <script>DOCUMENTATION_OPTIONS.search_as_you_type = false;</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Tutorials" href="tutorials/index.html" />
+    <link rel="next" title="Testing the MDO architectures" href="architecture_results.html" />
     <link rel="prev" title="Implementation" href="implementation.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2612.0" />
+  <meta name="docsearch:version" content="2612.1" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -129,8 +129,8 @@
     
     
     
-    <img src="_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.0 - Home"/>
-    <img src="_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.0 - Home"/>
+    <img src="_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.1 - Home"/>
+    <img src="_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.1 - Home"/>
   
   
 </a></div>
@@ -174,15 +174,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="tutorials/index.html">
-    Tutorials
+  <a class="nav-link nav-internal" href="architecture_results.html">
+    Testing the MDO architectures
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="user_guide/problem_definition.html">
-    Problem definition
+  <a class="nav-link nav-internal" href="tutorials/index.html">
+    Tutorials
   </a>
 </li>
 
@@ -194,6 +194,20 @@
                 </button>
                 <ul id="pst-nav-more-links" class="dropdown-menu">
                     
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="user_guide/problem_definition.html">
+    Problem definition
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="user_guide/architectures.html">
+    MDO architectures
+  </a>
+</li>
+
+
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="user_guide/outputs.html">
     Outputs
@@ -337,6 +351,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="architecture_results.html">
+    Testing the MDO architectures
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="tutorials/index.html">
     Tutorials
   </a>
@@ -346,6 +367,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="user_guide/problem_definition.html">
     Problem definition
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="user_guide/architectures.html">
+    MDO architectures
   </a>
 </li>
 
@@ -435,7 +463,10 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#results">Results</a><ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#sellar-the-choice-of-inner-solver">Sellar: the choice of inner solver</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#speed-reducer-geometric-program-and-basic-problem">Speed reducer, geometric program and basic problem</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#supersonic-business-jet">Supersonic business jet</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#supersonic-business-jet">Supersonic business jet</a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#the-four-atc-formulations-of-tosserams-et-al">The four ATC formulations of Tosserams et al.</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#regression-suite">Regression suite</a></li>
@@ -514,8 +545,8 @@ traces, without running any optimization, by:</p>
 </section>
 <section id="test-problems">
 <h2>Test problems<a class="headerlink" href="#test-problems" title="Link to this heading">#</a></h2>
-<div class="pst-scrollable-table-container"><table class="table" id="id9">
-<caption><span class="caption-number">Table 2 </span><span class="caption-text">Problems and settings of the recorded runs</span><a class="headerlink" href="#id9" title="Link to this table">#</a></caption>
+<div class="pst-scrollable-table-container"><table class="table" id="id14">
+<caption><span class="caption-number">Table 2 </span><span class="caption-text">Problems and settings of the recorded runs</span><a class="headerlink" href="#id14" title="Link to this table">#</a></caption>
 <colgroup>
 <col style="width: 22.0%" />
 <col style="width: 9.0%" />
@@ -541,7 +572,7 @@ traces, without running any optimization, by:</p>
 <td><p>50</p></td>
 <td><p>OMADS <code class="docutils literal notranslate"><span class="pre">poll</span></code> (150)</p></td>
 </tr>
-<tr class="row-odd"><td><p>Sellar <span class="bibtex-citation" id="id1">[<a class="reference internal" href="references.html#id20" title="R. S. Sellar, S. M. Batill, and J. E. Renaud. Response surface based, concurrent subspace optimization for multidisciplinary system design. In 34th AIAA Aerospace Sciences Meeting and Exhibit. 1996. AIAA 96-0714.">Sellar <em>et al.</em>, 1996</a>]</span></p></td>
+<tr class="row-odd"><td><p>Sellar <span class="bibtex-citation" id="id1">[<a class="reference internal" href="references.html#id21" title="R. S. Sellar, S. M. Batill, and J. E. Renaud. Response surface based, concurrent subspace optimization for multidisciplinary system design. In 34th AIAA Aerospace Sciences Meeting and Exhibit. 1996. AIAA 96-0714.">Sellar <em>et al.</em>, 1996</a>]</span></p></td>
 <td><p>2</p></td>
 <td><p>9</p></td>
 <td><p>2.0, 0.5, <code class="docutils literal notranslate"><span class="pre">median</span></code></p></td>
@@ -562,7 +593,7 @@ traces, without running any optimization, by:</p>
 <td><p>150</p></td>
 <td><p>OMADS <code class="docutils literal notranslate"><span class="pre">mads</span></code> (500)</p></td>
 </tr>
-<tr class="row-even"><td><p>Speed reducer <span class="bibtex-citation" id="id2">[<a class="reference internal" href="references.html#id21" title="J. Golinski. Optimal synthesis problems solved by means of nonlinear programming and random methods. Journal of Mechanisms, 5(3):287–309, 1970.">Golinski, 1970</a>]</span></p></td>
+<tr class="row-even"><td><p>Speed reducer <span class="bibtex-citation" id="id2">[<a class="reference internal" href="references.html#id22" title="J. Golinski. Optimal synthesis problems solved by means of nonlinear programming and random methods. Journal of Mechanisms, 5(3):287–309, 1970.">Golinski, 1970</a>]</span></p></td>
 <td><p>4</p></td>
 <td><p>20</p></td>
 <td><p>1.3, 0.5, <code class="docutils literal notranslate"><span class="pre">median</span></code></p></td>
@@ -585,8 +616,8 @@ problem statements and their partitions are given in <a class="reference interna
 </section>
 <section id="results">
 <h2>Results<a class="headerlink" href="#results" title="Link to this heading">#</a></h2>
-<div class="pst-scrollable-table-container"><table class="table" id="id10">
-<caption><span class="caption-number">Table 3 </span><span class="caption-text">Final results of the recorded runs</span><a class="headerlink" href="#id10" title="Link to this table">#</a></caption>
+<div class="pst-scrollable-table-container"><table class="table" id="id15">
+<caption><span class="caption-number">Table 3 </span><span class="caption-text">Final results of the recorded runs</span><a class="headerlink" href="#id15" title="Link to this table">#</a></caption>
 <colgroup>
 <col style="width: 20.0%" />
 <col style="width: 6.0%" />
@@ -674,14 +705,14 @@ problem statements and their partitions are given in <a class="reference interna
 </tbody>
 </table>
 </div>
-<p>Best known solutions: Sellar and speed reducer from <span class="bibtex-citation" id="id3">Tedford and Martins [<a class="reference internal" href="references.html#id18" title="Nathan P. Tedford and Joaquim R. R. A. Martins. Benchmarking multidisciplinary design optimization algorithms. Optimization and Engineering, 11(1):159–183, 2010. doi:10.1007/s11081-009-9082-6.">2010</a>]</span> (Sects. 5.1 and 5.2), geometric
-programming from <span class="bibtex-citation" id="id4">Talgorn <em>et al.</em> [<a class="reference internal" href="references.html#id19" title="B. Talgorn, M. Kokkolaras, A. DeBlois, and P. Piperni. Numerical investigation of non-hierarchical coordination for distributed multidisciplinary design optimization with fixed computational budget. Structural and Multidisciplinary Optimization, 55(1):205–220, 2017. doi:10.1007/s00158-016-1489-z.">2017</a>]</span> (Table 1); the basic problem’s, 5.58, has no published reference.
+<p>Best known solutions: Sellar and speed reducer from <span class="bibtex-citation" id="id3">Tedford and Martins [<a class="reference internal" href="references.html#id19" title="Nathan P. Tedford and Joaquim R. R. A. Martins. Benchmarking multidisciplinary design optimization algorithms. Optimization and Engineering, 11(1):159–183, 2010. doi:10.1007/s11081-009-9082-6.">2010</a>]</span> (Sects. 5.1 and 5.2), geometric
+programming from <span class="bibtex-citation" id="id4">Talgorn <em>et al.</em> [<a class="reference internal" href="references.html#id20" title="B. Talgorn, M. Kokkolaras, A. DeBlois, and P. Piperni. Numerical investigation of non-hierarchical coordination for distributed multidisciplinary design optimization with fixed computational budget. Structural and Multidisciplinary Optimization, 55(1):205–220, 2017. doi:10.1007/s00158-016-1489-z.">2017</a>]</span> (Table 1); the basic problem’s, 5.58, has no published reference.
 The gap is relative to the best known solution.</p>
-<figure class="align-center" id="id11">
+<figure class="align-center" id="id16">
 <span id="f-bench-consistency"></span><a class="reference internal image-reference" href="_images/bench_consistency.svg"><img alt="Maximum inconsistency versus outer iteration for the six recorded runs" src="_images/bench_consistency.svg" style="width: 95%;" />
 </a>
 <figcaption>
-<p><span class="caption-number">Figure 8 </span><span class="caption-text">Maximum inconsistency between the copies of the disciplines at each outer iteration.</span><a class="headerlink" href="#id11" title="Link to this image">#</a></p>
+<p><span class="caption-number">Figure 8 </span><span class="caption-text">Maximum inconsistency between the copies of the disciplines at each outer iteration.</span><a class="headerlink" href="#id16" title="Link to this image">#</a></p>
 </figcaption>
 </figure>
 <p><strong>Consistency.</strong> In every run the coordinator brings the copies held by different subproblems into agreement
@@ -691,16 +722,16 @@ quickly: the maximum inconsistency falls below <span class="math notranslate noh
 budget (50 iterations), ends at <span class="math notranslate nohighlight">\(7.4\times10^{-4}\)</span>.</p>
 <section id="sellar-the-choice-of-inner-solver">
 <h3>Sellar: the choice of inner solver<a class="headerlink" href="#sellar-the-choice-of-inner-solver" title="Link to this heading">#</a></h3>
-<figure class="align-center" id="id12">
+<figure class="align-center" id="id17">
 <span id="f-bench-sellar"></span><a class="reference internal image-reference" href="_images/bench_sellar.svg"><img alt="Objective and maximum inconsistency of the Sellar problem with three inner solvers" src="_images/bench_sellar.svg" style="width: 98%;" />
 </a>
 <figcaption>
 <p><span class="caption-number">Figure 9 </span><span class="caption-text">Sellar problem with three inner solvers: objective of the master subproblem (left) and maximum inconsistency
-(right). The dashed line is the best known solution <span class="math notranslate nohighlight">\(f^\ast = 3.18339\)</span>.</span><a class="headerlink" href="#id12" title="Link to this image">#</a></p>
+(right). The dashed line is the best known solution <span class="math notranslate nohighlight">\(f^\ast = 3.18339\)</span>.</span><a class="headerlink" href="#id17" title="Link to this image">#</a></p>
 </figcaption>
 </figure>
 <p>The Sellar problem has a known optimum, <span class="math notranslate nohighlight">\(f^\ast = 3.18339\)</span> at <span class="math notranslate nohighlight">\((z_1, x_1, x_2) = (1.9776, 0, 0)\)</span>
-<span class="bibtex-citation" id="id5">[<a class="reference internal" href="references.html#id18" title="Nathan P. Tedford and Joaquim R. R. A. Martins. Benchmarking multidisciplinary design optimization algorithms. Optimization and Engineering, 11(1):159–183, 2010. doi:10.1007/s11081-009-9082-6.">Tedford and Martins, 2010</a>]</span>, which makes it a direct test of the coordination.
+<span class="bibtex-citation" id="id5">[<a class="reference internal" href="references.html#id19" title="Nathan P. Tedford and Joaquim R. R. A. Martins. Benchmarking multidisciplinary design optimization algorithms. Optimization and Engineering, 11(1):159–183, 2010. doi:10.1007/s11081-009-9082-6.">Tedford and Martins, 2010</a>]</span>, which makes it a direct test of the coordination.
 With derivative-free <strong>MADS</strong> subproblems, DMDO ends at <span class="math notranslate nohighlight">\(f = 3.2042\)</span>, <strong>0.65 % above the optimum</strong>, with the
 disciplines consistent to <span class="math notranslate nohighlight">\(1.3\times10^{-6}\)</span>. With the <strong>poll</strong> step alone and with <strong>SLSQP</strong>, the coordination
 also reaches consistency (<span class="math notranslate nohighlight">\(6.2\times10^{-6}\)</span> and <span class="math notranslate nohighlight">\(9.7\times10^{-6}\)</span>) but settles on designs 10.6 % and
@@ -716,11 +747,11 @@ much as the coordination itself.</p>
 </section>
 <section id="speed-reducer-geometric-program-and-basic-problem">
 <h3>Speed reducer, geometric program and basic problem<a class="headerlink" href="#speed-reducer-geometric-program-and-basic-problem" title="Link to this heading">#</a></h3>
-<figure class="align-center" id="id13">
+<figure class="align-center" id="id18">
 <span id="f-bench-objectives"></span><a class="reference internal image-reference" href="_images/bench_objectives.svg"><img alt="Objective of the master subproblem for the basic problem, the speed reducer and the geometric program" src="_images/bench_objectives.svg" style="width: 98%;" />
 </a>
 <figcaption>
-<p><span class="caption-number">Figure 10 </span><span class="caption-text">Objective of the master subproblem along the outer iterations.</span><a class="headerlink" href="#id13" title="Link to this image">#</a></p>
+<p><span class="caption-number">Figure 10 </span><span class="caption-text">Objective of the master subproblem along the outer iterations.</span><a class="headerlink" href="#id18" title="Link to this image">#</a></p>
 </figcaption>
 </figure>
 <p><a class="reference internal" href="#f-bench-objectives"><span class="std std-numref">Figure 10</span></a> shows the objectives settling early: they stay within 0.5 % of their final values from
@@ -729,12 +760,12 @@ drops below <span class="math notranslate nohighlight">\(10^{-3}\)</span>.</p>
 <ul class="simple">
 <li><p><strong>Speed reducer</strong> (Golinski’s gear-box design, 7 design variables and 11 constraints split over 4 subproblems):
 final objective 2741.41, 8.45 % <em>below</em> the best known solution <span class="math notranslate nohighlight">\(f^\ast = 2994.355026\)</span> at
-<span class="math notranslate nohighlight">\((z_1, z_2, x_{21}, x_{31}) = (0.7, 17, 7.3, 7.7153199)\)</span> <span class="bibtex-citation" id="id6">[<a class="reference internal" href="references.html#id18" title="Nathan P. Tedford and Joaquim R. R. A. Martins. Benchmarking multidisciplinary design optimization algorithms. Optimization and Engineering, 11(1):159–183, 2010. doi:10.1007/s11081-009-9082-6.">Tedford and Martins, 2010</a>]</span>. A value below the
+<span class="math notranslate nohighlight">\((z_1, z_2, x_{21}, x_{31}) = (0.7, 17, 7.3, 7.7153199)\)</span> <span class="bibtex-citation" id="id6">[<a class="reference internal" href="references.html#id19" title="Nathan P. Tedford and Joaquim R. R. A. Martins. Benchmarking multidisciplinary design optimization algorithms. Optimization and Engineering, 11(1):159–183, 2010. doi:10.1007/s11081-009-9082-6.">Tedford and Martins, 2010</a>]</span>. A value below the
 optimum is possible only because this run is not exactly consistent and feasible: it ends with a maximum
 inconsistency of <span class="math notranslate nohighlight">\(7.4\times10^{-4}\)</span>, and the regression suite accepts subproblem constraint violations up to
 <span class="math notranslate nohighlight">\(h \le 0.06\)</span> for it. Its acceptance band is <span class="math notranslate nohighlight">\(\pm 5\,\%\)</span> around 2713.66 (next section).</p></li>
 <li><p><strong>Geometric programming</strong> (14 variables, 4 coupling equalities and 6 inequalities over 3 subproblems): final
-objective 20.2632, 15.2 % above the best known solution <span class="math notranslate nohighlight">\(f^\ast = 17.59\)</span> <span class="bibtex-citation" id="id7">[<a class="reference internal" href="references.html#id19" title="B. Talgorn, M. Kokkolaras, A. DeBlois, and P. Piperni. Numerical investigation of non-hierarchical coordination for distributed multidisciplinary design optimization with fixed computational budget. Structural and Multidisciplinary Optimization, 55(1):205–220, 2017. doi:10.1007/s00158-016-1489-z.">Talgorn <em>et al.</em>, 2017</a>]</span>,
+objective 20.2632, 15.2 % above the best known solution <span class="math notranslate nohighlight">\(f^\ast = 17.59\)</span> <span class="bibtex-citation" id="id7">[<a class="reference internal" href="references.html#id20" title="B. Talgorn, M. Kokkolaras, A. DeBlois, and P. Piperni. Numerical investigation of non-hierarchical coordination for distributed multidisciplinary design optimization with fixed computational budget. Structural and Multidisciplinary Optimization, 55(1):205–220, 2017. doi:10.1007/s00158-016-1489-z.">Talgorn <em>et al.</em>, 2017</a>]</span>,
 with zero constraint violation and the tightest final consistency of all runs, <span class="math notranslate nohighlight">\(1.1\times10^{-7}\)</span>.</p></li>
 <li><p><strong>Basic problem</strong>: final objective 5.58977, 0.18 % above the best known solution 5.58, with consistency
 <span class="math notranslate nohighlight">\(3.1\times10^{-7}\)</span> after 50 iterations of the poll-step solver.</p></li>
@@ -742,13 +773,13 @@ with zero constraint violation and the tightest final consistency of all runs, <
 </section>
 <section id="supersonic-business-jet">
 <h3>Supersonic business jet<a class="headerlink" href="#supersonic-business-jet" title="Link to this heading">#</a></h3>
-<p>The supersonic business jet (SBJ) of <span class="bibtex-citation" id="id8">Tosserams <em>et al.</em> [<a class="reference internal" href="references.html#id17" title="S. Tosserams, Michael Kokkolaras, L. F. P. Etman, and J. E. Rooda. A nonhierarchical formulation of analytical target cascading. Journal of Mechanical Design, 132(5):051002, 2010. doi:10.1115/1.4001346.">2010</a>]</span> couples four subproblems (aircraft,
+<p>The supersonic business jet (SBJ) of <span class="bibtex-citation" id="id8">Tosserams <em>et al.</em> [<a class="reference internal" href="references.html#id18" title="S. Tosserams, Michael Kokkolaras, L. F. P. Etman, and J. E. Rooda. A nonhierarchical formulation of analytical target cascading. Journal of Mechanical Design, 132(5):051002, 2010. doi:10.1115/1.4001346.">2010</a>]</span> couples four subproblems (aircraft,
 propulsion, aerodynamics and structures, <code class="docutils literal notranslate"><span class="pre">tests/SBJ</span></code>); its objective is the total weight <span class="math notranslate nohighlight">\(W_t\)</span>, and the best
 known solution is <span class="math notranslate nohighlight">\(W_t^\ast = 33{,}600\)</span> lb, the lowest optimal weight of their all-in-one optimizations from
 100 random starting points (Table 2 of that paper). Unlike the runs above, the SBJ results come from benchmarking
 campaigns rather than from recorded regression traces. All constraints use the progressive barrier.</p>
-<div class="pst-scrollable-table-container"><table class="table" id="id14">
-<caption><span class="caption-number">Table 4 </span><span class="caption-text">SBJ results</span><a class="headerlink" href="#id14" title="Link to this table">#</a></caption>
+<div class="pst-scrollable-table-container"><table class="table" id="id19">
+<caption><span class="caption-number">Table 4 </span><span class="caption-text">SBJ results</span><a class="headerlink" href="#id19" title="Link to this table">#</a></caption>
 <colgroup>
 <col style="width: 30.0%" />
 <col style="width: 12.0%" />
@@ -791,6 +822,346 @@ median slightly below <span class="math notranslate nohighlight">\(W_t^\ast\)</s
 <li><p>With only 50 evaluations per solve, MADS does not reach an inconsistency of <span class="math notranslate nohighlight">\(10^{-3}\)</span> within 100 outer
 iterations: the structures subproblem, with 72 constraints, needs the larger budget.</p></li>
 </ul>
+<section id="the-four-atc-formulations-of-tosserams-et-al">
+<h4>The four ATC formulations of Tosserams et al.<a class="headerlink" href="#the-four-atc-formulations-of-tosserams-et-al" title="Link to this heading">#</a></h4>
+<p><span class="bibtex-citation" id="id9">Tosserams <em>et al.</em> [<a class="reference internal" href="references.html#id18" title="S. Tosserams, Michael Kokkolaras, L. F. P. Etman, and J. E. Rooda. A nonhierarchical formulation of analytical target cascading. Journal of Mechanical Design, 132(5):051002, 2010. doi:10.1115/1.4001346.">2010</a>]</span> decompose the business jet in four ways (<a class="reference internal" href="#f-sbj-formulations"><span class="std std-numref">Figure 11</span></a> and the three figures after it):</p>
+<ol class="loweralpha simple">
+<li><p>hierarchical, with aircraft coordinating the other three subproblems (26 target-response pairs);</p></li>
+<li><p>non-hierarchical (16 pairs);</p></li>
+<li><p>like (b), but with the range constraint relaxed as a system-wide function (14 pairs and 1 function);</p></li>
+<li><p>without the aircraft subproblem, with the range constraint and the weight balance
+<span class="math notranslate nohighlight">\(W_t = W_e + W_s + W_f\)</span> as system-wide functions (10 pairs and 2 functions).</p></li>
+</ol>
+<p><code class="docutils literal notranslate"><span class="pre">tests/SBJ</span></code> contains one problem definition per formulation, <code class="docutils literal notranslate"><span class="pre">SBJ_a.yaml</span></code> to <code class="docutils literal notranslate"><span class="pre">SBJ_d.yaml</span></code>. Formulations (c)
+and (d) declare their system-wide functions in the <code class="docutils literal notranslate"><span class="pre">system_functions</span></code> section. Each such function is relaxed
+with its own multiplier and penalty weight, <span class="math notranslate nohighlight">\(\phi(g + s)\)</span> with a slack <span class="math notranslate nohighlight">\(s \ge 0\)</span> for an inequality and
+<span class="math notranslate nohighlight">\(\phi(h)\)</span> for an equality, and is added to the objective of every subproblem whose variables it depends on.</p>
+<figure class="align-default" id="id20">
+<span id="f-sbj-formulations"></span><a class="reference internal image-reference" href="_images/fig6a.png"><img alt="_images/fig6a.png" src="_images/fig6a.png" style="width: 48%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Figure 11 </span><span class="caption-text">Formulation (a): hierarchical.</span><a class="headerlink" href="#id20" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id21">
+<a class="reference internal image-reference" href="_images/fig6b.png"><img alt="_images/fig6b.png" src="_images/fig6b.png" style="width: 48%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Figure 12 </span><span class="caption-text">Formulation (b): non-hierarchical.</span><a class="headerlink" href="#id21" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id22">
+<a class="reference internal image-reference" href="_images/fig6c.png"><img alt="_images/fig6c.png" src="_images/fig6c.png" style="width: 48%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Figure 13 </span><span class="caption-text">Formulation (c): range constraint as a system-wide function.</span><a class="headerlink" href="#id22" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+<figure class="align-default" id="id23">
+<a class="reference internal image-reference" href="_images/fig6d.png"><img alt="_images/fig6d.png" src="_images/fig6d.png" style="width: 48%;" />
+</a>
+<figcaption>
+<p><span class="caption-number">Figure 14 </span><span class="caption-text">Formulation (d): range and total-weight constraints as system-wide functions.</span><a class="headerlink" href="#id23" title="Link to this image">#</a></p>
+</figcaption>
+</figure>
+<p><em>Four ATC formulations of the business jet, redrawn for DMDO (TikZ sources in</em> <code class="docutils literal notranslate"><span class="pre">docs_src/_static/sbj/tikz</span></code><em>);
+adapted from Fig. 6 of</em> <span class="bibtex-citation" id="id10">Tosserams <em>et al.</em> [<a class="reference internal" href="references.html#id18" title="S. Tosserams, Michael Kokkolaras, L. F. P. Etman, and J. E. Rooda. A nonhierarchical formulation of analytical target cascading. Journal of Mechanical Design, 132(5):051002, 2010. doi:10.1115/1.4001346.">2010</a>]</span><em>.</em></p>
+<p><strong>Setup</strong> (following Sec. 4.3 of the paper). Every formulation is solved from the same 100 starting points, drawn
+uniformly within <span class="math notranslate nohighlight">\(\pm 10\,\%\)</span> of the reference design of the paper’s Table 1; all copies of a quantity start
+from the same value. The other settings are:</p>
+<ul class="simple">
+<li><p>sequential (Gauss–Seidel) coordination, with one inner iteration per outer iteration;</p></li>
+<li><p><span class="math notranslate nohighlight">\(\beta = 1.03\)</span>, <span class="math notranslate nohighlight">\(\gamma = 0.75\)</span>, a per-coupling weight update (<code class="docutils literal notranslate"><span class="pre">normal</span></code>) and termination tolerance
+<span class="math notranslate nohighlight">\(\varepsilon = 10^{-3}\)</span>;</p></li>
+<li><p>inconsistencies scaled by the reference values;</p></li>
+<li><p>SciPy SLSQP in every subproblem, in place of the paper’s MATLAB <code class="docutils literal notranslate"><span class="pre">fmincon</span></code> SQP.</p></li>
+</ul>
+<p>The initial weights follow the paper’s rule with objective estimate <span class="math notranslate nohighlight">\(\hat f = 10\times10^{3}\)</span> lb,
+<span class="math notranslate nohighlight">\(w^0 = 0.001\)</span> and <span class="math notranslate nohighlight">\(\alpha = 0.1\)</span> (coordinator options <code class="docutils literal notranslate"><span class="pre">w_init</span></code>, <code class="docutils literal notranslate"><span class="pre">w_init_f_hat</span></code> and
+<code class="docutils literal notranslate"><span class="pre">w_init_alpha</span></code>). The first outer iteration uses <span class="math notranslate nohighlight">\(w^0\)</span>; every weight is then set to
+<span class="math notranslate nohighlight">\(\sqrt{\alpha |\hat f|}/\lVert q^0\rVert_\infty\)</span>.</p>
+<p>Up to 50 runs ran at a time, and a run that took more than 40 minutes was stopped and counted as not converged. The
+all-in-one column is an MDF solution with SLSQP from the same design-variable starts. As in the paper, the weight,
+constraint-violation and iteration statistics cover the converged runs only. The weight and the constraint violation
+come from a full multidisciplinary analysis of each final design. The campaign is reproduced (about 4 hours on a
+16-core machine) by:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>python<span class="w"> </span>tests/SBJ/bm_SBJ.py<span class="w"> </span>--n<span class="w"> </span><span class="m">100</span><span class="w"> </span>--workers<span class="w"> </span><span class="m">50</span><span class="w"> </span>--timeout<span class="w"> </span><span class="m">2400</span>
+</pre></div>
+</div>
+<div class="pst-scrollable-table-container"><table class="table" id="id24">
+<caption><span class="caption-number">Table 5 </span><span class="caption-text">DMDO results for the four formulations, 100 random starting points (layout of Table 2 of <span class="bibtex-citation" id="id11">Tosserams <em>et al.</em> [<a class="reference internal" href="references.html#id18" title="S. Tosserams, Michael Kokkolaras, L. F. P. Etman, and J. E. Rooda. A nonhierarchical formulation of analytical target cascading. Journal of Mechanical Design, 132(5):051002, 2010. doi:10.1115/1.4001346.">2010</a>]</span>)</span><a class="headerlink" href="#id24" title="Link to this table">#</a></caption>
+<colgroup>
+<col style="width: 30.6%" />
+<col style="width: 8.2%" />
+<col style="width: 12.2%" />
+<col style="width: 12.2%" />
+<col style="width: 12.2%" />
+<col style="width: 12.2%" />
+<col style="width: 12.2%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Formulation</p></th>
+<th class="head"></th>
+<th class="head"><p>All-in-one</p></th>
+<th class="head"><p>(a)</p></th>
+<th class="head"><p>(b)</p></th>
+<th class="head"><p>(c)</p></th>
+<th class="head"><p>(d)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Coordination</p></td>
+<td></td>
+<td><p>MDF</p></td>
+<td><p>Sequential</p></td>
+<td><p>Sequential</p></td>
+<td><p>Sequential</p></td>
+<td><p>Sequential</p></td>
+</tr>
+<tr class="row-odd"><td><p>Converged runs</p></td>
+<td></td>
+<td><p>99/100</p></td>
+<td><p>52/100 <a class="footnote-reference brackets" href="#a-time" id="id12" role="doc-noteref"><span class="fn-bracket">[</span>1<span class="fn-bracket">]</span></a></p></td>
+<td><p>99/100</p></td>
+<td><p>100/100</p></td>
+<td><p>100/100</p></td>
+</tr>
+<tr class="row-even"><td><p>Optimal weight (<span class="math notranslate nohighlight">\(\times 10^3\)</span> lb)</p></td>
+<td><p>Min</p></td>
+<td><p>34.0</p></td>
+<td><p>34.2</p></td>
+<td><p>34.4</p></td>
+<td><p>34.3</p></td>
+<td><p>34.4</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>Mean</p></td>
+<td><p>36.4</p></td>
+<td><p>34.7</p></td>
+<td><p>35.4</p></td>
+<td><p>35.4</p></td>
+<td><p>35.3</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>Max</p></td>
+<td><p>38.1</p></td>
+<td><p>38.3</p></td>
+<td><p>38.8</p></td>
+<td><p>38.3</p></td>
+<td><p>38.4</p></td>
+</tr>
+<tr class="row-odd"><td><p>Maximum constraint violation</p></td>
+<td><p>Min</p></td>
+<td><p>0.000</p></td>
+<td><p>0.000</p></td>
+<td><p>0.000</p></td>
+<td><p>0.000</p></td>
+<td><p>0.000</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>Mean</p></td>
+<td><p>0.000</p></td>
+<td><p>0.006</p></td>
+<td><p>0.001</p></td>
+<td><p>0.001</p></td>
+<td><p>0.001</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>Max</p></td>
+<td><p>0.000</p></td>
+<td><p>0.013</p></td>
+<td><p>0.008</p></td>
+<td><p>0.005</p></td>
+<td><p>0.004</p></td>
+</tr>
+<tr class="row-even"><td><p>Iterations (total)</p></td>
+<td><p>Min</p></td>
+<td><p>–</p></td>
+<td><p>138</p></td>
+<td><p>132</p></td>
+<td><p>114</p></td>
+<td><p>127</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>Mean</p></td>
+<td><p>–</p></td>
+<td><p>155</p></td>
+<td><p>159</p></td>
+<td><p>143</p></td>
+<td><p>148</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>Max</p></td>
+<td><p>–</p></td>
+<td><p>182</p></td>
+<td><p>199</p></td>
+<td><p>180</p></td>
+<td><p>173</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="pst-scrollable-table-container"><table class="table" id="id25">
+<caption><span class="caption-number">Table 6 </span><span class="caption-text">Reference: Table 2 of <span class="bibtex-citation" id="id13">Tosserams <em>et al.</em> [<a class="reference internal" href="references.html#id18" title="S. Tosserams, Michael Kokkolaras, L. F. P. Etman, and J. E. Rooda. A nonhierarchical formulation of analytical target cascading. Journal of Mechanical Design, 132(5):051002, 2010. doi:10.1115/1.4001346.">2010</a>]</span> (MATLAB <code class="docutils literal notranslate"><span class="pre">fmincon</span></code>)</span><a class="headerlink" href="#id25" title="Link to this table">#</a></caption>
+<colgroup>
+<col style="width: 30.6%" />
+<col style="width: 8.2%" />
+<col style="width: 12.2%" />
+<col style="width: 12.2%" />
+<col style="width: 12.2%" />
+<col style="width: 12.2%" />
+<col style="width: 12.2%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Formulation</p></th>
+<th class="head"></th>
+<th class="head"><p>All-in-one</p></th>
+<th class="head"><p>(a)</p></th>
+<th class="head"><p>(b)</p></th>
+<th class="head"><p>(c)</p></th>
+<th class="head"><p>(d)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>Converged runs</p></td>
+<td></td>
+<td><p>100/100</p></td>
+<td><p>98/100</p></td>
+<td><p>100/100</p></td>
+<td><p>89/100</p></td>
+<td><p>94/100</p></td>
+</tr>
+<tr class="row-odd"><td><p>Optimal weight (<span class="math notranslate nohighlight">\(\times 10^3\)</span> lb)</p></td>
+<td><p>Min</p></td>
+<td><p>33.6</p></td>
+<td><p>34.0</p></td>
+<td><p>33.9</p></td>
+<td><p>33.6</p></td>
+<td><p>34.0</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>Mean</p></td>
+<td><p>34.7</p></td>
+<td><p>34.9</p></td>
+<td><p>35.0</p></td>
+<td><p>34.3</p></td>
+<td><p>34.7</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>Max</p></td>
+<td><p>38.1</p></td>
+<td><p>39.2</p></td>
+<td><p>48.5</p></td>
+<td><p>38.8</p></td>
+<td><p>46.0</p></td>
+</tr>
+<tr class="row-even"><td><p>Maximum constraint violation</p></td>
+<td><p>Min</p></td>
+<td><p>0.000</p></td>
+<td><p>0.000</p></td>
+<td><p>0.000</p></td>
+<td><p>0.000</p></td>
+<td><p>0.000</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>Mean</p></td>
+<td><p>0.000</p></td>
+<td><p>0.001</p></td>
+<td><p>0.002</p></td>
+<td><p>0.002</p></td>
+<td><p>0.003</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>Max</p></td>
+<td><p>0.001</p></td>
+<td><p>0.009</p></td>
+<td><p>0.009</p></td>
+<td><p>0.006</p></td>
+<td><p>0.006</p></td>
+</tr>
+<tr class="row-odd"><td><p>Iterations (total)</p></td>
+<td><p>Min</p></td>
+<td><p>–</p></td>
+<td><p>181</p></td>
+<td><p>166</p></td>
+<td><p>145</p></td>
+<td><p>76</p></td>
+</tr>
+<tr class="row-even"><td></td>
+<td><p>Mean</p></td>
+<td><p>–</p></td>
+<td><p>244</p></td>
+<td><p>209</p></td>
+<td><p>202</p></td>
+<td><p>85</p></td>
+</tr>
+<tr class="row-odd"><td></td>
+<td><p>Max</p></td>
+<td><p>–</p></td>
+<td><p>283</p></td>
+<td><p>261</p></td>
+<td><p>242</p></td>
+<td><p>131</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<aside class="footnote-list brackets">
+<aside class="footnote brackets" id="a-time" role="doc-footnote">
+<span class="label"><span class="fn-bracket">[</span><a role="doc-backlink" href="#id12">1</a><span class="fn-bracket">]</span></span>
+<p>None of the (a) runs diverged: all 48 non-converged runs were stopped at the 40-minute limit.
+Formulation (a) has the most expensive subproblem (aircraft holds 15 copies and 26 pairs), so its outer
+iterations take about twice as long. When stopped, those runs had reached 129–190 iterations with a median
+inconsistency of <span class="math notranslate nohighlight">\(2.7\times10^{-3}\)</span>, and 45 of the 48 were below <span class="math notranslate nohighlight">\(5\times10^{-3}\)</span>. Its iteration
+statistics therefore cover only the faster half of the runs. One (b) run was also stopped at the limit.</p>
+</aside>
+</aside>
+<p>All four formulations converge to the same two optima as the paper: the Table 1 design at about
+<span class="math notranslate nohighlight">\(34.3\times10^3\)</span> lb, and a heavier design at about <span class="math notranslate nohighlight">\(38\times10^3\)</span> lb with a larger wing and 9-inch
+bottom skin cores.</p>
+<div class="pst-scrollable-table-container"><table class="table" id="id26">
+<caption><span class="caption-number">Table 7 </span><span class="caption-text">Converged runs per optimum</span><a class="headerlink" href="#id26" title="Link to this table">#</a></caption>
+<colgroup>
+<col style="width: 40.0%" />
+<col style="width: 12.0%" />
+<col style="width: 12.0%" />
+<col style="width: 12.0%" />
+<col style="width: 12.0%" />
+<col style="width: 12.0%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Final weight</p></th>
+<th class="head"><p>All-in-one</p></th>
+<th class="head"><p>(a)</p></th>
+<th class="head"><p>(b)</p></th>
+<th class="head"><p>(c)</p></th>
+<th class="head"><p>(d)</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><span class="math notranslate nohighlight">\(\approx 34.3\times10^3\)</span> lb (below <span class="math notranslate nohighlight">\(36\times10^3\)</span>)</p></td>
+<td><p>43</p></td>
+<td><p>50</p></td>
+<td><p>77</p></td>
+<td><p>80</p></td>
+<td><p>78</p></td>
+</tr>
+<tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(\approx 38\times10^3\)</span> lb (above <span class="math notranslate nohighlight">\(37\times10^3\)</span>)</p></td>
+<td><p>56</p></td>
+<td><p>2</p></td>
+<td><p>22</p></td>
+<td><p>20</p></td>
+<td><p>21</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<p>The ranges of the optimal weights (<span class="math notranslate nohighlight">\(34.0\)</span>–<span class="math notranslate nohighlight">\(38.8\times10^3\)</span> lb) and of the constraint violations (at
+most 0.013) match the paper’s. The formulations with fewer pairs need fewer outer iterations: (c) and (d) average
+143 and 148, against 159 for (b). The paper’s (d) needs far fewer iterations (85) than DMDO’s (148). One possible
+cause is the initial weights: the paper sets one per coupling, while DMDO uses a single weight for all couplings.
+Unlike the paper’s (b) and (d), no DMDO run ends above <span class="math notranslate nohighlight">\(38.8\times10^3\)</span> lb.</p>
+</section>
 </section>
 </section>
 <section id="regression-suite">
@@ -798,8 +1169,8 @@ iterations: the structures subproblem, with 72 constraints, needs the larger bud
 <p><code class="docutils literal notranslate"><span class="pre">tests/test_basic.py</span></code> runs on Linux, Windows and macOS in continuous integration. Each problem must reach the
 following targets within its budget; <code class="docutils literal notranslate"><span class="pre">f</span></code> is the objective of the master subproblem, <code class="docutils literal notranslate"><span class="pre">h</span></code> the largest constraint
 violation and <code class="docutils literal notranslate"><span class="pre">q</span></code> the final maximum inconsistency.</p>
-<div class="pst-scrollable-table-container"><table class="table" id="id15">
-<caption><span class="caption-number">Table 5 </span><span class="caption-text">Acceptance criteria of the regression suite</span><a class="headerlink" href="#id15" title="Link to this table">#</a></caption>
+<div class="pst-scrollable-table-container"><table class="table" id="id27">
+<caption><span class="caption-number">Table 8 </span><span class="caption-text">Acceptance criteria of the regression suite</span><a class="headerlink" href="#id27" title="Link to this table">#</a></caption>
 <colgroup>
 <col style="width: 30.0%" />
 <col style="width: 70.0%" />
@@ -876,11 +1247,11 @@ comparison is opt-in. The acceptance criteria above are platform independent.</p
       </div>
     </a>
     <a class="right-next"
-       href="tutorials/index.html"
+       href="architecture_results.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Tutorials</p>
+        <p class="prev-next-title">Testing the MDO architectures</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

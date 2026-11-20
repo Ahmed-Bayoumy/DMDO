@@ -1,0 +1,69 @@
+# Sellar problem, monolithic MDF: one standalone subproblem whose MDA holds both analyses.
+# DA1 outputs y1 (v3) that DA2 reads, DA2 outputs y2 (v4) that DA1 reads: MDA1 has the feedback loop {DA1, DA2},
+# which MDA1.solver converges at every evaluation. Optimum: f* = 3.18339 at x = 0, z = (1.9776, 0), y = (3.16, 3.7553).
+
+variables:
+# vs:  [name,  sp_index, link, coupling, lb,     bl,     ub,     dim, var_type]
+  v0:  ["x",   1,        null, u,        0.0,    1.0,    10.0,   1,   "REAL"]
+  v1:  ["z1",  1,        null, u,        -10.0,  5.0,    10.0,   1,   "REAL"]
+  v2:  ["z2",  1,        null, u,        0.0,    2.0,    10.0,   1,   "REAL"]
+  v3:  ["y1",  1,        null, ff,       0.0,    1.0,    100.0,  1,   "REAL"]
+  v4:  ["y2",  1,        null, ff,       0.0,    1.0,    100.0,  1,   "REAL"]
+
+DA:
+  DA1:
+    index: 1
+    inputs: [v0, v1, v2, v4]       # y1 = x + z1^2 + z2 - 0.2 y2
+    outputs: [v3]
+    blackbox: sellar_a1
+    type: callable
+    links: []
+    coupling_type: ff
+  DA2:
+    index: 2
+    inputs: [v1, v2, v3]           # y2 = z1 + z2 + sqrt(y1)
+    outputs: [v4]
+    blackbox: sellar_a2
+    type: callable
+    links: []
+    coupling_type: ff
+
+MDA:
+  MDA1:
+    index: 1
+    nAnalyses: 2
+    analyses: [1, 2]
+    variables: [v0, v1, v2]
+    responses: [v3, v4]
+    solver: GS                     # GS (default) | Jacobi | Newton, or {name: Newton, tol: 1.0e-10, maxiter: 50}
+
+subproblem:
+  sp1:
+    nv: 3
+    index: 1
+    vars: [v0, v1, v2]
+    resps: [v3, v4]
+    is_main: True
+    MDA: 1
+    opt: sellar_mdf_opt
+    type: callable
+    fmin_nop: inf
+    budget: 200
+    display: False
+    solver: scipy
+    scipy:
+      method: SLSQP
+      is_con: true
+      tol: 1.0e-10
+      options: {maxiter: 200, ftol: 1.0e-12, disp: false}
+
+USER:
+
+MDO:
+  architecture:
+    MON: MDF
+  subproblems: [1]
+  responses: [v3, v4]
+  fmin: inf
+  hmin: inf
+  display: True

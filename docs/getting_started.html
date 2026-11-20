@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Getting started &#8212; DMDO 2612.0</title>
+    <title>Getting started &#8212; DMDO 2612.1</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=d587bd99"></script>
+    <script src="_static/documentation_options.js?v=71ff3980"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -59,7 +59,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2612.0" />
+  <meta name="docsearch:version" content="2612.1" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -129,8 +129,8 @@
     
     
     
-    <img src="_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.0 - Home"/>
-    <img src="_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.0 - Home"/>
+    <img src="_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.1 - Home"/>
+    <img src="_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.1 - Home"/>
   
   
 </a></div>
@@ -174,15 +174,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="tutorials/index.html">
-    Tutorials
+  <a class="nav-link nav-internal" href="architecture_results.html">
+    Testing the MDO architectures
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="user_guide/problem_definition.html">
-    Problem definition
+  <a class="nav-link nav-internal" href="tutorials/index.html">
+    Tutorials
   </a>
 </li>
 
@@ -194,6 +194,20 @@
                 </button>
                 <ul id="pst-nav-more-links" class="dropdown-menu">
                     
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="user_guide/problem_definition.html">
+    Problem definition
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="user_guide/architectures.html">
+    MDO architectures
+  </a>
+</li>
+
+
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="user_guide/outputs.html">
     Outputs
@@ -337,6 +351,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="architecture_results.html">
+    Testing the MDO architectures
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="tutorials/index.html">
     Tutorials
   </a>
@@ -346,6 +367,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="user_guide/problem_definition.html">
     Problem definition
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="user_guide/architectures.html">
+    MDO architectures
   </a>
 </li>
 
@@ -507,7 +535,7 @@
 <span class="gp">$ </span>pytest<span class="w"> </span>tests
 </pre></div>
 </div>
-<p>DMDO uses <a class="reference external" href="https://github.com/Ahmed-Bayoumy/OMADS">OMADS</a> <span class="bibtex-citation" id="id1">[<a class="reference internal" href="references.html#id26" title="Ahmed H. Bayoumy. OMADS: optimization using mesh adaptive direct search. 2022. URL: https://github.com/Ahmed-Bayoumy/OMADS, doi:10.5281/zenodo.23407559.">Bayoumy, 2022</a>]</span> for its derivative-free subproblem
+<p>DMDO uses <a class="reference external" href="https://github.com/Ahmed-Bayoumy/OMADS">OMADS</a> <span class="bibtex-citation" id="id1">[<a class="reference internal" href="references.html#id27" title="Ahmed H. Bayoumy. OMADS: optimization using mesh adaptive direct search. 2022. URL: https://github.com/Ahmed-Bayoumy/OMADS, doi:10.5281/zenodo.23407559.">Bayoumy, 2022</a>]</span> for its derivative-free subproblem
 solvers and SciPy for the gradient-based ones, together with <code class="docutils literal notranslate"><span class="pre">numpy</span></code>, <code class="docutils literal notranslate"><span class="pre">pandas</span></code> and <code class="docutils literal notranslate"><span class="pre">pyyaml</span></code>. Installing DMDO
 also installs the <code class="docutils literal notranslate"><span class="pre">dmdo</span></code> command of the optional HTTP service (<a class="reference internal" href="tutorials/service.html"><span class="doc">The HTTP service and remote workers</span></a>).</p>
 </section>

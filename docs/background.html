@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Background &#8212; DMDO 2612.0</title>
+    <title>Background &#8212; DMDO 2612.1</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=d587bd99"></script>
+    <script src="_static/documentation_options.js?v=71ff3980"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -60,7 +60,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2612.0" />
+  <meta name="docsearch:version" content="2612.1" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -130,8 +130,8 @@
     
     
     
-    <img src="_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.0 - Home"/>
-    <img src="_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.0 - Home"/>
+    <img src="_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.1 - Home"/>
+    <img src="_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.1 - Home"/>
   
   
 </a></div>
@@ -175,15 +175,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="tutorials/index.html">
-    Tutorials
+  <a class="nav-link nav-internal" href="architecture_results.html">
+    Testing the MDO architectures
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="user_guide/problem_definition.html">
-    Problem definition
+  <a class="nav-link nav-internal" href="tutorials/index.html">
+    Tutorials
   </a>
 </li>
 
@@ -195,6 +195,20 @@
                 </button>
                 <ul id="pst-nav-more-links" class="dropdown-menu">
                     
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="user_guide/problem_definition.html">
+    Problem definition
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="user_guide/architectures.html">
+    MDO architectures
+  </a>
+</li>
+
+
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="user_guide/outputs.html">
     Outputs
@@ -338,6 +352,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="architecture_results.html">
+    Testing the MDO architectures
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="tutorials/index.html">
     Tutorials
   </a>
@@ -347,6 +368,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="user_guide/problem_definition.html">
     Problem definition
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="user_guide/architectures.html">
+    MDO architectures
   </a>
 </li>
 
@@ -507,16 +535,16 @@ accounting for the interactions between these disciplines (<a class="reference i
 own models, tools and design freedom. Distributed multidisciplinary design optimization (MDO) does this by
 decomposing the system design problem into subproblems, one per discipline or component, and coordinating their
 solutions so that the subproblem designs agree and are optimal for the system.</p>
-<figure class="align-center" id="id14">
+<figure class="align-center" id="id15">
 <span id="f-mdo"></span><a class="reference internal image-reference" href="_images/MDO.png"><img alt="_images/MDO.png" src="_images/MDO.png" width="640" />
 </a>
 <figcaption>
-<p><span class="caption-number">Figure 3 </span><span class="caption-text">Interactions between the disciplines of a multidisciplinary system.</span><a class="headerlink" href="#id14" title="Link to this image">#</a></p>
+<p><span class="caption-number">Figure 3 </span><span class="caption-text">Interactions between the disciplines of a multidisciplinary system.</span><a class="headerlink" href="#id15" title="Link to this image">#</a></p>
 </figcaption>
 </figure>
 <section id="architectures-for-mdo">
 <h2>Architectures for MDO<a class="headerlink" href="#architectures-for-mdo" title="Link to this heading">#</a></h2>
-<p>MDO architectures are commonly divided into monolithic and distributed ones <span class="bibtex-citation" id="id1">[<a class="reference internal" href="references.html#id22" title="Joaquim R. R. A. Martins and Andrew B. Lambe. Multidisciplinary design optimization: a survey of architectures. AIAA Journal, 51(9):2049–2075, 2013. doi:10.2514/1.J051895.">Martins and Lambe, 2013</a>]</span>.
+<p>MDO architectures are commonly divided into monolithic and distributed ones <span class="bibtex-citation" id="id1">[<a class="reference internal" href="references.html#id23" title="Joaquim R. R. A. Martins and Andrew B. Lambe. Multidisciplinary design optimization: a survey of architectures. AIAA Journal, 51(9):2049–2075, 2013. doi:10.2514/1.J051895.">Martins and Lambe, 2013</a>]</span>.
 Monolithic architectures solve a single optimization problem: the multidisciplinary feasible (MDF) architecture
 converges a multidisciplinary analysis (MDA) at every design point, and the individual discipline feasible (IDF)
 architecture adds the coupling variables to the optimization and enforces their consistency as equality constraints.
@@ -525,11 +553,15 @@ methods include penalty-based decomposition <span class="bibtex-citation" id="id
 system synthesis <span class="bibtex-citation" id="id3">[<a class="reference internal" href="references.html#id4" title="Jaroslaw Sobieszczanski-Sobieski, Jeremy S. Agte, and Robert R. Sandusky, Jr. Bilevel integrated system synthesis. AIAA Journal, 38(1):164–172, 2000.">Sobieszczanski-Sobieski <em>et al.</em>, 2000</a>, <a class="reference internal" href="references.html#id5" title="Jaroslaw Sobieszczanski-Sobieski, Troy D. Altus, Matthew Phillips, and Robert Sandusky. Bilevel integrated system synthesis for concurrent and distributed processing. AIAA Journal, 41(10):1996–2003, 2003.">Sobieszczanski-Sobieski <em>et al.</em>, 2003</a>]</span>, collaborative optimization
 <span class="bibtex-citation" id="id4">[<a class="reference internal" href="references.html#id6" title="Robert David Braun. Collaborative Optimization: An Architecture for Large-Scale Distributed Design. PhD thesis, Stanford University, 1996.">Braun, 1996</a>, <a class="reference internal" href="references.html#id7" title="Robert D. Braun, Arlene A. Moore, and Ilan M. Kroo. Collaborative approach to launch vehicle design. Journal of Spacecraft and Rockets, 34(4):478–486, 1997.">Braun <em>et al.</em>, 1997</a>, <a class="reference internal" href="references.html#id8" title="JiGuan G. Lin. Analysis and enhancement of collaborative optimization for multidisciplinary design. AIAA Journal, 42(2):348–360, 2004.">Lin, 2004</a>, <a class="reference internal" href="references.html#id9" title="Brian D. Roth and Ilan M. Kroo. Enhanced collaborative optimization: a decomposition-based method for multidisciplinary design. In International Design Engineering Technical Conferences and Computers and Information in Engineering Conference, volume 43253, 927–936. 2008.">Roth and Kroo, 2008</a>]</span>, quasi-separable decomposition
 <span class="bibtex-citation" id="id5">[<a class="reference internal" href="references.html#id10" title="Raphael T. Haftka and Layne T. Watson. Multidisciplinary design optimization with quasiseparable subsystems. Optimization and Engineering, 6(1):9–20, 2005.">Haftka and Watson, 2005</a>]</span>, and augmented Lagrangian coordination with the alternating direction method of
-multipliers (ADMM) <span class="bibtex-citation" id="id6">[<a class="reference internal" href="references.html#id11" title="Simon Tosserams, L. F. Pascal Etman, and J. E. Rooda. An augmented Lagrangian decomposition method for quasi-separable problems in MDO. Structural and Multidisciplinary Optimization, 34(3):211–227, 2007.">Tosserams <em>et al.</em>, 2007</a>, <a class="reference internal" href="references.html#id12" title="Simon Tosserams, L. F. P. Etman, and J. E. Rooda. Augmented Lagrangian coordination for distributed optimal design in MDO. International Journal for Numerical Methods in Engineering, 73(13):1885–1910, 2008.">Tosserams <em>et al.</em>, 2008</a>, <a class="reference internal" href="references.html#id13" title="S. Tosserams, L. F. P. Etman, and J. E. Rooda. Block-separable linking constraints in augmented Lagrangian coordination. Structural and Multidisciplinary Optimization, 37(5):521–527, 2009.">Tosserams <em>et al.</em>, 2009</a>]</span>.</p>
+multipliers (ADMM) <span class="bibtex-citation" id="id6">[<a class="reference internal" href="references.html#id12" title="Simon Tosserams, L. F. Pascal Etman, and J. E. Rooda. An augmented Lagrangian decomposition method for quasi-separable problems in MDO. Structural and Multidisciplinary Optimization, 34(3):211–227, 2007.">Tosserams <em>et al.</em>, 2007</a>, <a class="reference internal" href="references.html#id13" title="Simon Tosserams, L. F. P. Etman, and J. E. Rooda. Augmented Lagrangian coordination for distributed optimal design in MDO. International Journal for Numerical Methods in Engineering, 73(13):1885–1910, 2008.">Tosserams <em>et al.</em>, 2008</a>, <a class="reference internal" href="references.html#id14" title="S. Tosserams, L. F. P. Etman, and J. E. Rooda. Block-separable linking constraints in augmented Lagrangian coordination. Structural and Multidisciplinary Optimization, 37(5):521–527, 2009.">Tosserams <em>et al.</em>, 2009</a>]</span>.</p>
 <p>DMDO implements <strong>analytical target cascading (ATC)</strong> in its nonhierarchical form (NHATC). According to the
-classification of <span class="bibtex-citation" id="id7">Tosserams <em>et al.</em> [<a class="reference internal" href="references.html#id14" title="Simon Tosserams, L. F. Pascal Etman, and J. E. Rooda. A classification of methods for distributed system optimization based on formulation structure. Structural and Multidisciplinary Optimization, 39(5):503–517, 2009.">2009</a>]</span>, ATC is an alternating method with closed design constraints
+classification of <span class="bibtex-citation" id="id7">Tosserams <em>et al.</em> [<a class="reference internal" href="references.html#id15" title="Simon Tosserams, L. F. Pascal Etman, and J. E. Rooda. A classification of methods for distributed system optimization based on formulation structure. Structural and Multidisciplinary Optimization, 39(5):503–517, 2009.">2009</a>]</span>, ATC is an alternating method with closed design constraints
 and open consistency constraints: every subproblem satisfies its own constraints at every iteration, while the
 consistency between subproblems is reached only at convergence of the coordination.</p>
+<p>NHATC is the default architecture. The <code class="docutils literal notranslate"><span class="pre">MDO.architecture</span></code> key also selects hierarchical ATC on a tree of
+subproblems, coordinated with the same augmented Lagrangian method <span class="bibtex-citation" id="id8">[<a class="reference internal" href="references.html#id11" title="Simon Tosserams, L. F. Pascal Etman, Panos Y. Papalambros, and J. E. Rooda. An augmented Lagrangian relaxation for analytical target cascading using the alternating direction method of multipliers. Structural and Multidisciplinary Optimization, 31(3):176–189, 2006.">Tosserams <em>et al.</em>, 2006</a>]</span>, and monolithic
+MDF with Gauss–Seidel, Jacobi or Newton MDA solvers, for example to compute an all-in-one reference optimum; see
+<a class="reference internal" href="user_guide/architectures.html"><span class="doc">MDO architectures</span></a> and <a class="reference internal" href="architecture_results.html"><span class="doc">Testing the MDO architectures</span></a>.</p>
 </section>
 <section id="when-to-use-dmdo">
 <h2>When to use DMDO<a class="headerlink" href="#when-to-use-dmdo" title="Link to this heading">#</a></h2>
@@ -548,15 +580,15 @@ gradient-based methods for smooth analytical models;</p></li>
 <section id="analytical-target-cascading">
 <h2>Analytical target cascading<a class="headerlink" href="#analytical-target-cascading" title="Link to this heading">#</a></h2>
 <p>ATC was introduced to translate system-level design targets into design specifications for the subsystems
-(components) that make up the system <span class="bibtex-citation" id="id8">[<a class="reference internal" href="references.html#id15" title="Nestor Michelena, Hyung Min Kim, and P. Y. Papalambros. A system partitioning and optimization approach to target cascading. In Proceedings of the 12th International Conference on Engineering Design, volume 2, 1109–1112. Munich, 1999.">Michelena <em>et al.</em>, 1999</a>, <a class="reference internal" href="references.html#id16" title="Hyung Min Kim, Nestor F. Michelena, Panos Y. Papalambros, and Tao Jiang. Target cascading in optimal system design. Journal of Mechanical Design, 125(3):474–480, 2003.">Kim <em>et al.</em>, 2003</a>]</span>. Targets are cascaded through a
+(components) that make up the system <span class="bibtex-citation" id="id9">[<a class="reference internal" href="references.html#id16" title="Nestor Michelena, Hyung Min Kim, and P. Y. Papalambros. A system partitioning and optimization approach to target cascading. In Proceedings of the 12th International Conference on Engineering Design, volume 2, 1109–1112. Munich, 1999.">Michelena <em>et al.</em>, 1999</a>, <a class="reference internal" href="references.html#id17" title="Hyung Min Kim, Nestor F. Michelena, Panos Y. Papalambros, and Tao Jiang. Target cascading in optimal system design. Journal of Mechanical Design, 125(3):474–480, 2003.">Kim <em>et al.</em>, 2003</a>]</span>. Targets are cascaded through a
 hierarchical decomposition: a subproblem sets targets for its children and computes responses to the targets it
 receives from its parent (<a class="reference internal" href="#f-tr"><span class="std std-numref">Figure 4</span></a>). Each subproblem minimizes the deviations between its target-response
-pairs while satisfying its local design constraints <span class="bibtex-citation" id="id9">[<a class="reference internal" href="references.html#id17" title="S. Tosserams, Michael Kokkolaras, L. F. P. Etman, and J. E. Rooda. A nonhierarchical formulation of analytical target cascading. Journal of Mechanical Design, 132(5):051002, 2010. doi:10.1115/1.4001346.">Tosserams <em>et al.</em>, 2010</a>]</span>.</p>
-<figure class="align-center" id="id15">
+pairs while satisfying its local design constraints <span class="bibtex-citation" id="id10">[<a class="reference internal" href="references.html#id18" title="S. Tosserams, Michael Kokkolaras, L. F. P. Etman, and J. E. Rooda. A nonhierarchical formulation of analytical target cascading. Journal of Mechanical Design, 132(5):051002, 2010. doi:10.1115/1.4001346.">Tosserams <em>et al.</em>, 2010</a>]</span>.</p>
+<figure class="align-center" id="id16">
 <span id="f-tr"></span><a class="reference internal image-reference" href="_images/t_r.png"><img alt="_images/t_r.png" src="_images/t_r.png" width="150" />
 </a>
 <figcaption>
-<p><span class="caption-number">Figure 4 </span><span class="caption-text">Target-response coupling between a parent subproblem <span class="math notranslate nohighlight">\(p_{i}\)</span> and its child <span class="math notranslate nohighlight">\(p_{j}\)</span>.</span><a class="headerlink" href="#id15" title="Link to this image">#</a></p>
+<p><span class="caption-number">Figure 4 </span><span class="caption-text">Target-response coupling between a parent subproblem <span class="math notranslate nohighlight">\(p_{i}\)</span> and its child <span class="math notranslate nohighlight">\(p_{j}\)</span>.</span><a class="headerlink" href="#id16" title="Link to this image">#</a></p>
 </figcaption>
 </figure>
 <div class="proof definition admonition" id="def-targets">
@@ -589,18 +621,18 @@ that compute the responses. A local objective and local constraints are not requ
 hierarchy: their analyses exchange data in loops, and system-wide quantities such as mass, cost or power depend on
 the variables of several subproblems (<a class="reference internal" href="#f-fd"><span class="std std-numref">Figure 5</span></a>). Coordinating them with hierarchical ATC requires at least as
 many artificial target-response pairs as there are subproblems.</p>
-<figure class="align-center" id="id16">
+<figure class="align-center" id="id17">
 <span id="f-fd"></span><a class="reference internal image-reference" href="_images/ATC_FD.png"><img alt="_images/ATC_FD.png" src="_images/ATC_FD.png" width="660" />
 </a>
 <figcaption>
 <p><span class="caption-number">Figure 5 </span><span class="caption-text">Functional dependence of the hierarchical and nonhierarchical formulations. Arrows show the flow of responses;
-shaded boxes show system-wide functions that depend on the variables of several subproblems.</span><a class="headerlink" href="#id16" title="Link to this image">#</a></p>
+shaded boxes show system-wide functions that depend on the variables of several subproblems.</span><a class="headerlink" href="#id17" title="Link to this image">#</a></p>
 </figcaption>
 </figure>
 </section>
 <section id="nonhierarchical-atc">
 <h2>Nonhierarchical ATC<a class="headerlink" href="#nonhierarchical-atc" title="Link to this heading">#</a></h2>
-<p>NHATC <span class="bibtex-citation" id="id10">[<a class="reference internal" href="references.html#id17" title="S. Tosserams, Michael Kokkolaras, L. F. P. Etman, and J. E. Rooda. A nonhierarchical formulation of analytical target cascading. Journal of Mechanical Design, 132(5):051002, 2010. doi:10.1115/1.4001346.">Tosserams <em>et al.</em>, 2010</a>]</span> lets any subproblem send targets to, and receive targets from, any other
+<p>NHATC <span class="bibtex-citation" id="id11">[<a class="reference internal" href="references.html#id18" title="S. Tosserams, Michael Kokkolaras, L. F. P. Etman, and J. E. Rooda. A nonhierarchical formulation of analytical target cascading. Journal of Mechanical Design, 132(5):051002, 2010. doi:10.1115/1.4001346.">Tosserams <em>et al.</em>, 2010</a>]</span> lets any subproblem send targets to, and receive targets from, any other
 subproblem, its <em>neighbors</em>. The level index is dropped and the two indices of a quantity denote the sender and the
 receiver.</p>
 <div class="proof definition admonition" id="def-neighbors">
@@ -611,11 +643,11 @@ receiver.</p>
 that is, for which it computes responses. <span class="math notranslate nohighlight">\(\mathbf{t}_{nj}\)</span> are the targets that <span class="math notranslate nohighlight">\(j\)</span> receives from
 <span class="math notranslate nohighlight">\(n\)</span>, and <span class="math notranslate nohighlight">\(\mathbf{r}_{jn}\)</span> the responses that <span class="math notranslate nohighlight">\(j\)</span> computes to match them.</p>
 </section>
-</div><figure class="align-center" id="id17">
+</div><figure class="align-center" id="id18">
 <span id="f-neighbors"></span><a class="reference internal image-reference" href="_images/neighbors.png"><img alt="_images/neighbors.png" src="_images/neighbors.png" width="260" />
 </a>
 <figcaption>
-<p><span class="caption-number">Figure 6 </span><span class="caption-text">Nonhierarchical target and response flow between subproblem <span class="math notranslate nohighlight">\(j\)</span> and its neighbors.</span><a class="headerlink" href="#id17" title="Link to this image">#</a></p>
+<p><span class="caption-number">Figure 6 </span><span class="caption-text">Nonhierarchical target and response flow between subproblem <span class="math notranslate nohighlight">\(j\)</span> and its neighbors.</span><a class="headerlink" href="#id18" title="Link to this image">#</a></p>
 </figcaption>
 </figure>
 <p>Subproblem <span class="math notranslate nohighlight">\(j\)</span> has two sets of consistency constraints, <span class="math notranslate nohighlight">\(\mathbf{c}_{nj} = \mathbf{t}_{nj} -
@@ -650,7 +682,7 @@ scaled inconsistency is</p>
 categorical ones. By default the scale factors are <span class="math notranslate nohighlight">\(\sigma_{i} = 0.1 / (u_{i} - \ell_{i})\)</span>, from the bounds of
 each copy, so that couplings of very different magnitudes weigh comparably; a single constant can be given instead.
 The inconsistencies of all links form the vector <span class="math notranslate nohighlight">\(\mathbf{q} \in \mathbb{R}^{n_q}\)</span>.</p>
-<div class="pseudocode" id="id18">
+<div class="pseudocode" id="id19">
 <span id="a-linker"></span><div class="pseudocode-content">
 <pre id="1" style="display:none;">
              \begin{algorithm}
@@ -689,7 +721,7 @@ subproblem that holds the system objective is the <strong>master</strong> subpro
 <section id="method-of-multipliers">
 <h3>Method of multipliers<a class="headerlink" href="#method-of-multipliers" title="Link to this heading">#</a></h3>
 <p>The coordinator updates the penalty parameters after each outer iteration <span class="math notranslate nohighlight">\(t\)</span>, following the method of
-multipliers <span class="bibtex-citation" id="id11">[<a class="reference internal" href="references.html#id24" title="Dimitri P. Bertsekas. Constrained Optimization and Lagrange Multiplier Methods. Academic Press, 1982.">Bertsekas, 1982</a>]</span>:</p>
+multipliers <span class="bibtex-citation" id="id12">[<a class="reference internal" href="references.html#id25" title="Dimitri P. Bertsekas. Constrained Optimization and Lagrange Multiplier Methods. Academic Press, 1982.">Bertsekas, 1982</a>]</span>:</p>
 <div class="math notranslate nohighlight" id="equation-eq-v">
 <span class="eqno">(7)<a class="headerlink" href="#equation-eq-v" title="Link to this equation">#</a></span>\[\mathbf{v}^{t+1} = \mathbf{v}^{t} + 2\,\mathbf{w}^{t}\circ\mathbf{w}^{t}\circ\mathbf{q}^{t},\]</div>
 <p>and grows the penalty weights of the links that do not make enough progress:</p>
@@ -703,8 +735,8 @@ multipliers <span class="bibtex-citation" id="id11">[<a class="reference interna
 <p>where <span class="math notranslate nohighlight">\(q^{t-1}\)</span> are the inconsistencies at the start of the outer iteration and the exponent <span class="math notranslate nohighlight">\(e_{l}\)</span>
 depends on the <strong>update scheme</strong> (<code class="docutils literal notranslate"><span class="pre">M_update_scheme</span></code>). Starting values are <span class="math notranslate nohighlight">\(\mathbf{v}^{0} = \mathbf{0}\)</span> and
 <span class="math notranslate nohighlight">\(\mathbf{w}^{0} = \mathbf{1}\)</span>.</p>
-<div class="pst-scrollable-table-container"><table class="table" id="id19">
-<caption><span class="caption-number">Table 1 </span><span class="caption-text">Penalty-weight update schemes (<code class="docutils literal notranslate"><span class="pre">M_update_scheme</span></code>)</span><a class="headerlink" href="#id19" title="Link to this table">#</a></caption>
+<div class="pst-scrollable-table-container"><table class="table" id="id20">
+<caption><span class="caption-number">Table 1 </span><span class="caption-text">Penalty-weight update schemes (<code class="docutils literal notranslate"><span class="pre">M_update_scheme</span></code>)</span><a class="headerlink" href="#id20" title="Link to this table">#</a></caption>
 <colgroup>
 <col style="width: 18.0%" />
 <col style="width: 82.0%" />
@@ -734,7 +766,7 @@ inconsistencies grow faster.</p></td>
 </div>
 <p>Growing the weights only where consistency stalls keeps the penalty small on couplings that converge on their own,
 which preserves the conditioning of the subproblems; the multipliers <span class="math notranslate nohighlight">\(\mathbf{v}\)</span> let the coordination reach
-consistency without driving the weights to infinity <span class="bibtex-citation" id="id12">[<a class="reference internal" href="references.html#id12" title="Simon Tosserams, L. F. P. Etman, and J. E. Rooda. Augmented Lagrangian coordination for distributed optimal design in MDO. International Journal for Numerical Methods in Engineering, 73(13):1885–1910, 2008.">Tosserams <em>et al.</em>, 2008</a>, <a class="reference internal" href="references.html#id23" title="Stephen Boyd, Neal Parikh, Eric Chu, Borja Peleato, and Jonathan Eckstein. Distributed optimization and statistical learning via the alternating direction method of multipliers. Foundations and Trends in Machine Learning, 3(1):1–122, 2011. doi:10.1561/2200000016.">Boyd <em>et al.</em>, 2011</a>]</span>.</p>
+consistency without driving the weights to infinity <span class="bibtex-citation" id="id13">[<a class="reference internal" href="references.html#id13" title="Simon Tosserams, L. F. P. Etman, and J. E. Rooda. Augmented Lagrangian coordination for distributed optimal design in MDO. International Journal for Numerical Methods in Engineering, 73(13):1885–1910, 2008.">Tosserams <em>et al.</em>, 2008</a>, <a class="reference internal" href="references.html#id24" title="Stephen Boyd, Neal Parikh, Eric Chu, Borja Peleato, and Jonathan Eckstein. Distributed optimization and statistical learning via the alternating direction method of multipliers. Foundations and Trends in Machine Learning, 3(1):1–122, 2011. doi:10.1561/2200000016.">Boyd <em>et al.</em>, 2011</a>]</span>.</p>
 </section>
 </section>
 <section id="the-coordination-loop">
@@ -749,12 +781,12 @@ same outer iteration, which usually reduces the number of outer iterations.</p>
 first set to their mean. Each subproblem then evaluates its penalty on the inconsistency shifted by
 <span class="math notranslate nohighlight">\(\delta_{l} = -v_{l}/(2w_{l}^{2}) - \bar{q}_{l}\)</span>, where <span class="math notranslate nohighlight">\(\bar{q}_{l}\)</span> is the inconsistency of the
 averaged snapshot; this is the scaled form of the augmented Lagrangian used by consensus ADMM
-<span class="bibtex-citation" id="id13">[<a class="reference internal" href="references.html#id23" title="Stephen Boyd, Neal Parikh, Eric Chu, Borja Peleato, and Jonathan Eckstein. Distributed optimization and statistical learning via the alternating direction method of multipliers. Foundations and Trends in Machine Learning, 3(1):1–122, 2011. doi:10.1561/2200000016.">Boyd <em>et al.</em>, 2011</a>]</span>. The subproblems can be solved concurrently; their results are then merged in
+<span class="bibtex-citation" id="id14">[<a class="reference internal" href="references.html#id24" title="Stephen Boyd, Neal Parikh, Eric Chu, Borja Peleato, and Jonathan Eckstein. Distributed optimization and statistical learning via the alternating direction method of multipliers. Foundations and Trends in Machine Learning, 3(1):1–122, 2011. doi:10.1561/2200000016.">Boyd <em>et al.</em>, 2011</a>]</span>. The subproblems can be solved concurrently; their results are then merged in
 subproblem order, each subproblem contributing the copies it owns, so the outcome does not depend on the order in
 which the solves finish.</p>
 </dd>
 </dl>
-<div class="pseudocode" id="id20">
+<div class="pseudocode" id="id21">
 <span id="a-nhatc"></span><div class="pseudocode-content">
 <pre id="2" style="display:none;">
              \begin{algorithm}
@@ -808,11 +840,11 @@ iteration. The benchmark results in <a class="reference internal" href="benchmar
 \end{array}\end{split}\]</div>
 <p>has the workflow of <a class="reference internal" href="#f-basic"><span class="std std-numref">Figure 7</span></a> and is partitioned into two subproblems that each keep copies of
 <span class="math notranslate nohighlight">\(u\)</span>, <span class="math notranslate nohighlight">\(a\)</span> and <span class="math notranslate nohighlight">\(b\)</span>:</p>
-<figure class="align-center" id="id21">
+<figure class="align-center" id="id22">
 <span id="f-basic"></span><a class="reference internal image-reference" href="_images/basicMDO.png"><img alt="_images/basicMDO.png" src="_images/basicMDO.png" width="240" />
 </a>
 <figcaption>
-<p><span class="caption-number">Figure 7 </span><span class="caption-text">Workflow of the basic problem.</span><a class="headerlink" href="#id21" title="Link to this image">#</a></p>
+<p><span class="caption-number">Figure 7 </span><span class="caption-text">Workflow of the basic problem.</span><a class="headerlink" href="#id22" title="Link to this image">#</a></p>
 </figcaption>
 </figure>
 <div class="math notranslate nohighlight">

@@ -63,6 +63,13 @@ Main features
       Nonhierarchical target cascading with an augmented Lagrangian penalty and method-of-multipliers updates;
       penalty weights grow only on couplings that stall.
 
+   .. grid-item-card:: NHATC, ATC and MDF
+      :link: user_guide/architectures
+      :link-type: doc
+
+      One ``MDO.architecture`` key selects distributed NHATC (default), hierarchical ATC on a tree of subproblems,
+      or monolithic MDF with Gauss–Seidel, Jacobi or Newton MDA solvers.
+
    .. grid-item-card:: Pluggable subproblem solvers
       :link: tutorials/extending
       :link-type: doc
@@ -144,11 +151,15 @@ Organization of this documentation
    the service layer.
 :doc:`benchmarking`
    The regression problems and the recorded results on Sellar, the speed reducer and the geometric program.
+:doc:`architecture_results`
+   How the hierarchical ATC and monolithic MDF architectures and the MDA solvers were tested: Sellar, an analytical
+   ATC star and the SBJ formulations (a) and (d).
 :doc:`tutorials/index`
    Worked examples: the basic problem, Sellar with three inner solvers, parallel and remote execution, the Session
    API, extension points, the HTTP service and the post-processing dashboard.
-:doc:`user_guide/problem_definition` and :doc:`user_guide/outputs`
-   Complete description of the problem-definition keys and of the files a run produces.
+:doc:`user_guide/problem_definition`, :doc:`user_guide/architectures` and :doc:`user_guide/outputs`
+   Complete description of the problem-definition keys, of the MDO architectures (NHATC, ATC, MDF) and MDA
+   solvers, and of the files a run produces.
 :doc:`api/index`
    Reference of the public classes and functions.
 
@@ -187,6 +198,7 @@ later; see the `LICENSE <https://github.com/Ahmed-Bayoumy/DMDO/blob/DEV/LICENSE>
    background
    implementation
    benchmarking
+   architecture_results
 
 .. toctree::
    :hidden:
@@ -199,6 +211,7 @@ later; see the `LICENSE <https://github.com/Ahmed-Bayoumy/DMDO/blob/DEV/LICENSE>
    :caption: User guide
 
    user_guide/problem_definition
+   user_guide/architectures
    user_guide/outputs
 
 .. toctree::

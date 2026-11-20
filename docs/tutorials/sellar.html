@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>The Sellar problem &#8212; DMDO 2612.0</title>
+    <title>The Sellar problem &#8212; DMDO 2612.1</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=d587bd99"></script>
+    <script src="../_static/documentation_options.js?v=71ff3980"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -59,7 +59,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2612.0" />
+  <meta name="docsearch:version" content="2612.1" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -129,8 +129,8 @@
     
     
     
-    <img src="../_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.0 - Home"/>
-    <img src="../_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.0 - Home"/>
+    <img src="../_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.1 - Home"/>
+    <img src="../_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.1 - Home"/>
   
   
 </a></div>
@@ -173,16 +173,16 @@
 </li>
 
 
-<li class="nav-item current active">
-  <a class="nav-link nav-internal" href="index.html">
-    Tutorials
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../architecture_results.html">
+    Testing the MDO architectures
   </a>
 </li>
 
 
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="../user_guide/problem_definition.html">
-    Problem definition
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Tutorials
   </a>
 </li>
 
@@ -194,6 +194,20 @@
                 </button>
                 <ul id="pst-nav-more-links" class="dropdown-menu">
                     
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../user_guide/problem_definition.html">
+    Problem definition
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../user_guide/architectures.html">
+    MDO architectures
+  </a>
+</li>
+
+
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="../user_guide/outputs.html">
     Outputs
@@ -336,6 +350,13 @@
 </li>
 
 
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../architecture_results.html">
+    Testing the MDO architectures
+  </a>
+</li>
+
+
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
     Tutorials
@@ -346,6 +367,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../user_guide/problem_definition.html">
     Problem definition
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../user_guide/architectures.html">
+    MDO architectures
   </a>
 </li>
 
@@ -504,7 +532,7 @@
                   
   <section id="the-sellar-problem">
 <h1>The Sellar problem<a class="headerlink" href="#the-sellar-problem" title="Link to this heading">#</a></h1>
-<p>The Sellar problem <span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id20" title="R. S. Sellar, S. M. Batill, and J. E. Renaud. Response surface based, concurrent subspace optimization for multidisciplinary system design. In 34th AIAA Aerospace Sciences Meeting and Exhibit. 1996. AIAA 96-0714.">Sellar <em>et al.</em>, 1996</a>]</span> is the classic two-discipline test of MDO architectures. Its optimum
+<p>The Sellar problem <span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id21" title="R. S. Sellar, S. M. Batill, and J. E. Renaud. Response surface based, concurrent subspace optimization for multidisciplinary system design. In 34th AIAA Aerospace Sciences Meeting and Exhibit. 1996. AIAA 96-0714.">Sellar <em>et al.</em>, 1996</a>]</span> is the classic two-discipline test of MDO architectures. Its optimum
 is known, <span class="math notranslate nohighlight">\(f^\ast = 3.18339\)</span>, which makes it a direct measure of how well a coordination method works. This
 tutorial builds it with DMDO’s Python API (the same objects the YAML builder creates) and compares three inner
 solvers.</p>
@@ -524,7 +552,7 @@ solvers.</p>
 <a class="reference internal image-reference" href="../_images/Sellar_Wflow.png"><img alt="../_images/Sellar_Wflow.png" src="../_images/Sellar_Wflow.png" style="width: 95%;" />
 </a>
 <figcaption>
-<p><span class="caption-number">Figure 11 </span><span class="caption-text">Data flow between the two disciplines.</span><a class="headerlink" href="#id2" title="Link to this image">#</a></p>
+<p><span class="caption-number">Figure 15 </span><span class="caption-text">Data flow between the two disciplines.</span><a class="headerlink" href="#id2" title="Link to this image">#</a></p>
 </figcaption>
 </figure>
 </div>
@@ -533,7 +561,7 @@ solvers.</p>
 <a class="reference internal image-reference" href="../_images/sellar_xdsm.png"><img alt="../_images/sellar_xdsm.png" src="../_images/sellar_xdsm.png" style="width: 100%;" />
 </a>
 <figcaption>
-<p><span class="caption-number">Figure 12 </span><span class="caption-text">The Sellar problem partitioned into two subproblems.</span><a class="headerlink" href="#id3" title="Link to this image">#</a></p>
+<p><span class="caption-number">Figure 16 </span><span class="caption-text">The Sellar problem partitioned into two subproblems.</span><a class="headerlink" href="#id3" title="Link to this image">#</a></p>
 </figcaption>
 </figure>
 </div>
@@ -836,7 +864,7 @@ and <code class="docutils literal notranslate"><span class="pre">Sellar_OMADS_MA
 <a class="reference internal image-reference" href="../_images/bench_sellar.svg"><img alt="Objective and maximum inconsistency of the Sellar problem with three inner solvers" src="../_images/bench_sellar.svg" style="width: 98%;" />
 </a>
 <figcaption>
-<p><span class="caption-number">Figure 13 </span><span class="caption-text">Objective of the master subproblem (left) and maximum inconsistency (right) with the three inner solvers.</span><a class="headerlink" href="#id4" title="Link to this image">#</a></p>
+<p><span class="caption-number">Figure 17 </span><span class="caption-text">Objective of the master subproblem (left) and maximum inconsistency (right) with the three inner solvers.</span><a class="headerlink" href="#id4" title="Link to this image">#</a></p>
 </figcaption>
 </figure>
 <p>All three variants reach consistency to better than <span class="math notranslate nohighlight">\(10^{-5}\)</span>, but only the full MADS algorithm, whose search

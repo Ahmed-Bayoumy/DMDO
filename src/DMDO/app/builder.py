@@ -33,10 +33,14 @@ import numpy as np
 
 from ..analysis.da import DA
 from ..analysis.mda import MDA
+from ..analysis.mda_solvers import resolve_name as resolve_mda_solver_name
 from ..workflow.mdo import MDO
 from ..subproblem.subproblem import SubProblem
 from ..utils.log import MSG_TYPE, logger
-from ..core.enums import COUPLING_TYPE, MDO_ARCHITECTURE, PSIZE_UPDATE, USER, w_scheme
+from ..core.enums import COUPLING_TYPE, PSIZE_UPDATE, USER, w_scheme
+from ..architectures.spec import ArchitectureSpec, parse_architecture
+from ..architectures.mdf import StandaloneCoordination
+from ..architectures.atc import build_hierarchy
 from ..coordination.admm import ADMM
 from ..coordination.system_functions import SystemFunction
 
@@ -181,13 +185,20 @@ class problemSetup:
     else:
       return None
   
-  def getMDOArch(self, inp: str) -> int:
-    if inp.lower() == "idf":
-      return MDO_ARCHITECTURE.IDF
-    elif inp.lower() == "MDF":
-      return MDO_ARCHITECTURE.MDF
-    else:
-      MDO_ARCHITECTURE.IDF
+  def getMDOArch(self, inp: Any) -> ArchitectureSpec:
+    """Parse the ``MDO.architecture`` value (see :mod:`DMDO.architectures.spec`). An unrecognised value selects the
+    default NHATC architecture and logs one warning."""
+    spec, warning = parse_architecture(inp)
+    if warning is not None and self.log is not None:
+      self.log.log_msg(msg=warning, msg_type=MSG_TYPE.WARNING.value)
+    return spec
+
+  def architectureSetup(self) -> ArchitectureSpec:
+    """Read ``MDO.architecture`` once, before the rest of the setup, so a fallback warning heads the log."""
+    mdo = self.data.get("MDO") or {}
+    self.architecture = self.getMDOArch(mdo.get("architecture"))
+    self.log.log_msg(msg=f"MDO architecture: {self.architecture.label}", msg_type=MSG_TYPE.INFO.value)
+    return self.architecture
   
   def raiser(self, blerr): 
     raise ImportError(blerr)
@@ -414,13 +425,32 @@ class problemSetup:
     """ Setup the MDA process """
     MD = self.data["MDA"]
     self.MDAs = []
+    arch = getattr(self, "architecture", None)
+    is_mdf = arch is not None and arch.is_mdf
     for i in MD:
-      self.MDAs.append(MDA(
-        index=MD[i]["index"], 
-        nAnalyses=MD[i]["nAnalyses"], 
-        analyses=self.getDA(MD[i]["analyses"]), 
-        variables=self.getVariables(MD[i]["variables"]), 
-        responses=self.getVariables(MD[i]["responses"])))
+      mda = MDA(
+        index=MD[i]["index"],
+        nAnalyses=MD[i]["nAnalyses"],
+        analyses=self.getDA(MD[i]["analyses"]),
+        variables=self.getVariables(MD[i]["variables"]),
+        responses=self.getVariables(MD[i]["responses"]))
+      spec = MD[i].get("solver")
+      if is_mdf:
+        # MDA.<id>.solver converges the feedback loops of this MDA (default GS); validate it now.
+        mda.solver = spec
+        name = resolve_mda_solver_name(spec)
+        mda.mda_solver()
+        if mda.has_feedback():
+          loops = [[da.index for da in c.analyses] for c in mda.components() if c.feedback]
+          self.log.log_msg(msg=f"MDA{mda.index}: feedback loop(s) {loops} solved with {name}",
+                           msg_type=MSG_TYPE.INFO.value)
+        else:
+          self.log.log_msg(msg=f"MDA{mda.index} has no feedback coupling; MDA solver {name} not used",
+                           msg_type=MSG_TYPE.INFO.value)
+      elif spec is not None:
+        self.log.log_msg(msg=f"MDA{mda.index}: 'solver' is used only by the MON: MDF architecture; ignored",
+                         msg_type=MSG_TYPE.INFO.value)
+      self.MDAs.append(mda)
 
   def _coord_scaling(self, value: Any) -> Any:
     """Inconsistency scaling of a coordinator: a float, ``"reference"`` (1/|baseline| per variable) or, by default,
@@ -434,8 +464,14 @@ class problemSetup:
   def COORDSetup(self):
     """ Setup coordinators definition """
     self.log.log_msg(msg="Starting coordinator setup ...", msg_type=MSG_TYPE.INFO.value)
-    c = self.data["coord"]
     self.Coords = []
+    if self._is_mdf():
+      # MON: MDF has no coordination; coordinator blocks, if any, are not used.
+      if self.data.get("coord"):
+        self.log.log_msg(msg="MON: MDF: the coord blocks are not used", msg_type=MSG_TYPE.INFO.value)
+      self.log.log_msg(msg="Completed coordinator setup ...\n", msg_type=MSG_TYPE.INFO.value)
+      return
+    c = self.data["coord"]
     for i in c:
       if c[i]["type"] != "ADMM":
         msg = f'Currently DMDO only supports ADMM coordinator. Please change the coordination type under {i} to ADMM.'
@@ -472,6 +508,19 @@ class problemSetup:
       self.log.log_msg(msg=f"Coordinator configurations: {c}", msg_type=MSG_TYPE.INFO.value)
     self.systemFunctionsSetup()
     self.log.log_msg(msg="Completed coordinator setup ...\n", msg_type=MSG_TYPE.INFO.value)
+
+  def _is_mdf(self) -> bool:
+    arch = getattr(self, "architecture", None)
+    return arch is not None and arch.is_mdf
+
+  def _sp_coordination(self, sp: Dict) -> Any:
+    """The coordinator of a subproblem block; MON: MDF subproblems are solved without one."""
+    if self._is_mdf():
+      return StandaloneCoordination()
+    if self.getMDA(sp["coordinator"]) is not None:
+      return self.getCoord(sp["coordinator"])
+    return IOError(f'Could not find the coordinator with index {sp["coordinator"]}'
+                   f' assigned to the subproblem {sp["index"]} coordinator key.')
 
   def _variable_index(self, key: str, where: str) -> int:
     keys = list(self.data["variables"].keys())
@@ -537,9 +586,7 @@ class problemSetup:
         analysis=self.getMDA(SP[i]["MDA"]) if self.getMDA(SP[i]["MDA"]) is not None \
           else IOError(f'Could not find the MDA with index {SP[i]["MDA"]} assigned to the subproblem {SP[i]["index"]} MDA key.'
                        ),
-        coordination=self.getCoord(SP[i]["coordinator"]) if self.getMDA(SP[i]["coordinator"]) is not None \
-          else IOError(f'Could not find the coordinator with index {SP[i]["coordinator"]}'
-                       f' assigned to the subproblem {SP[i]["index"]} coordinator key.'),
+        coordination=self._sp_coordination(SP[i]),
         opt=self.setBlackboxes(SP[i]["opt"], bb_type=SP[i]["type"], copts = None) 
         if "opt" in SP[i] else IOError(f'The optimization blackbox key could not be found for {SP[i]}.'),
         fmin_nop=np.inf if not isinstance(SP[i]["fmin_nop"], float) and not isinstance(SP[i]["fmin_nop"], int) \
@@ -567,8 +614,10 @@ class problemSetup:
     self.log.log_msg("Starting MDO architecture setup ...", msg_type=MSG_TYPE.INFO.value)
     MDAO = self.data["MDO"]
     self.MDAO = MDO(
-      Architecture= self.getMDOArch(MDAO["architecture"]) if MDAO["architecture"] is not None else MDO_ARCHITECTURE.IDF,
-      Coordinator= self.getCoord(MDAO["coordinator"]) if self.getMDA(MDAO["coordinator"]) is not None \
+      Architecture= self.architecture if getattr(self, "architecture", None) is not None \
+        else self.getMDOArch(MDAO.get("architecture")),
+      Coordinator= None if self._is_mdf() else self.getCoord(MDAO["coordinator"]) \
+        if self.getMDA(MDAO["coordinator"]) is not None \
         else IOError(f'Could not find the coordinator with index {MDAO["coordinator"]} assigned to the MDO coordinator key.'),
       subProblems= self.getSPs(MDAO["subproblems"]),
       variables= self.V,
@@ -582,11 +631,15 @@ class problemSetup:
       noprogress_stop= MDAO["noprogress_stop"] if "noprogress_stop" in MDAO and isinstance(MDAO["noprogress_stop"], int) \
         else 100
     )
+    if self.MDAO.architecture.is_atc:
+      # Validate the tree now, so a link graph that is not a tree fails at setup rather than at the first iteration.
+      self.MDAO.atc_hierarchy = build_hierarchy(self.MDAO.subProblems)
+      self.log.log_msg(f"DIST: IDF: ATC hierarchy: {self.MDAO.atc_hierarchy.describe()}", msg_type=MSG_TYPE.INFO.value)
     if "Sets" in self.data:
       self.MDAO.sets = self.data["Sets"]
     else:
       self.MDAO.sets = None
-    if self.MDAO.Coordinator is None:
+    if self.MDAO.Coordinator is None and not self._is_mdf():
       msg = f'Could not find the coordinator with index {MDAO["coordinator"]} assigned to the MDO coordinator key.'
       self.log.log_msg(msg=msg, msg_type=MSG_TYPE.ERROR.value)
       raise IOError(msg)
@@ -606,6 +659,7 @@ class problemSetup:
   def autoProbSetup(self) -> MDO:
     """ Setup the MDO problem """
     self.log.log_msg(msg = "MDO problem setup...\n", msg_type=MSG_TYPE.INFO.value)
+    self.architectureSetup()
     self.variablesSetup()
     self.DASetup()
     self.MDASetup()

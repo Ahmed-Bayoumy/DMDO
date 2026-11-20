@@ -1,3 +1,24 @@
+# ------------------------------------------------------------------------------------#
+#  Distributed Multidisciplinary Design Optimization - DMDO                           #
+#                                                                                     #
+#  Author: Ahmed H. Bayoumy                                                           #
+#  email: ahmed.bayoumy@mail.mcgill.ca                                                #
+#                                                                                     #
+#  This program is free software: you can redistribute it and/or modify it under the  #
+#  terms of the GNU General Public License as published by the Free Software          #
+#  Foundation, either version 3 of the License, or (at your option) any later         #
+#  version.                                                                           #
+#                                                                                     #
+#  This program is distributed in the hope that it will be useful, but WITHOUT ANY    #
+#  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A    #
+#  PARTICULAR PURPOSE.  See the GNU General Public License for more details.          #
+#                                                                                     #
+#  You should have received a copy of the GNU General Public License along            #
+#  with this program. If not, see <http://www.gnu.org/licenses/>.                     #
+#                                                                                     #
+#  You can find information on simple_mads at                                         #
+#  https://github.com/Ahmed-Bayoumy/DMDO                                              #
+# ------------------------------------------------------------------------------------#
 """Name -> component registries (solvers, blackboxes).
 
 A registry maps a case-insensitive name to a component. Components come from three sources, tried in order:
@@ -22,7 +43,7 @@ from typing import Callable, Dict, Generic, Iterable, List, Optional, TypeVar
 
 T = TypeVar("T")
 
-__all__ = ["Registry", "RegistryError", "solvers", "blackboxes", "executors", "register_blackbox"]
+__all__ = ["Registry", "RegistryError", "solvers", "blackboxes", "executors", "mda_solvers", "register_blackbox"]
 
 
 class RegistryError(KeyError):
@@ -154,6 +175,9 @@ blackboxes: Registry[Callable] = Registry("blackbox", "dmdo.blackboxes")
 
 #: Executor factories (called as ``factory(max_workers=n)``), see :class:`DMDO.ports.Executor`.
 executors: Registry[Callable] = Registry("executor", "dmdo.executors")
+
+#: MDA solver classes (``MDA.<id>.solver`` of a ``MON: MDF`` problem), see :mod:`DMDO.analysis.mda_solvers`.
+mda_solvers: Registry[Callable] = Registry("MDA solver", "dmdo.mda_solvers")
 
 
 def register_blackbox(name: str, component: Optional[Callable] = None, *, override: bool = True):

@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Extending DMDO &#8212; DMDO 2612.0</title>
+    <title>Extending DMDO &#8212; DMDO 2612.1</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=d587bd99"></script>
+    <script src="../_static/documentation_options.js?v=71ff3980"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -59,7 +59,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2612.0" />
+  <meta name="docsearch:version" content="2612.1" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -129,8 +129,8 @@
     
     
     
-    <img src="../_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.0 - Home"/>
-    <img src="../_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.0 - Home"/>
+    <img src="../_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.1 - Home"/>
+    <img src="../_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.1 - Home"/>
   
   
 </a></div>
@@ -173,16 +173,16 @@
 </li>
 
 
-<li class="nav-item current active">
-  <a class="nav-link nav-internal" href="index.html">
-    Tutorials
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../architecture_results.html">
+    Testing the MDO architectures
   </a>
 </li>
 
 
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="../user_guide/problem_definition.html">
-    Problem definition
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Tutorials
   </a>
 </li>
 
@@ -194,6 +194,20 @@
                 </button>
                 <ul id="pst-nav-more-links" class="dropdown-menu">
                     
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../user_guide/problem_definition.html">
+    Problem definition
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../user_guide/architectures.html">
+    MDO architectures
+  </a>
+</li>
+
+
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="../user_guide/outputs.html">
     Outputs
@@ -336,6 +350,13 @@
 </li>
 
 
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../architecture_results.html">
+    Testing the MDO architectures
+  </a>
+</li>
+
+
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
     Tutorials
@@ -346,6 +367,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../user_guide/problem_definition.html">
     Problem definition
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../user_guide/architectures.html">
+    MDO architectures
   </a>
 </li>
 
@@ -527,7 +555,7 @@ model from another framework:</p>
 <p>The outputs are matched to the analysis’s <code class="docutils literal notranslate"><span class="pre">outputs</span></code> by name, so the order of the dictionary does not matter. For
 parallel or remote execution the adapter must be picklable: build heavy models lazily, or rebuild them in
 <code class="docutils literal notranslate"><span class="pre">__setstate__</span></code>.</p>
-<p>Frameworks such as OpenMDAO <span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id27" title="Justin S. Gray, John T. Hwang, Joaquim R. R. A. Martins, Kenneth T. Moore, and Bret A. Naylor. OpenMDAO: an open-source framework for multidisciplinary design, analysis, and optimization. Structural and Multidisciplinary Optimization, 59(4):1075–1104, 2019. doi:10.1007/s00158-019-02211-z.">Gray <em>et al.</em>, 2019</a>]</span> and GEMSEO <span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id28" title="François Gallard, Charlie Vanaret, Damien Guénot, Vincent Gachelin, Rémi Lafage, Benoit Pauwels, Pierre-Jean Barjhoux, and Anne Gazaix. GEMS: a python library for automation of multidisciplinary design optimization process generation. In AIAA SciTech Forum, 2018 AIAA/ASCE/AHS/ASC Structures, Structural Dynamics, and Materials Conference. 2018. AIAA 2018-0657. doi:10.2514/6.2018-0657.">Gallard <em>et al.</em>, 2018</a>]</span> are examples of tools
+<p>Frameworks such as OpenMDAO <span class="bibtex-citation" id="id1">[<a class="reference internal" href="../references.html#id28" title="Justin S. Gray, John T. Hwang, Joaquim R. R. A. Martins, Kenneth T. Moore, and Bret A. Naylor. OpenMDAO: an open-source framework for multidisciplinary design, analysis, and optimization. Structural and Multidisciplinary Optimization, 59(4):1075–1104, 2019. doi:10.1007/s00158-019-02211-z.">Gray <em>et al.</em>, 2019</a>]</span> and GEMSEO <span class="bibtex-citation" id="id2">[<a class="reference internal" href="../references.html#id29" title="François Gallard, Charlie Vanaret, Damien Guénot, Vincent Gachelin, Rémi Lafage, Benoit Pauwels, Pierre-Jean Barjhoux, and Anne Gazaix. GEMS: a python library for automation of multidisciplinary design optimization process generation. In AIAA SciTech Forum, 2018 AIAA/ASCE/AHS/ASC Structures, Structural Dynamics, and Materials Conference. 2018. AIAA 2018-0657. doi:10.2514/6.2018-0657.">Gallard <em>et al.</em>, 2018</a>]</span> are examples of tools
 whose models can be wrapped this way, or which can drive DMDO through the <a class="reference internal" href="session.html"><span class="doc">The Session API</span></a>; DMDO itself depends on
 neither.</p>
 </section>

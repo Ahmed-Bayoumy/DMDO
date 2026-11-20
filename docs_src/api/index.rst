@@ -12,6 +12,8 @@ The public API is importable from the top-level package (``from DMDO import Sess
    The interfaces DMDO talks to: disciplines, subproblem solvers, executors and observers.
 :doc:`extension`
    Registries, solver strategies, coordination policies and the built-in observers.
+:doc:`architectures`
+   Architecture selection (``MDO.architecture``), hierarchical ATC, monolithic MDF and the MDA solvers.
 :doc:`problem`
    Variables, analyses, subproblems, the coordinator and the enumerations used to build a problem in Python.
 :doc:`service`
@@ -24,5 +26,6 @@ The public API is importable from the top-level package (``from DMDO import Sess
    workflow
    ports
    extension
+   architectures
    problem
    service

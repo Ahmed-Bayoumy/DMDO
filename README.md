@@ -191,6 +191,10 @@ weights: the paper sets one per coupling, while DMDO uses a single weight for al
 
 - NHATC coordination with an augmented Lagrangian penalty and method-of-multipliers updates; penalty weights grow
   only on the couplings that stall (`normal`, `median`, `max` or `rank` update schemes)
+- Three architectures selected by one `MDO.architecture` key: distributed NHATC (default), hierarchical ATC on a
+  tree of subproblems, and monolithic MDF
+- MDA feedback detection (strongly connected analyses, including self-references) with Gauss–Seidel, Jacobi and
+  Newton MDA solvers for MDF
 - Subproblem solvers: OMADS `mads`, `poll` and `search`, SciPy (`SLSQP`, `COBYLA`, `trust-constr`, ...), or your own
 - Gauss–Seidel and Jacobi coordination sweeps; in-process, process-pool, remote or custom executors
 - `Session` API: `run`, `step`, `ask`/`tell`, early stopping, JSON-ready results, checkpoints and exact resume
@@ -258,13 +262,36 @@ while not session.done:
 |---|---|---|
 | `variables` | One row per variable copy | `[name, subproblem, link, coupling, lb, baseline, ub, dim, type]` |
 | `DA` | Disciplinary analyses | `inputs`, `outputs`, `blackbox` |
-| `MDA` | Analyses evaluated in each subproblem | `analyses`, `variables`, `responses` |
+| `MDA` | Analyses evaluated in each subproblem | `analyses`, `variables`, `responses`, `solver` (MDF only) |
 | `coord` | The coordinator | `beta`, `gamma`, `M_update_scheme`, `scaling`, `budget`, `index_of_master_SP` |
 | `subproblem` | The subproblems | `vars`, `resps`, `opt`, `solver`, `budget`, `is_main` |
-| `MDO` | The run | `subproblems`, `inc_stop`, `noprogress_stop`, `display` |
+| `MDO` | The run | `architecture`, `subproblems`, `inc_stop`, `noprogress_stop`, `display` |
 
 Every key, with its default, is listed in the
 [problem-definition reference](https://ahmed-bayoumy.github.io/DMDO/user_guide/problem_definition.html).
+
+## MDO architectures
+
+The `architecture` key of the `MDO` block holds a path of nested keys; every option stays in the blocks that
+already exist.
+
+```yaml
+MDO:
+  architecture:          # default: distributed non-hierarchical ATC, exactly as before
+    DIST:
+      IDF: NHATC
+```
+
+| `architecture` | Method |
+|---|---|
+| `DIST: {IDF: NHATC}` | Non-hierarchical ATC with augmented Lagrangian coordination (default) |
+| `DIST: {IDF: ATC}` | Hierarchical ATC: the subproblem with `is_main: True` is the root and the links must form a tree; the tree is solved level by level with the same ADMM coordinator |
+| `MON: MDF` | Monolithic MDF: each subproblem is a standalone problem whose MDA converges its feedback loops (`MDA.<id>.solver`: `GS`, `Jacobi` or `Newton`) at every evaluation |
+
+Any other value, such as the `architecture: IDF` of older problem files, logs one warning and runs the default.
+[`examples/sellar_mdf.yaml`](examples/sellar_mdf.yaml) solves Sellar with MDF (`f = 3.183394`). See the
+[architectures guide](https://ahmed-bayoumy.github.io/DMDO/user_guide/architectures.html) and how the new
+architectures were [tested](https://ahmed-bayoumy.github.io/DMDO/architecture_results.html).
 
 ## Serial, parallel and remote execution
 
@@ -334,6 +361,8 @@ Plugin packages register solvers, executors, analyses and coordination policies 
 - [Implementation](https://ahmed-bayoumy.github.io/DMDO/implementation.html): architecture, interfaces, the
   coordination loop
 - [Benchmarking](https://ahmed-bayoumy.github.io/DMDO/benchmarking.html)
+- [MDO architectures](https://ahmed-bayoumy.github.io/DMDO/user_guide/architectures.html) and their
+  [test results](https://ahmed-bayoumy.github.io/DMDO/architecture_results.html)
 - [Tutorials](https://ahmed-bayoumy.github.io/DMDO/tutorials/index.html) and
   [API reference](https://ahmed-bayoumy.github.io/DMDO/api/index.html)
 

@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Problem objects &#8212; DMDO 2612.0</title>
+    <title>Problem objects &#8212; DMDO 2612.1</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=d587bd99"></script>
+    <script src="../_static/documentation_options.js?v=71ff3980"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -54,11 +54,11 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Service layer" href="service.html" />
-    <link rel="prev" title="Extension points" href="extension.html" />
+    <link rel="prev" title="MDO architectures and MDA solvers" href="architectures.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2612.0" />
+  <meta name="docsearch:version" content="2612.1" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -128,8 +128,8 @@
     
     
     
-    <img src="../_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.0 - Home"/>
-    <img src="../_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.0 - Home"/>
+    <img src="../_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.1 - Home"/>
+    <img src="../_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.1 - Home"/>
   
   
 </a></div>
@@ -173,15 +173,15 @@
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../tutorials/index.html">
-    Tutorials
+  <a class="nav-link nav-internal" href="../architecture_results.html">
+    Testing the MDO architectures
   </a>
 </li>
 
 
 <li class="nav-item ">
-  <a class="nav-link nav-internal" href="../user_guide/problem_definition.html">
-    Problem definition
+  <a class="nav-link nav-internal" href="../tutorials/index.html">
+    Tutorials
   </a>
 </li>
 
@@ -193,6 +193,20 @@
                 </button>
                 <ul id="pst-nav-more-links" class="dropdown-menu">
                     
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../user_guide/problem_definition.html">
+    Problem definition
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../user_guide/architectures.html">
+    MDO architectures
+  </a>
+</li>
+
+
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="../user_guide/outputs.html">
     Outputs
@@ -336,6 +350,13 @@
 
 
 <li class="nav-item ">
+  <a class="nav-link nav-internal" href="../architecture_results.html">
+    Testing the MDO architectures
+  </a>
+</li>
+
+
+<li class="nav-item ">
   <a class="nav-link nav-internal" href="../tutorials/index.html">
     Tutorials
   </a>
@@ -345,6 +366,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../user_guide/problem_definition.html">
     Problem definition
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../user_guide/architectures.html">
+    MDO architectures
   </a>
 </li>
 
@@ -424,6 +452,7 @@
 <li class="toctree-l1"><a class="reference internal" href="workflow.html">Coordination loop and execution</a></li>
 <li class="toctree-l1"><a class="reference internal" href="ports.html">Interfaces (ports)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="extension.html">Extension points</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architectures.html">MDO architectures and MDA solvers</a></li>
 <li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">Problem objects</a></li>
 <li class="toctree-l1"><a class="reference internal" href="service.html">Service layer</a></li>
 </ul>
@@ -441,7 +470,10 @@
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#DMDO.DA"><code class="docutils literal notranslate"><span class="pre">DMDO.DA</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#DMDO.MDA"><code class="docutils literal notranslate"><span class="pre">DMDO.MDA</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#DMDO.ADMM"><code class="docutils literal notranslate"><span class="pre">DMDO.ADMM</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#DMDO.SubProblem"><code class="docutils literal notranslate"><span class="pre">DMDO.SubProblem</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#DMDO.SubProblem"><code class="docutils literal notranslate"><span class="pre">DMDO.SubProblem</span></code></a><ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#DMDO.SubProblem.set_start_point"><code class="docutils literal notranslate"><span class="pre">DMDO.SubProblem.set_start_point()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#enumerations">Enumerations</a><ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#DMDO.COUPLING_TYPE"><code class="docutils literal notranslate"><span class="pre">DMDO.COUPLING_TYPE</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#DMDO.w_scheme"><code class="docutils literal notranslate"><span class="pre">DMDO.w_scheme</span></code></a></li>
@@ -542,10 +574,30 @@ master subproblem <code class="docutils literal notranslate"><span class="pre">i
 
 <dl class="py class">
 <dt class="sig sig-object py" id="DMDO.SubProblem">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">DMDO.</span></span><span class="sig-name descname"><span class="pre">SubProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_main</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">analysis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coordination</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmin_nop</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">budget</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">display</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psize</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pupdate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scipy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#DMDO.SubProblem" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">DMDO.</span></span><span class="sig-name descname"><span class="pre">SubProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nv</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">index</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vars</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resps</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">is_main</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">analysis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coordination</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmin_nop</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">budget</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">display</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">psize</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pupdate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">solver</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">freal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scipy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'warm'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#DMDO.SubProblem" title="Link to this definition">#</a></dt>
 <dd><p>One subproblem: its design variables <code class="docutils literal notranslate"><span class="pre">vars</span></code> and responses <code class="docutils literal notranslate"><span class="pre">resps</span></code>, its <code class="docutils literal notranslate"><span class="pre">analysis</span></code> (<a class="reference internal" href="#DMDO.MDA" title="DMDO.MDA"><code class="xref py py-class docutils literal notranslate"><span class="pre">MDA</span></code></a>),
 its <code class="docutils literal notranslate"><span class="pre">coordination</span></code> (<a class="reference internal" href="#DMDO.ADMM" title="DMDO.ADMM"><code class="xref py py-class docutils literal notranslate"><span class="pre">ADMM</span></code></a>), the objective callable <code class="docutils literal notranslate"><span class="pre">opt</span></code>, and the inner <code class="docutils literal notranslate"><span class="pre">solver</span></code> with its
-evaluation <code class="docutils literal notranslate"><span class="pre">budget</span></code> and settings (<code class="docutils literal notranslate"><span class="pre">scipy</span></code> for <code class="docutils literal notranslate"><span class="pre">solver=&quot;scipy&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">conf</span></code> for the OMADS solvers).</p>
+evaluation <code class="docutils literal notranslate"><span class="pre">budget</span></code> and settings (<code class="docutils literal notranslate"><span class="pre">scipy</span></code> for <code class="docutils literal notranslate"><span class="pre">solver=&quot;scipy&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">conf</span></code> for the OMADS solvers).
+<code class="docutils literal notranslate"><span class="pre">start_point</span></code> chooses where every inner solve starts (see <a class="reference internal" href="#DMDO.SubProblem.set_start_point" title="DMDO.SubProblem.set_start_point"><code class="xref py py-meth docutils literal notranslate"><span class="pre">set_start_point()</span></code></a>).</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="DMDO.SubProblem.set_start_point">
+<span class="sig-name descname"><span class="pre">set_start_point</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">start_point</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'warm'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#DMDO.SubProblem.set_start_point" title="Link to this definition">#</a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">&quot;warm&quot;</span></code> (default) starts each solve from the last solution, <code class="docutils literal notranslate"><span class="pre">&quot;initial&quot;</span></code> from the values the subproblem
+was built with, every time. A mapping <code class="docutils literal notranslate"><span class="pre">{variable:</span> <span class="pre">value}</span></code> starts from these values; design variables not
+listed keep their initial values. A variable is given by its index (<code class="xref py py-attr docutils literal notranslate"><span class="pre">variableData.index</span></code>, which is
+what a YAML variable key such as <code class="docutils literal notranslate"><span class="pre">v27</span></code> is translated to) or by its name; a name shared by several scalar
+variables takes one value for all of them or a list with one value each, and an index entry wins over a
+name entry. Vector variables take a list of <code class="docutils literal notranslate"><span class="pre">dim</span></code> values. Unknown variables raise <code class="xref py py-class docutils literal notranslate"><span class="pre">ValueError</span></code>.
+Only the start point is fixed: the frame size still follows <code class="docutils literal notranslate"><span class="pre">pupdate</span></code>. The initial values are those at the
+time of the call, so call it before the run.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sp1</span><span class="o">.</span><span class="n">set_start_point</span><span class="p">(</span><span class="s2">"initial"</span><span class="p">)</span>
+<span class="n">sp4</span><span class="o">.</span><span class="n">set_start_point</span><span class="p">({</span><span class="s2">"Sref"</span><span class="p">:</span> <span class="mf">800.0</span><span class="p">})</span>                          <span class="c1"># by name</span>
+<span class="n">first_t</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">v</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">sp4</span><span class="o">.</span><span class="n">vars</span> <span class="k">if</span> <span class="n">v</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s2">"t"</span><span class="p">)</span>
+<span class="n">sp4</span><span class="o">.</span><span class="n">set_start_point</span><span class="p">({</span><span class="n">first_t</span><span class="o">.</span><span class="n">index</span><span class="p">:</span> <span class="mf">3.0</span><span class="p">})</span>                     <span class="c1"># by index (1-based position in "variables")</span>
+</pre></div>
+</div>
+</dd></dl>
+
 </dd></dl>
 
 <section id="enumerations">
@@ -582,12 +634,12 @@ evaluation <code class="docutils literal notranslate"><span class="pre">budget</
                   
 <div class="prev-next-area">
     <a class="left-prev"
-       href="extension.html"
+       href="architectures.html"
        title="previous page">
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Extension points</p>
+        <p class="prev-next-title">MDO architectures and MDA solvers</p>
       </div>
     </a>
     <a class="right-next"

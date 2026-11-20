@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>The Session API &#8212; DMDO 2612.0</title>
+    <title>The Session API &#8212; DMDO 2612.1</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=d587bd99"></script>
+    <script src="../_static/documentation_options.js?v=71ff3980"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -59,7 +59,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="2612.0" />
+  <meta name="docsearch:version" content="2612.1" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -129,8 +129,8 @@
     
     
     
-    <img src="../_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.0 - Home"/>
-    <img src="../_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.0 - Home"/>
+    <img src="../_static/DMDO_logo.png" class="logo__image only-light" alt="DMDO 2612.1 - Home"/>
+    <img src="../_static/DMDO_logo.png" class="logo__image only-dark pst-js-only" alt="DMDO 2612.1 - Home"/>
   
   
 </a></div>
@@ -173,16 +173,16 @@
 </li>
 
 
-<li class="nav-item current active">
-  <a class="nav-link nav-internal" href="index.html">
-    Tutorials
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../architecture_results.html">
+    Testing the MDO architectures
   </a>
 </li>
 
 
-<li class="nav-item ">
-  <a class="nav-link nav-internal" href="../user_guide/problem_definition.html">
-    Problem definition
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="index.html">
+    Tutorials
   </a>
 </li>
 
@@ -194,6 +194,20 @@
                 </button>
                 <ul id="pst-nav-more-links" class="dropdown-menu">
                     
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../user_guide/problem_definition.html">
+    Problem definition
+  </a>
+</li>
+
+
+<li class=" ">
+  <a class="nav-link dropdown-item nav-internal" href="../user_guide/architectures.html">
+    MDO architectures
+  </a>
+</li>
+
+
 <li class=" ">
   <a class="nav-link dropdown-item nav-internal" href="../user_guide/outputs.html">
     Outputs
@@ -336,6 +350,13 @@
 </li>
 
 
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../architecture_results.html">
+    Testing the MDO architectures
+  </a>
+</li>
+
+
 <li class="nav-item current active">
   <a class="nav-link nav-internal" href="index.html">
     Tutorials
@@ -346,6 +367,13 @@
 <li class="nav-item ">
   <a class="nav-link nav-internal" href="../user_guide/problem_definition.html">
     Problem definition
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../user_guide/architectures.html">
+    MDO architectures
   </a>
 </li>
 
@@ -522,7 +550,28 @@ coordination loop in three ways, which can be mixed within one run:</p>
 <h2>The example<a class="headerlink" href="#the-example" title="Link to this heading">#</a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">examples/session_basics.py</span></code> runs the basic problem (8 outer iterations, for a quick demonstration) in the three
 ways:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1">#  email: ahmed.bayoumy@mail.mcgill.ca                                                #</span>
+<span class="c1">#                                                                                     #</span>
+<span class="c1">#  This program is free software: you can redistribute it and/or modify it under the  #</span>
+<span class="c1">#  terms of the GNU General Public License as published by the Free Software          #</span>
+<span class="c1">#  Foundation, either version 3 of the License, or (at your option) any later         #</span>
+<span class="c1">#  version.                                                                           #</span>
+<span class="c1">#                                                                                     #</span>
+<span class="c1">#  This program is distributed in the hope that it will be useful, but WITHOUT ANY    #</span>
+<span class="c1">#  WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A    #</span>
+<span class="c1">#  PARTICULAR PURPOSE.  See the GNU General Public License for more details.          #</span>
+<span class="c1">#                                                                                     #</span>
+<span class="c1">#  You should have received a copy of the GNU General Public License along            #</span>
+<span class="c1">#  with this program. If not, see &lt;http://www.gnu.org/licenses/&gt;.                     #</span>
+<span class="c1">#                                                                                     #</span>
+<span class="c1">#  You can find information on simple_mads at                                         #</span>
+<span class="c1">#  https://github.com/Ahmed-Bayoumy/DMDO                                              #</span>
+<span class="c1"># ------------------------------------------------------------------------------------#</span>
+<span class="sd">"""Build a DMDO problem from YAML and drive it through the Session API: run, step, observers and ask/tell.</span>
+
+<span class="sd">Run from the repository root:  python examples/session_basics.py</span>
+<span class="sd">"""</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">basic_disciplines</span><span class="w"> </span><span class="kn">import</span> <span class="n">BLACKBOXES</span>
 

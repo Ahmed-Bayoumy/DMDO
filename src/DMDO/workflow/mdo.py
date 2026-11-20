@@ -38,6 +38,7 @@ from ..core.protocols import Process_data
 from ..coordination.admm import ADMM
 from ..core.variables import variableData
 from ..ports import IterationRecord
+from ..architectures.spec import DEFAULT_ARCHITECTURE, ArchitectureSpec
 from .execution import SubproblemTask, create_executor, solve_task
 from .observers import HISTORY_FILE, ConsoleReporter, CoordinationHistoryRecorder, default_observers, notify
 
@@ -62,7 +63,9 @@ def _single_result(results, task):
 
 @dataclass
 class MDO_data(Process_data):
-  Architecture: int
+  #: An :class:`~DMDO.architectures.spec.ArchitectureSpec`; any other value (e.g. the legacy ``MDO_ARCHITECTURE``
+  #: enum of programmatic setups) means the default NHATC coordination.
+  Architecture: Any
   Coordinator: ADMM
   subProblems: List[SubProblem]
   fmin: float
@@ -112,6 +115,12 @@ class MDO(MDO_data):
       self.__dict__.update(state)
       # Reconstruct non-picklable objects if needed
       # self._lock = threading.RLock()
+  @property
+  def architecture(self) -> ArchitectureSpec:
+    """The architecture this run uses; anything but a parsed spec means the default NHATC coordination."""
+    arch = self.Architecture
+    return arch if isinstance(arch, ArchitectureSpec) else DEFAULT_ARCHITECTURE
+
   def get_list_of_var_values(self, x: List[variableData]):
     x_temp = []
     for i in range(len(x)):
@@ -355,6 +364,57 @@ class MDO(MDO_data):
       merged.modify_multipliers(merged.batch_q(merged.q), wb, vb)
     self.Coordinator = merged
 
+  def _atc_sweep(self, sweep):
+    """Build (once) and log the ATC tree; return the ATC sweep. The ``sweep`` option does not apply to ATC."""
+    from ..architectures.atc import build_hierarchy
+    if getattr(self, "atc_hierarchy", None) is None:
+      self.atc_hierarchy = build_hierarchy(self.subProblems)
+    if self.log is not None:
+      self.log.log_msg(msg=f"DIST: IDF: ATC hierarchy (solve order): {self.atc_hierarchy.describe()}",
+                       msg_type=MSG_TYPE.INFO.value)
+      if sweep is not None:
+        self.log.log_msg(msg=f"DIST: IDF: ATC solves the hierarchy level by level; sweep '{sweep}' is ignored",
+                         msg_type=MSG_TYPE.WARNING.value)
+    return self._sweep_atc
+
+  def _sweep_atc(self):
+    """Hierarchical ATC sweep: the levels of the ATC tree from the root down; one batch of tasks per level.
+
+    The subproblems of one level share no target/response pairs, so they are solved from the same coordinator
+    state (in parallel with a parallel executor) and their results are merged in subproblem order. The next level
+    then sees the targets its parents just set. A generator, like the other sweeps.
+    """
+    n = len(self.subProblems)
+    if self.iter == 0:
+      for s in range(n):
+        self._initialize_subproblem(s)
+    position = {int(sp.index): s for s, sp in enumerate(self.subProblems)}
+    for level in self.atc_hierarchy.levels:
+      tasks = []
+      for idx in level:
+        s = position[idx]
+        sp = self.subProblems[s]
+        sp.coord = copy.deepcopy(self.Coordinator)
+        sp.modify_cond_vars(self.Coordinator.master_vars)
+        tasks.append(SubproblemTask(index=s, subproblem=sp, v=copy.deepcopy(self.Coordinator.v),
+                                    w=copy.deepcopy(self.Coordinator.w), iteration=self.iter, file=self.file))
+      results = sorted(_check_results((yield tasks), tasks), key=lambda r: r.index)
+      merged = copy.deepcopy(self.Coordinator)
+      for result in results:
+        s, sp = result.index, result.subproblem
+        self.subProblems[s] = sp
+        self._record_subproblem_solve(s)
+        owned = [v.index for v in sp.vars] + [r.index for r in (sp.MDA_process.responses or [])]
+        for idx in owned:
+          merged.master_vars[idx - 1] = copy.deepcopy(sp.coord.master_vars[idx - 1])
+        if sp.is_main:
+          merged.eps_fo = list(sp.coord.eps_fo)
+      wb, vb = merged.batch_multipliers()
+      merged.calc_inconsistency()
+      if np.size(merged.q) != np.size(merged.w):
+        merged.modify_multipliers(merged.batch_q(merged.q), wb, vb)
+      self.Coordinator = merged
+
   def _initialize_subproblem(self, s: int) -> None:
     """First-iteration setup of subproblem ``s``: linking pairs, initial multipliers, logging and output paths."""
     sp = self.subProblems[s]
@@ -385,7 +445,14 @@ class MDO(MDO_data):
     :param observers: :class:`~DMDO.ports.RunObserver` objects notified during the run, after DMDO's own observers.
 
     To drive the loop step by step, or to solve the subproblems yourself (ask/tell), use :class:`DMDO.Session`.
+
+    With ``architecture: {MON: MDF}`` every subproblem is solved on its own by monolithic MDF instead (no
+    coordination; ``file``, ``resume``, ``mode``, ``executor``, ``sweep`` and ``max_workers`` do not apply) and the
+    per-subproblem results are returned (see :func:`DMDO.architectures.mdf.run_mdf`).
     """
+    if self.architecture.is_mdf:
+      from ..architectures.mdf import run_mdf
+      return run_mdf(self)
     if mode is None:
       mode = self.default_mode()
     owns_executor = executor is None or isinstance(executor, str)
@@ -418,6 +485,10 @@ class MDO(MDO_data):
 
     :param should_stop: called after each outer iteration; returning True ends the run there.
     """
+    if self.architecture.is_mdf:
+      raise NotImplementedError("MON: MDF has no coordination loop to step through; use MDO.run().")
+    if not (self.architecture.is_nhatc or self.architecture.is_atc):
+      raise NotImplementedError(f"MDO architecture {self.architecture.label} is not implemented yet.")
     global eps_fio, eps_qio
     if file is not None:
       self.post_dir = os.path.dirname(file)
@@ -440,7 +511,10 @@ class MDO(MDO_data):
       mode = self.default_mode()
     self.mode = mode
     self.Coordinator.mode = mode
-    run_sweep = self._resolve_sweep(mode, sweep)
+    if self.architecture.is_atc:
+      run_sweep = self._atc_sweep(sweep)
+    else:
+      run_sweep = self._resolve_sweep(mode, sweep)
     hooks = default_observers(self) + list(observers or [])
 
     # A checkpoint is written at the start of an outer iteration (after its on_iteration_start hooks): a resumed run

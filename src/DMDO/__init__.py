@@ -47,6 +47,7 @@ from .workflow.execution import (InProcessExecutor, ProcessExecutor, SubproblemR
 from .coordination.policy import CoordinationPolicy, NeutralPolicy, SpikeAdaptationPolicy, policies, policy_for
 from .workflow.observers import CheckpointWriter, ConsoleReporter, CoordinationHistoryRecorder
 from .workflow.ai_hooks import AIRegularizerHooks, RollbackGuard
+from .architectures import ArchitectureError, ArchitectureSpec, parse_architecture
 
 __all__: list[str] = [
   'USER', 
@@ -115,4 +116,7 @@ __all__: list[str] = [
   'SessionError',
   'build_mdo',
   'load_setup',
+  'ArchitectureSpec',
+  'ArchitectureError',
+  'parse_architecture',
   ]
